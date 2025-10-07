@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Term Review</title>
+    <style>
+        /* --- Google Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        /* --- Global Styles & Resets --- */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --light-text-color: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* --- Header & Search Bar --- */
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--light-text-color);
+        }
+
+        .search-container {
+            position: sticky;
+            top: 10px;
+            background-color: rgba(248, 249, 250, 0.9);
+            padding: 1rem 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        #search-bar {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #search-bar:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* --- Card Styles --- */
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+
+        .card.hidden {
+            display: none;
+        }
+        
+        .question-header {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 1.1rem;
+            user-select: none;
+            background-color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .question-header:hover {
+            background-color: #f7f7f7;
+        }
+        
+        .question-header.active {
+            color: var(--primary-color);
+        }
+        
+        .icon {
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            font-size: 1.5rem;
+        }
+        
+        .question-header.active .icon {
+            transform: rotate(45deg);
+        }
+
+        .answer-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+            border-top: 1px solid var(--border-color);
+            background-color: #fafafa;
+        }
+        
+        .answer-content.show {
+            max-height: 500px; /* Adjust if content is longer */
+            padding: 1.5rem;
+        }
+
+        .answer-content p {
+            margin-bottom: 1rem;
+        }
+
+        .answer-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .answer-content strong {
+            color: var(--text-color);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>EMT Term Review</h1>
+            <p></p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="search-bar" placeholder="Search for a term or question...">
+        </div>
+        
+        <main id="card-container" class="card-container">
+            <!-- Cards will be dynamically inserted here by JavaScript -->
+        </main>
+    </div>
+
+    <script>
+        const terms = [
+            {
+                question: "Who makes the EMS curriculum?",
+                answer: "The National Highway Traffic Safety Administration (NHTSA).",
+                explanation: "The NHTSA sets the standards and curriculum for EMS education across the nation, ensuring a consistent foundation of knowledge for all providers."
+            },
+            {
+                question: "What is an EMS system?",
+                answer: "A comprehensive network of personnel, equipment, and resources established to deliver aid and emergency medical care to the community.",
+                explanation: "This system includes everything from 911 dispatchers and EMRs to ambulances, emergency departments, and medical oversight."
+            },
+            {
+                question: "Who is the NREMT?",
+                answer: "The National Registry of Emergency Medical Technicians.",
+                explanation: "It's a non-governmental agency that provides national certification for EMS professionals to ensure they meet a standard of competency. It is not a licensing body."
+            },
+            {
+                question: "What do EMTs, Paramedics, AEMTs, EMRs, and Medical Directors do?",
+                answer: "EMR: Provides basic immediate care. EMT: Provides basic life support (BLS). AEMT: Provides limited advanced life support (ALS). Paramedic: Provides extensive ALS care. Medical Director: A physician who authorizes and oversees all medical care.",
+                explanation: "These roles represent different levels of EMS certification, each with a progressively wider scope of practice. The Medical Director provides the legal authorization for EMS personnel to provide care."
+            },
+            {
+                question: "What is CQI (Continuous Quality Improvement)?",
+                answer: "A system of internal and external reviews and audits of all aspects of an EMS system.",
+                explanation: "The goal of CQI is to identify areas that need improvement and implement changes to enhance patient care and system efficiency."
+            },
+            {
+                question: "What are the 5 stages of grief?",
+                answer: "Denial, Anger, Bargaining, Depression, Acceptance.",
+                explanation: "Coined by Elisabeth Kübler-Ross, these stages describe the emotional process that a person may go through when facing death or significant loss. They do not always occur in this order."
+            },
+            {
+                question: "What is the General Adaptation Syndrome?",
+                answer: "The body's response to stress, occurring in three stages: Alarm, Resistance, and Exhaustion.",
+                explanation: "The Alarm stage is the initial 'fight or flight' response. Resistance is when the body tries to cope with the stressor. Exhaustion occurs when the body's resources are depleted from prolonged stress."
+            },
+            {
+                question: "What is CISD (Critical Incident Stress Debriefing) & its timeline?",
+                answer: "A formal process designed to help responders deal with the stress of a critical incident.",
+                explanation: "CISD is a multi-phase group discussion that usually takes place 24-72 hours after the incident. It aims to reduce the impact of the event and accelerate recovery."
+            },
+            {
+                question: "What does 'burn-out' mean in EMS?",
+                answer: "A state of cumulative stress characterized by emotional exhaustion, cynicism, and a reduced sense of personal accomplishment.",
+                explanation: "It's a serious consequence of prolonged exposure to high-stress situations without adequate coping mechanisms or support."
+            },
+            {
+                question: "What is Quid Pro Quo?",
+                answer: "A Latin phrase meaning 'this for that.'",
+                explanation: "In a professional context, it often refers to a form of sexual harassment where a supervisor requests sexual favors in exchange for a job-related benefit (like a promotion or raise)."
+            },
+            {
+                question: "What is Vector-Borne Transmission?",
+                answer: "The spread of disease through an intermediary agent, such as an insect or animal.",
+                explanation: "Examples include malaria (spread by mosquitoes) and Lyme disease (spread by ticks). The agent (vector) carries the pathogen from one host to another."
+            },
+            {
+                question: "What is Direct Transmission?",
+                answer: "The spread of disease through direct contact with an infected person or their bodily fluids.",
+                explanation: "This can occur through touching, kissing, or exposure to coughs and sneezes (droplet spread)."
+            },
+            {
+                question: "What is Body Substance Isolation (BSI)?",
+                answer: "An infection control practice that assumes all body fluids are potentially infectious.",
+                explanation: "This is the foundation of Standard Precautions. It means wearing appropriate personal protective equipment (PPE), like gloves and goggles, to prevent exposure."
+            },
+            {
+                question: "What is the most important thing at the scene of a hazardous materials incident?",
+                answer: "Personal and scene safety.",
+                explanation: "You cannot help others if you become a victim yourself. The priority is to recognize the potential hazard, ensure your own safety, call for specialized resources, and establish a safe zone."
+            },
+            {
+                question: "Who defines the EMT Scope of Practice?",
+                answer: "The Medical Director.",
+                explanation: "While state laws provide a general outline, the local Medical Director defines the specific treatments, procedures, and medications an EMT is allowed to perform in their system."
+            },
+            {
+                question: "What is the EMT Standard of Care?",
+                answer: "The level of care that a reasonable, prudent EMT with similar training would provide in a similar situation.",
+                explanation: "It's a legal concept used to determine if an EMT acted properly. It is not defined by one individual but by local protocols, textbooks, and national standards."
+            },
+            {
+                question: "What are Expressed and Implied consent?",
+                answer: "Expressed Consent: A patient verbally or non-verbally agrees to treatment. Implied Consent: Assumed when a patient is unconscious, delusional, or otherwise unable to make a rational decision, and a reasonable person would want treatment.",
+                explanation: "Consent is a legal requirement before providing care. Implied consent operates under the principle that the patient would agree to life-saving care if they were able to."
+            },
+            {
+                question: "What is abandonment?",
+                answer: "Terminating care for a patient without ensuring that care continues at the same or higher level.",
+                explanation: "For example, leaving a patient on a hospital gurney without giving a report to a nurse or doctor constitutes abandonment."
+            },
+            {
+                question: "What is negligence?",
+                answer: "Failure to provide the standard of care, resulting in harm to the patient.",
+                explanation: "Four components must be proven for negligence: Duty to act, Breach of that duty, Causation (the breach caused the injury), and Damages (the patient was harmed)."
+            },
+            {
+                question: "What is the Good Samaritan Law?",
+                answer: "A law that protects civilians who provide reasonable assistance to someone who is ill, injured, or in peril.",
+                explanation: "It is designed to encourage bystanders to help without fear of being sued for accidental injury, provided they act in good faith and within their training."
+            },
+            {
+                question: "What are DNR and HIPAA?",
+                answer: "DNR (Do Not Resuscitate): A legal order stating that a patient does not want CPR if their heart stops. HIPAA (Health Insurance Portability and Accountability Act): A federal law protecting the privacy of patient health information.",
+                explanation: "EMTs must respect a valid DNR order. HIPAA requires that all patient information be kept confidential and only shared with those directly involved in the patient's care."
+            },
+            {
+                question: "What are Assault and Battery?",
+                answer: "Assault: Unlawfully placing a person in fear of immediate bodily harm. Battery: Unlawfully touching a person without their consent.",
+                explanation: "Threatening to restrain a patient who doesn't want to be touched is assault. Actually touching or treating them against their will is battery."
+            },
+            {
+                question: "What is Dependent Lividity (Livor Mortis)?",
+                answer: "A definitive sign of death where blood settles in the lowest parts of the body, causing a purplish-red discoloration of the skin.",
+                explanation: "This is caused by gravity pulling red blood cells to the most dependent areas after circulation has stopped."
+            },
+            {
+                question: "What is Putrefaction?",
+                answer: "A definitive sign of death characterized by the decomposition of body tissues.",
+                explanation: "This is a later stage of decomposition, involving bloating, discoloration, and foul odors, indicating that the patient has been deceased for a significant amount of time."
+            },
+            {
+                question: "What does Midaxillary mean?",
+                answer: "An imaginary line that runs down from the center of the armpit to the ankle.",
+                explanation: "It divides the body into anterior (front) and posterior (back) halves. It is a key landmark for things like chest tube placement or EKG lead placement."
+            },
+            {
+                question: "What does Plantar mean?",
+                answer: "Referring to the sole of the foot.",
+                explanation: "For example, plantar warts are warts on the sole of the foot."
+            },
+            {
+                question: "What does Apex mean?",
+                answer: "The tip or pointed end of an organ.",
+                explanation: "The most common uses in EMS are the apex of the heart (the bottom tip) and the apex of the lungs (the very top part)."
+            },
+            {
+                question: "What does Unilateral mean?",
+                answer: "Occurring on only one side of the body.",
+                explanation: "For example, unilateral chest rise would mean only one side of the chest is moving during breathing, which could indicate a pneumothorax or other injury."
+            },
+            {
+                question: "What is Abduction?",
+                answer: "Movement of a limb away from the midline of the body.",
+                explanation: "Think of a person 'abducting' or taking away a limb from the body's center."
+            },
+            {
+                question: "What is Adduction?",
+                answer: "Movement of a limb toward the midline of the body.",
+                explanation: "Think of 'adding' the limb back to the body's center."
+            },
+            {
+                question: "What is the Supine position?",
+                answer: "Lying on the back, face up.",
+                explanation: "This is a common position for patient assessment and for patients who are unconscious but breathing adequately."
+            },
+            {
+                question: "What is the Trendelenburg position?",
+                answer: "Lying on the back with the body tilted so the feet are higher than the head.",
+                explanation: "It was once commonly used for shock but is now generally discouraged as it can impair breathing and increase intracranial pressure."
+            },
+            {
+                question: "What is the Foramen Magnum?",
+                answer: "The large opening at the base of the skull where the spinal cord connects to the brain.",
+                explanation: "This is a critical anatomical landmark. Significant trauma here can be instantly fatal."
+            },
+            {
+                question: "What is the Cricoid Cartilage?",
+                answer: "A firm, complete ring of cartilage that forms the lower part of the larynx (voice box).",
+                explanation: "It is a key landmark for procedures like cricothyrotomy (an emergency airway procedure) and is used to help prevent gastric distention during ventilation (Sellick maneuver)."
+            },
+            {
+                question: "What is the order of the vertebrae?",
+                answer: "Cervical (7), Thoracic (12), Lumbar (5), Sacrum (5 fused), Coccyx (4 fused).",
+                explanation: "A common mnemonic is 'Breakfast at 7, Lunch at 12, Dinner at 5' to remember the number of cervical, thoracic, and lumbar vertebrae."
+            },
+            {
+                question: "What is the most superior portion of the sternum?",
+                answer: "The Manubrium.",
+                explanation: "This is the upper part of the sternum where the clavicles (collarbones) and the first two ribs attach."
+            },
+            {
+                question: "What is the most easily-injurable part of the vertebrae and why?",
+                answer: "The Cervical spine (C-spine).",
+                explanation: "It is the most mobile part of the spine and has the least amount of support from surrounding musculature, making it highly susceptible to injury from trauma."
+            },
+            {
+                question: "What is the most distal part of the spine?",
+                answer: "The Coccyx (tailbone).",
+                explanation: "It is the final segment of the vertebral column, composed of several fused vertebrae."
+            },
+            {
+                question: "What is the most inferior part of the sternum?",
+                answer: "The Xiphoid Process.",
+                explanation: "This small, cartilaginous tip at the bottom of the sternum is an important landmark for hand placement during CPR. It can be fractured if CPR is performed incorrectly."
+            },
+            {
+                question: "Where are the intercostal muscles and spaces located?",
+                answer: "Between the ribs.",
+                explanation: "The intercostal muscles are essential for breathing, helping to expand and shrink the size of the chest cavity. The spaces are named for the rib superior to them."
+            },
+            {
+                question: "What quadrant is the spleen in?",
+                answer: "The Left Upper Quadrant (LUQ).",
+                explanation: "The spleen is a solid organ that filters blood. It can be easily injured in trauma to the LUQ, leading to severe internal bleeding."
+            },
+            {
+                question: "What quadrant is the liver in?",
+                answer: "The Right Upper Quadrant (RUQ).",
+                explanation: "The liver is the largest solid organ in the abdomen. Like the spleen, it is prone to injury and can bleed profusely."
+            },
+            {
+                question: "What organs are in the retroperitoneal space?",
+                answer: "The kidneys, pancreas, and aorta.",
+                explanation: "This is the anatomical space behind the abdominal cavity. Injuries here can be difficult to detect and may present with back or flank pain."
+            },
+            {
+                question: "What is the difference between bradycardia and tachycardia?",
+                answer: "Bradycardia is a slow heart rate (typically < 60 bpm). Tachycardia is a fast heart rate (typically > 100 bpm).",
+                explanation: "Both can be normal (e.g., in an athlete or during exercise) or signs of a serious medical condition, depending on the context."
+            },
+            {
+                question: "Why are baseline vitals called baseline vitals?",
+                answer: "They are the first set of vital signs obtained and are used as a reference point to compare against subsequent measurements.",
+                explanation: "Tracking trends in vital signs over time (e.g., a rising heart rate or falling blood pressure) is often more informative than a single measurement."
+            },
+            {
+                question: "What is Spontaneous Respiration?",
+                answer: "Breathing that occurs without any assistance; also known as normal breathing.",
+                explanation: "This is what a healthy person does naturally. The opposite would be assisted ventilation, where an EMT uses a device to help the patient breathe."
+            },
+            {
+                question: "What are NOT signs of Labored Breathing?",
+                answer: "A normal respiratory rate and adequate tidal volume.",
+                explanation: "Signs of labored breathing include nasal flaring, retractions (sucking in of muscles between ribs), use of accessory muscles, and abnormal sounds like stridor or grunting."
+            },
+            {
+                question: "What is the acetabulum?",
+                answer: "The socket of the hip joint.",
+                explanation: "It is the cup-shaped depression on the pelvis into which the head of the femur (thigh bone) fits."
+            },
+            {
+                question: "What is a symptom?",
+                answer: "Something the patient feels and tells you, which cannot be measured or observed by others.",
+                explanation: "Examples include pain, nausea, dizziness, and fatigue. This is subjective information."
+            },
+            {
+                question: "What is a Chief Complaint?",
+                answer: "The main reason why the patient called for help, in their own words.",
+                explanation: "It's the primary problem you are there to address, such as 'I'm having chest pain' or 'I can't breathe'."
+            },
+            {
+                question: "What is SAMPLE history?",
+                answer: "A mnemonic for gathering patient history: Signs/Symptoms, Allergies, Medications, Past pertinent history, Last oral intake, Events leading up to the incident.",
+                explanation: "This is a structured way to quickly obtain a thorough history from a patient or their family."
+            },
+            {
+                question: "What does 'Palliating' mean?",
+                answer: "What makes the pain or symptom better.",
+                explanation: "This is part of the 'P' in the OPQRST pain assessment mnemonic (Provocation/Palliation). For example, 'The chest pain gets better when I sit still.'"
+            },
+            {
+                question: "What is Radiating pain?",
+                answer: "Pain that starts in one location and spreads to another, typically along a nerve pathway.",
+                explanation: "A classic example is the pain from a heart attack starting in the chest and radiating down the left arm or into the jaw."
+            },
+            {
+                question: "What is Referred pain?",
+                answer: "Pain that is felt in a location other than where the pain originates.",
+                explanation: "An example is gallbladder inflammation causing pain in the right shoulder tip, because they share a common nerve pathway."
+            },
+            {
+                question: "How does a patient with reduced tidal volume breathe?",
+                answer: "Shallowly and often rapidly.",
+                explanation: "Tidal volume is the amount of air moved in one breath. If it's low, the patient must breathe faster (tachypnea) to compensate and maintain adequate oxygenation."
+            },
+            {
+                question: "How should a normal pulse feel?",
+                answer: "Strong and regular.",
+                explanation: "A 'strong' pulse is easily felt and not easily compressed. A 'regular' pulse has a consistent, even rhythm."
+            },
+            {
+                question: "What is cyanosis?",
+                answer: "A bluish discoloration of the skin and mucous membranes.",
+                explanation: "It is a sign of poor oxygenation, caused by an increased concentration of deoxygenated hemoglobin in the blood."
+            },
+            {
+                question: "What causes cyanosis?",
+                answer: "A lack of oxygen in the blood (hypoxia).",
+                explanation: "This can be due to respiratory failure, airway obstruction, shock, or exposure to cold. It is a late and serious sign of respiratory distress."
+            },
+            {
+                question: "What is 'Normal' skin?",
+                answer: "Warm, pink, and dry.",
+                explanation: "This indicates good perfusion (circulation), oxygenation, and body temperature regulation. Deviations from this (e.g., cool, pale, moist skin) are signs of a problem."
+            },
+            {
+                question: "What is Diaphoresis?",
+                answer: "Profuse sweating.",
+                explanation: "Diaphoretic skin (cool, pale, and moist) is a classic sign of shock or a cardiac event, as the body's 'fight or flight' response is activated."
+            },
+            {
+                question: "What is the normal capillary refill time?",
+                answer: "2 seconds.",
+                explanation: "To test this, you press on a nail bed until it turns white, then release. The color should return within 2 seconds. A longer time suggests poor peripheral perfusion."
+            },
+            {
+                question: "How do you check skin color on a darker-skinned person?",
+                answer: "Check the mucous membranes, such as the inside of the lip, the gums, or the conjunctiva (inside of the eyelid).",
+                explanation: "These areas have less pigmentation and can more accurately show changes like pallor (paleness) or cyanosis (bluish color)."
+            },
+            {
+                question: "Who is capillary refill most reliable in?",
+                answer: "Infants and young children.",
+                explanation: "In adults, factors like cold environments, smoking, or certain medications can make the test unreliable. It is a key part of the pediatric assessment."
+            },
+            {
+                question: "What happens during Systolic Blood Pressure?",
+                answer: "The ventricles of the heart contract, pushing blood into the arteries.",
+                explanation: "This is the top number in a blood pressure reading and represents the peak pressure in the arteries during a heartbeat."
+            },
+            {
+                question: "What happens during Diastolic Blood Pressure?",
+                answer: "The ventricles of the heart relax and refill with blood.",
+                explanation: "This is the bottom number in a blood pressure reading and represents the pressure remaining in the arteries between heartbeats."
+            },
+            {
+                question: "What would the skin of someone with high blood pressure look like?",
+                answer: "Flushed (red and warm).",
+                explanation: "High blood pressure can cause blood vessels near the skin's surface to dilate, leading to a flushed appearance, especially in the face."
+            },
+            {
+                question: "What is stridor?",
+                answer: "A high-pitched, harsh sound heard during inspiration.",
+                explanation: "It is a sign of a partial upper airway obstruction, caused by swelling or a foreign body. It is a true medical emergency."
+            },
+            {
+                question: "From what age group down do we not typically do blood pressure on?",
+                answer: "Children under 3 years old.",
+                explanation: "In this age group, getting an accurate reading is difficult, and perfusion is better assessed by skin condition, capillary refill, and mental status."
+            },
+            {
+                question: "What kind of a reading can you get if you use a blood pressure cuff that's too small?",
+                answer: "A falsely high reading.",
+                explanation: "A cuff that is too small for the arm over-constricts the artery, requiring more pressure to occlude it, which artificially inflates the reading."
+            },
+            {
+                question: "How do you auscultate a patient's blood pressure?",
+                answer: "Place a stethoscope over the brachial artery and listen for the return of Korotkoff sounds as you slowly release the pressure from the cuff.",
+                explanation: "The first sound you hear is the systolic pressure. The point where the sound disappears is the diastolic pressure."
+            },
+            {
+                question: "What should happen to a patient's pupil when you shine a light in it?",
+                answer: "It should constrict (get smaller).",
+                explanation: "This is a normal pupillary light reflex. Both the pupil with the light and the other pupil (consensual response) should constrict."
+            },
+            {
+                question: "If you shine a bright light into a pupil and it dilates, what could that indicate?",
+                answer: "A serious head injury or neurological event.",
+                explanation: "This is a paradoxical reaction and a very ominous sign, suggesting increased intracranial pressure or brainstem damage."
+            },
+            {
+                question: "What do you not do in the scene size-up?",
+                answer: "Patient care or assessment.",
+                explanation: "The scene size-up is a rapid evaluation of the scene to ensure safety, determine the nature of the incident, and decide if additional resources are needed. Patient contact comes after the scene is deemed safe."
+            },
+            {
+                question: "What's the first thing you do when you arrive on scene?",
+                answer: "Ensure scene safety (BSI, Scene Safety).",
+                explanation: "This is the absolute first priority. It involves looking for hazards to yourself, your partner, and the patient before any other action is taken."
+            },
+            {
+                question: "What is the mechanism of injury (MOI)?",
+                answer: "The way in which a traumatic injury occurs; the forces that act on the body to cause injury.",
+                explanation: "Understanding the MOI (e.g., type of car crash, height of a fall) helps you predict potential injuries."
+            },
+            {
+                question: "What is the job of the first unit at a mass casualty incident (MCI)?",
+                answer: "Establish command and begin triage.",
+                explanation: "The first crew on scene does not treat patients. Their role is to take command, get an overview of the situation, and quickly sort patients by priority (triage) to direct incoming resources."
+            },
+            {
+                question: "What is the goal of the primary (initial) assessment?",
+                answer: "To identify and treat immediate life threats.",
+                explanation: "This involves a rapid check of Airway, Breathing, Circulation, and mental status (ABC's) to find and fix problems that will kill the patient in the next few minutes."
+            },
+            {
+                question: "What is ventilation?",
+                answer: "The physical act of moving air into and out of the lungs.",
+                explanation: "This is different from respiration, which is the exchange of gases (oxygen and carbon dioxide) at the cellular level."
+            },
+            {
+                question: "What is NOT found in the upper airway?",
+                answer: "The bronchi and alveoli.",
+                explanation: "The upper airway consists of the nose, mouth, pharynx, and larynx. Its function is to warm, filter, and humidify air before it reaches the lower airway."
+            },
+            {
+                question: "What are the structures of the lower airway?",
+                answer: "The trachea, bronchi, bronchioles, and alveoli.",
+                explanation: "The lower airway begins below the larynx and is where gas exchange actually takes place."
+            },
+            {
+                question: "What is the epiglottis? How is it described?",
+                answer: "A leaf-shaped flap of cartilage at the base of the tongue.",
+                explanation: "Its function is to cover the opening of the trachea (the glottis) during swallowing to prevent food and liquid from entering the lungs."
+            },
+            {
+                question: "Where does the exchange of oxygen and carbon dioxide take place?",
+                answer: "In the alveoli.",
+                explanation: "These are tiny air sacs in the lungs that are surrounded by capillaries. Oxygen diffuses from the alveoli into the blood, and carbon dioxide diffuses from the blood into the alveoli to be exhaled."
+            },
+            {
+                question: "What happens when you inhale?",
+                answer: "The diaphragm and intercostal muscles contract, creating negative pressure in the chest, which draws air into the lungs.",
+                explanation: "This expansion of the chest cavity decreases the pressure inside relative to the atmosphere, causing air to rush in."
+            },
+            {
+                question: "What is the diaphragm?",
+                answer: "A large, dome-shaped muscle at the base of the chest cavity that is the primary muscle of breathing.",
+                explanation: "When it contracts, it flattens and moves downward, increasing the volume of the chest cavity."
+            },
+            {
+                question: "Is inhalation an active or passive process?",
+                answer: "Active.",
+                explanation: "It requires muscle contraction (the diaphragm and intercostal muscles) and therefore requires energy."
+            },
+            {
+                question: "Is exhalation an active or passive process?",
+                answer: "Passive.",
+                explanation: "Normally, exhalation does not require muscle contraction. The muscles relax, and the natural elasticity of the chest wall and lungs causes them to return to their resting size, forcing air out."
+            },
+            {
+                question: "What is Tidal Volume?",
+                answer: "The amount of air that is moved into or out of the lungs during a single normal breath.",
+                explanation: "Adequate tidal volume is just as important as respiratory rate. Breathing that is too shallow (low tidal volume) will not be effective, even if the rate is fast."
+            },
+            {
+                question: "At what point does irreversible brain damage without oxygen occur?",
+                answer: "Typically between 4 to 6 minutes.",
+                explanation: "After this time, brain cells begin to die from lack of oxygen, leading to permanent neurological damage or death."
+            },
+            {
+                question: "Of the 21% oxygen we inhale, how much do our bodies use?",
+                answer: "About 5%. We exhale around 16-17% oxygen.",
+                explanation: "This is why rescue breathing is effective. The air you exhale still contains enough oxygen (about 16%) to sustain a non-breathing person."
+            },
+            {
+                question: "What is the primary stimulus for a healthy individual to breathe?",
+                answer: "An increased level of carbon dioxide in the blood.",
+                explanation: "The brain's respiratory center is highly sensitive to CO2 levels. When CO2 rises, the brain signals the body to breathe more rapidly and deeply to expel it."
+            },
+            {
+                question: "What is a late sign of hypoxia?",
+                answer: "Cyanosis (blue skin).",
+                explanation: "Early signs of hypoxia include restlessness, anxiety, and tachycardia. Cyanosis appears only after a significant amount of the blood is deoxygenated, making it a very late and serious finding."
+            },
+            {
+                question: "If you find an unconscious, prone patient with no pulse and no breathing, what must you do first?",
+                answer: "Log-roll them into a supine position while maintaining C-spine stabilization and immediately begin high-quality CPR.",
+                explanation: "Effective CPR and defibrillation cannot be performed on a patient in the prone (face-down) position. The immediate priority is to start chest compressions."
+            }
+        ];
+
+        const cardContainer = document.getElementById('card-container');
+        const searchBar = document.getElementById('search-bar');
+
+        // Function to display the cards
+        const displayCards = (termList) => {
+            cardContainer.innerHTML = ''; // Clear existing cards
+            if (termList.length === 0) {
+                cardContainer.innerHTML = '<p style="text-align:center; color: var(--light-text-color);">No matching terms found.</p>';
+                return;
+            }
+            termList.forEach(term => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+
+                card.innerHTML = `
+                    <div class="question-header">
+                        <span class="question-text">${term.question}</span>
+                        <span class="icon">+</span>
+                    </div>
+                    <div class="answer-content">
+                        <p><strong>Answer:</strong> ${term.answer}</p>
+                        <p><strong>Explanation:</strong> ${term.explanation}</p>
+                    </div>
+                `;
+                cardContainer.appendChild(card);
+            });
+        };
+
+        // Initial display of all cards
+        displayCards(terms);
+
+        // Event Listener for the search bar
+        searchBar.addEventListener('keyup', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredTerms = terms.filter(term => {
+                return (
+                    term.question.toLowerCase().includes(searchTerm) ||
+                    term.answer.toLowerCase().includes(searchTerm) ||
+                    term.explanation.toLowerCase().includes(searchTerm)
+                );
+            });
+            displayCards(filteredTerms);
+        });
+        
+        // Event Listener for accordion functionality (using event delegation)
+        cardContainer.addEventListener('click', (e) => {
+            const header = e.target.closest('.question-header');
+            if (!header) return;
+
+            const content = header.nextElementSibling;
+            
+            header.classList.toggle('active');
+            content.classList.toggle('show');
+        });
+
+    </script>
+</body>
+</html>
