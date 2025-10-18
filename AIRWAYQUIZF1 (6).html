@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Airway Quiz Suite</title>
+    <style>
+        :root {
+            --primary-bg: #f0f4f8;
+            --secondary-bg: #ffffff;
+            --header-bg: #003366;
+            --text-color: #333;
+            --header-text-color: #ffffff;
+            --button-bg: #005a9c;
+            --button-hover-bg: #003d6b;
+            --correct-bg: #d4edda;
+            --correct-border: #c3e6cb;
+            --incorrect-bg: #f8d7da;
+            --incorrect-border: #f5c6cb;
+            --explanation-bg: #e2e3e5;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --star-color: #ccc;
+            --star-bookmarked-color: #ffc107;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: auto;
+            background-color: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            overflow: hidden;
+        }
+
+        /* --- Navigation Tabs --- */
+        nav {
+            display: flex;
+            background-color: #e9ecef;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover { background-color: #dee2e6; }
+        .nav-tab.active { border-bottom: 3px solid var(--button-bg); color: var(--button-bg); }
+
+        /* --- General View Styling --- */
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        .quiz-header {
+            background-color: var(--header-bg);
+            color: var(--header-text-color);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .quiz-header h1 { margin: 0; font-size: 1.8em; }
+        .quiz-body { padding: 20px 30px; }
+
+        /* --- Practice Mode Styling --- */
+        #category-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        .category-btn {
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        .category-btn:hover { background-color: #ced4da; }
+        .category-btn.active { background-color: var(--button-bg); color: white; border-color: var(--button-bg); }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        #question-text {
+            font-size: 1.3em;
+            line-height: 1.5;
+            flex-grow: 1;
+            margin: 0;
+        }
+        
+        .vocab-link {
+            color: var(--button-bg);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .vocab-link:hover { color: var(--button-hover-bg); }
+
+        .bookmark-star {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--star-color);
+            transition: color 0.2s;
+        }
+        .bookmark-star.bookmarked { color: var(--star-bookmarked-color); }
+
+        #options-container { display: flex; flex-direction: column; gap: 15px; }
+
+        .option {
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box; 
+        }
+
+        .option:hover:not(.correct):not(.incorrect) { background-color: #e9ecef; border-color: #adb5bd; }
+        .option.correct { background-color: var(--correct-bg); border-color: var(--correct-border); color: #155724; font-weight: bold; }
+        .option.incorrect { background-color: var(--incorrect-bg); border-color: var(--incorrect-border); color: #721c24; font-weight: bold; }
+    
+        #explanation-container {
+            margin-top: 25px; padding: 20px; background-color: var(--explanation-bg);
+            border-radius: var(--border-radius); border: 1px solid #d6d8db;
+            font-size: 1.1em; line-height: 1.6;
+        }
+        
+        .quiz-footer {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .main-controls { display: flex; justify-content: space-between; align-items: center; }
+
+        .nav-button, .action-button {
+            background-color: var(--button-bg); color: var(--header-text-color); border: none;
+            padding: 12px 20px; border-radius: var(--border-radius); font-size: 1em;
+            cursor: pointer; transition: background-color 0.2s ease;
+        }
+
+        .nav-button:hover, .action-button:hover { background-color: var(--button-hover-bg); }
+        .nav-button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+
+        /* --- Classroom Sync Styling --- */
+        .sync-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .sync-container input {
+            padding: 8px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; width: 80px; text-align: center;
+        }
+        .sync-container button { padding: 8px 12px; font-size: 0.9em; }
+
+        /* --- Question Bank Styling --- */
+        #bank-view .quiz-body { max-height: 70vh; overflow-y: auto; }
+        .bookmarked-question-item {
+            padding: 15px; border: 1px solid #dee2e6; border-radius: var(--border-radius);
+            margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s ease;
+        }
+        .bookmarked-question-item:hover { background-color: #f8f9fa; }
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888;
+            width: 80%; max-width: 700px; border-radius: var(--border-radius);
+        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        #modal-body .option { margin-bottom: 10px; cursor: default; }
+        #modal-body .option:hover { background-color: var(--secondary-bg); }
+        #modal-body .correct { background-color: var(--correct-bg); border-color: var(--correct-border); }
+
+        /* --- Vocabulary Styling --- */
+        #vocab-search {
+            width: 100%; padding: 12px; font-size: 1.1em; border-radius: var(--border-radius);
+            border: 2px solid #dee2e6; margin-bottom: 20px; box-sizing: border-box;
+        }
+        #vocab-list { list-style: none; padding: 0; max-height: 60vh; overflow-y: auto; }
+        #vocab-list li { padding: 15px; border-bottom: 1px solid #eee; transition: background-color 0.5s ease; }
+        #vocab-list li.highlight { background-color: #fff3cd; }
+        #vocab-list strong { font-size: 1.1em; color: var(--header-bg); }
+
+        @media (max-width: 600px) {
+            body { padding: 0; }
+            .main-container { border-radius: 0; }
+            .quiz-body { padding: 15px 20px; }
+            .quiz-header h1 { font-size: 1.5em; }
+            #question-text { font-size: 1.1em; }
+            .option, .nav-button, .action-button, .nav-tab { font-size: 1em; }
+            .main-controls { flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .modal-content { width: 95%; margin: 15% auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <nav>
+            <button class="nav-tab active" data-view="practice-view">Practice</button>
+            <button class="nav-tab" data-view="bank-view">Question Bank</button>
+            <button class="nav-tab" data-view="vocab-view">Vocabulary</button>
+        </nav>
+
+        <!-- Practice Mode View -->
+        <div id="practice-view" class="view active">
+            <div class="quiz-header">
+                <h1>Practice Quiz</h1>
+                <p id="question-counter"></p>
+            </div>
+            <div class="quiz-body">
+                <div id="category-filter-container"></div>
+                <div class="question-header">
+                    <p id="question-text"></p>
+                    <span class="bookmark-star" id="bookmark-btn" title="Bookmark this question">&#9733;</span>
+                </div>
+                <div id="options-container"></div>
+                <div id="explanation-container" style="display: none;"></div>
+            </div>
+            <div class="quiz-footer">
+                <div class="main-controls">
+                    <button id="prev-btn" class="nav-button">Previous</button>
+                    <button id="shuffle-btn" class="action-button">Shuffle All</button>
+                    <button id="next-btn" class="nav-button">Next</button>
+                </div>
+                <div class="sync-container">
+                    <span>Classroom Mode:</span>
+                    <input type="number" id="seed-input" placeholder="Code">
+                    <button id="sync-btn" class="action-button">Sync</button>
+                    <button id="generate-seed-btn" class="action-button" title="Generate a new session code">Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Bank View -->
+        <div id="bank-view" class="view">
+            <div class="quiz-header"><h1>Bookmarked Questions</h1></div>
+            <div class="quiz-body" id="bookmarked-questions-container"></div>
+        </div>
+        
+        <!-- Vocabulary View -->
+        <div id="vocab-view" class="view">
+            <div class="quiz-header"><h1>EMT Vocabulary</h1></div>
+            <div class="quiz-body">
+                <input type="text" id="vocab-search" placeholder="Search for a term...">
+                <ul id="vocab-list"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Question Bank -->
+    <div id="question-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+
+    <script>
+        // ===================================================================================
+        // PASTE YOUR COMPLETE, CATEGORIZED quizData and vocabData ARRAYS HERE
+        // ===================================================================================
+        const quizData = [
+            // Section 1: In-Class Priority Questions
+            {
+                id: 1,
+                text: "Which of the following organs are most sensitive to oxygen deprivation and will begin to suffer damage most quickly?",
+                options: ["The skin and muscles", "The liver and kidneys", "The brain and the heart", "The stomach and intestines"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The brain and the heart are the most sensitive organs to hypoxia. Irreversible brain damage can begin in as little as 4-6 minutes without oxygen."
+            },
+            {
+                id: 2,
+                text: "The oropharynx is the portion of the pharynx that is located posterior to the:",
+                options: ["Nasal cavity", "Larynx", "Oral cavity (mouth)", "Esophagus"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The oropharynx is the middle section of the pharynx, located directly behind the oral cavity or mouth. The nasopharynx is behind the nose, and the laryngopharynx is the lowest section."
+            },
+            {
+                id: 3,
+                text: "What is the diaphragm?",
+                options: ["A bone in the chest that protects the heart", "A dome-shaped muscle that is the primary muscle of breathing", "A valve that prevents food from entering the airway", "The tube that carries air from the throat to the lungs"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The diaphragm is a large, dome-shaped muscle at the base of the chest cavity. Its contraction and relaxation are the primary drivers of inhalation and exhalation."
+            },
+            {
+                id: 4,
+                text: "During normal, unassisted breathing, how does air enter the lungs?",
+                options: ["Positive pressure from the atmosphere forces air in", "The diaphragm contracts, creating negative pressure in the chest that draws air in", "The abdominal muscles contract, pushing air into the chest", "The lungs actively expand on their own, pulling air in"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Inhalation is an active process where the diaphragm and intercostal muscles contract. This increases the size of the chest cavity, creating a negative pressure that sucks air into the lungs."
+            },
+            {
+                id: 5,
+                text: "Snoring respirations in an unconscious patient are most often a sign of:",
+                options: ["Fluid in the lower airways", "A partial upper airway obstruction by the tongue", "Severe bronchoconstriction", "A foreign body lodged in the trachea"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Snoring is caused by the vibration of soft tissues in the upper airway, typically indicating that the tongue has partially fallen back and is obstructing the pharynx."
+            },
+            {
+                id: 6,
+                text: "What leaf-shaped cartilaginous structure prevents food and liquid from entering the trachea during swallowing?",
+                options: ["Uvula", "Vocal cords", "Epiglottis", "Carina"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The epiglottis is a flap located at the top of the larynx. During swallowing, it folds down to cover the glottic opening, directing food and liquids into the esophagus and protecting the airway."
+            },
+            {
+                id: 7,
+                text: "You find an unconscious person who fell from a ladder. Which is the correct reason for using the jaw-thrust maneuver?",
+                options: ["It is easier to perform than the head-tilt-chin-lift", "It is used to protect the cervical spine from further injury", "It is more effective at clearing fluid from the airway", "It should only be used on conscious patients"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The jaw-thrust maneuver is the preferred method for opening the airway in any patient with a suspected head, neck, or spinal injury because it can be performed while maintaining manual in-line stabilization of the cervical spine."
+            },
+             {
+                id: 8,
+                text: "Which of the following are classic signs of severe respiratory distress in an infant or child?",
+                options: ["Slow, regular breathing and pink skin", "Nasal flaring, grunting, and retractions", "A strong cough and crying", "A respiratory rate of 20 breaths/min"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Infants and children in severe distress exhibit unique signs, including nasal flaring (widening of the nostrils), grunting on exhalation, and retractions (pulling in of skin around the ribs and clavicles)."
+            },
+            {
+                id: 9,
+                text: "Spontaneous respiration refers to a patient's ability to:",
+                options: ["Breathe without any outside assistance", "Speak in full sentences", "Maintain an oxygen saturation above 95%", "Take occasional gasping breaths"],
+                correct: 0,
+                category: "In-Class Priority Questions",
+                explanation: "Spontaneous respiration simply means the patient is breathing on their own, without the aid of artificial ventilations."
+            },
+            {
+                id: 10,
+                text: "A patient breathing 30 times per minute with very little chest movement is likely experiencing a reduction in:",
+                options: ["Respiratory rate", "Heart rate", "Tidal volume", "Dead space"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Shallow breathing, indicated by little chest movement, means the patient has a reduced tidal volume (the amount of air in each breath). Even with a fast rate, this leads to inadequate overall ventilation."
+            },
+            {
+                id: 11,
+                text: "A pulse oximeter provides a noninvasive measurement of the:",
+                options: ["Amount of carbon dioxide in the blood", "Percentage of hemoglobin saturated with oxygen", "Patient's respiratory rate", "Blood pressure"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "A pulse oximeter measures the oxygen saturation (SpO2), which is the percentage of hemoglobin in the arterial blood that is carrying oxygen."
+            },
+            {
+                id: 12,
+                text: "The medical term for profuse sweating, which can be a sign of respiratory distress, is:",
+                options: ["Cyanosis", "Pallor", "Diaphoresis", "Hypoxia"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Diaphoresis is the term for excessive, profuse sweating. It is often seen in patients with cardiac or respiratory emergencies as a result of the body's stress response."
+            },
+            {
+                id: 13,
+                text: "When caring for a patient with a suspected airborne disease like tuberculosis, what type of mask should the EMT wear?",
+                options: ["A surgical mask", "A non-rebreather mask", "A high-efficiency particulate air (HEPA) mask or N95 respirator", "A simple face shield"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "A HEPA mask or N95 respirator is required to filter out the microscopic airborne particles that transmit diseases like tuberculosis, providing protection to the provider."
+            },
+            {
+                id: 14,
+                text: "Why is carbon monoxide (CO) poisoning a life-threatening emergency?",
+                options: ["It causes severe bronchoconstriction", "It displaces oxygen from the air", "It binds to hemoglobin more effectively than oxygen", "It causes immediate cardiac arrest"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Carbon monoxide binds to hemoglobin 250 times more readily than oxygen. It effectively kicks oxygen off the red blood cells, leading to severe tissue hypoxia even if the patient is breathing air."
+            },
+            {
+                id: 15,
+                text: "What are the primary functions of the upper airway?",
+                options: ["To conduct gas exchange and produce speech", "To warm, filter, and humidify inhaled air", "To separate the thorax from the abdomen", "To create negative pressure for breathing"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The upper airway (nose, mouth, pharynx, larynx) is responsible for preparing air for the lungs by warming it to body temperature, filtering out particles, and adding moisture."
+            },
+            {
+                id: 16,
+                text: "How many lobes does the right lung have and how many does the left lung have?",
+                options: ["Right: 2, Left: 3", "Right: 3, Left: 2", "Right: 2, Left: 2", "Right: 3, Left: 3"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The right lung has three lobes (superior, middle, inferior), while the left lung has only two lobes (superior, inferior) to make room for the heart."
+            },
+            {
+                id: 17,
+                text: "Perfusion is best defined as:",
+                options: ["The act of breathing", "The exchange of gases in the lungs", "The circulation of blood within an organ or tissue", "The process of cellular metabolism"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Perfusion refers to the adequate circulation of blood through the capillary beds of tissues to provide oxygen and nutrients and remove waste products."
+            },
+            {
+                id: 18,
+                text: "Why is a nasopharyngeal airway (NPA) contraindicated in a patient with a significant head trauma and fluid coming from the nose?",
+                options: ["It can cause a nosebleed", "It is likely to cause vomiting", "It may be inadvertently inserted into the brain through a fractured skull", "It is too small to be effective"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "In a patient with a suspected basal skull fracture, there is a risk that the NPA could pass through the fracture site and into the cranial cavity, causing severe brain injury."
+            },
+            {
+                id: 19,
+                text: "When inserting a nasopharyngeal airway, it is generally recommended to try which nostril first?",
+                options: ["The smaller nostril", "The left nostril", "The right nostril, as it is often larger", "It does not matter which nostril is used"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The right nostril is generally larger and straighter in most people, making it the preferred choice for the initial attempt at NPA insertion to minimize discomfort and trauma."
+            },
+            {
+                id: 20,
+                text: "What is the primary advantage of using a nasopharyngeal airway (NPA)?",
+                options: ["It is easier to insert than an OPA", "It provides a definitive, secure airway", "It can be used in patients who have an intact gag reflex", "It prevents gastric distention"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Unlike the OPA, the NPA is tolerated by many semiconscious patients who still have a gag reflex, making it a valuable tool when an OPA cannot be used."
+            },
+            {
+                id: 21,
+                text: "What is the correct technique for suctioning a patient's oropharynx with a rigid-tip catheter?",
+                options: ["Insert the catheter as far as it will go and suction for 30 seconds", "Suction continuously while inserting and withdrawing the catheter", "Insert the catheter to the measured depth, and apply suction as you withdraw it", "Only suction the area around the teeth and gums"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The proper technique is to insert the catheter to the desired depth without suction, and then apply suction in a circular motion as you are withdrawing it. Suctioning should be limited to 15 seconds in an adult."
+            },
+            {
+                id: 22,
+                text: "A portable suction unit should be inspected regularly and must generate a vacuum of at least:",
+                options: ["100 mm Hg", "200 mm Hg", "300 mm Hg", "500 mm Hg"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "To be effective, a portable suction unit must be capable of generating a vacuum of more than 300 mm Hg when the tubing is clamped."
+            },
+            {
+                id: 23,
+                text: "The recovery position is indicated for which of the following patients?",
+                options: ["A patient in cardiac arrest", "A trauma patient with a suspected spinal injury", "An unconscious, uninjured patient who is breathing adequately", "A conscious patient with difficulty breathing"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The recovery position is used for unresponsive patients who are not injured and are breathing adequately on their own. It helps protect the airway from secretions or vomit."
+            },
+            {
+                id: 24,
+                text: "A full portable oxygen cylinder has a pressure of approximately:",
+                options: ["500 psi", "1000 psi", "2000 psi", "3000 psi"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "A standard full oxygen cylinder is pressurized to approximately 2000 pounds per square inch (psi)."
+            },
+            {
+                id: 25,
+                text: "What is the purpose of the Pin-Index Safety System (PISS)?",
+                options: ["To secure the oxygen cylinder during transport", "To regulate the pressure of the oxygen leaving the tank", "To prevent an oxygen regulator from being attached to a cylinder of another gas", "To measure the remaining psi in the cylinder"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The PISS uses a specific pattern of pins and holes for each type of compressed gas to prevent accidentally attaching the wrong regulator to the wrong cylinder, such as putting an oxygen regulator on a nitrogen tank."
+            },
+            {
+                id: 26,
+                text: "An oxygen cylinder should be replaced when the pressure falls below:",
+                options: ["1500 psi", "1000 psi", "500 psi", "100 psi"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "While services may have different policies, a pressure of 500 psi is the widely accepted minimum 'safe residual pressure' at which an oxygen tank should be replaced to ensure an adequate supply."
+            },
+            {
+                id: 27,
+                text: "Humidified oxygen is most indicated for:",
+                options: ["All trauma patients", "Short transports of less than 10 minutes", "Patients in cardiac arrest", "Long-term oxygen therapy or long transports"],
+                correct: 3,
+                category: "In-Class Priority Questions",
+                explanation: "Administering dry oxygen over a long period can dry out mucous membranes. Humidification is recommended for long transports or for patients on chronic oxygen therapy to improve comfort."
+            },
+            {
+                id: 28,
+                text: "A patient in respiratory arrest requires immediate:",
+                options: ["A nasal cannula at 6 L/min", "High-concentration oxygen via BVM", "Placement in the recovery position", "Assessment of blood pressure"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "A patient who is not breathing (respiratory arrest) needs immediate artificial ventilations with high-concentration oxygen, typically delivered with a bag-mask device."
+            },
+            {
+                id: 29,
+                text: "Before placing a non-rebreather mask on a patient, you must first:",
+                options: ["Ask the patient to take a deep breath", "Inflate the reservoir bag with oxygen", "Attach a humidifier to the oxygen line", "Check the patient's pulse oximetry"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "You must use your finger to cover the one-way valve and pre-fill the reservoir bag with oxygen. This ensures the patient's first breath is of high-concentration oxygen, not room air."
+            },
+            {
+                id: 30,
+                text: "A nasal cannula at a flow rate of 1-6 L/min can deliver an oxygen concentration of approximately:",
+                options: ["24% to 44%", "50% to 60%", "70% to 80%", "Up to 90%"],
+                correct: 0,
+                category: "In-Class Priority Questions",
+                explanation: "A nasal cannula is a low-flow device that delivers an oxygen percentage ranging from 24% at 1 L/min to 44% at 6 L/min."
+            },
+            {
+                id: 31,
+                text: "A non-rebreather mask with a flow rate of 15 L/min and a good seal can deliver an oxygen concentration of up to:",
+                options: ["44%", "60%", "75%", "90%"],
+                correct: 3,
+                category: "In-Class Priority Questions",
+                explanation: "A non-rebreather mask is a high-flow device. When used correctly with a high flow rate (10-15 L/min), it can deliver oxygen concentrations up to 90%."
+            },
+            {
+                id: 32,
+                text: "Which of the following techniques helps minimize gastric distention during BVM ventilation?",
+                options: ["Ventilating rapidly at a rate of 30/min", "Using the largest mask possible", "Squeezing the bag over 1 second, just enough for chest rise", "Applying firm pressure to the abdomen while ventilating"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Gastric distention is caused by air entering the esophagus. It can be minimized by ensuring proper head position, ventilating slowly (over 1 second), and using just enough volume to achieve visible chest rise."
+            },
+            {
+                id: 33,
+                text: "What is the single most reliable sign of effective bag-mask ventilation?",
+                options: ["Improvement in skin color", "An increasing heart rate", "Visible rise and fall of the chest", "Hearing air enter the lungs"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "While other signs are important, the immediate confirmation that your ventilations are entering the lungs is seeing the patient's chest visibly and equally rise with each breath and fall afterward."
+            },
+            {
+                id: 34,
+                text: "The physiological process of exchanging oxygen and carbon dioxide is known as:",
+                options: ["Ventilation", "Respiration", "Perfusion", "Metabolism"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Respiration refers specifically to the gas exchange process, both in the lungs (external respiration) and at the cellular level (internal respiration)."
+            },
+            {
+                id: 35,
+                text: "In a healthy person, the primary stimulus to breathe is:",
+                options: ["Low levels of oxygen in the blood", "High levels of oxygen in the blood", "Low levels of carbon dioxide in the blood", "High levels of carbon dioxide in the blood"],
+                correct: 3,
+                category: "In-Class Priority Questions",
+                explanation: "The brain's respiratory centers are most sensitive to changes in arterial CO2 levels. An increase in CO2 (hypercarbia) is the primary stimulus that triggers an increase in the rate and depth of breathing."
+            },
+            {
+                id: 36,
+                text: "Which of the following is a sign of inadequate breathing?",
+                options: ["A respiratory rate of 16 breaths/min in an adult", "Symmetrical chest rise and fall", "Use of accessory muscles in the neck and chest", "Speaking in full, clear sentences"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The use of accessory muscles (labored breathing) indicates that the patient is working hard to breathe and their normal respiratory effort is insufficient. This is a sign of inadequate breathing."
+            },
+            {
+                id: 37,
+                text: "After just a couple of minutes of oxygen deprivation, the heart can develop:",
+                options: ["Increased contractility", "Cardiac irritability and arrhythmias", "A decrease in size", "Resistance to defibrillation"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The heart is very sensitive to hypoxia. Within 1-2 minutes without oxygen, it can become irritable, leading to dangerous arrhythmias like ventricular fibrillation, and eventually cardiac arrest."
+            },
+            {
+                id: 38,
+                text: "Permanent brain damage is very likely to begin after how many minutes without oxygen?",
+                options: ["1-2 minutes", "4-6 minutes", "8-10 minutes", "10-15 minutes"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "While some damage may begin earlier, the 4-to-6-minute mark is the critical window after which significant and possibly permanent brain damage is likely to occur."
+            },
+            {
+                id: 39,
+                text: "Normal gas exchange in the lungs occurs through the process of:",
+                options: ["Osmosis", "Active transport", "Diffusion", "Filtration"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Gases like oxygen and carbon dioxide move across the alveolar-capillary membrane via diffusion, moving from an area of higher concentration (or partial pressure) to an area of lower concentration."
+            },
+            {
+                id: 40,
+                text: "Some patients with chronic COPD develop a 'hypoxic drive' to breathe because:",
+                options: ["They are chronically short of breath", "Their bodies become accustomed to high CO2 levels", "They have damage to their diaphragm", "Their lungs have lost elasticity"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "In these patients, the brain's respiratory centers become desensitized to chronically high levels of carbon dioxide. The body then relies on low oxygen levels (hypoxia) as the primary stimulus to breathe."
+            },
+            {
+                id: 41,
+                text: "Which of the following is considered a LATE sign of hypoxia?",
+                options: ["Anxiety", "Restlessness", "Tachycardia (fast heart rate)", "Cyanosis (bluish skin)"],
+                correct: 3,
+                category: "In-Class Priority Questions",
+                explanation: "Anxiety, restlessness, and tachycardia are early signs of hypoxia. Cyanosis is a late sign, indicating a significant and prolonged lack of oxygen in the blood."
+            },
+            {
+                id: 42,
+                text: "Which of these findings indicates adequate breathing in an adult?",
+                options: ["A respiratory rate of 16 breaths/min with good chest rise", "Shallow respirations at a rate of 28 breaths/min", "Use of neck muscles during inhalation", "A pulse oximetry reading of 90%"],
+                correct: 0,
+                category: "In-Class Priority Questions",
+                explanation: "A normal rate (12-20 for an adult), adequate depth (good chest rise), and a regular rhythm are all indicators of adequate breathing. The other options are signs of respiratory distress or inadequacy."
+            },
+            {
+                id: 43,
+                text: "The normal respiratory rate for an adult at rest is:",
+                options: ["6-10 breaths/min", "12-20 breaths/min", "22-30 breaths/min", "30-40 breaths/min"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "A healthy adult at rest typically breathes between 12 and 20 times per minute."
+            },
+            {
+                id: 44,
+                text: "An abnormal breathing pattern characterized by a cycle of increasing and then decreasing rate and depth, followed by a period of apnea, is called:",
+                options: ["Agonal respirations", "Kussmaul respirations", "Cheyne-Stokes respirations", "Ataxic respirations"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Cheyne-Stokes respirations have a distinct crescendo-decrescendo pattern followed by apnea and are often associated with stroke or head injury."
+            },
+            {
+                id: 45,
+                text: "You arrive to find a patient who is unresponsive and taking infrequent, gasping breaths. This breathing pattern is known as:",
+                options: ["Tachypnea", "Spontaneous respiration", "Cheyne-Stokes", "Agonal respirations"],
+                correct: 3,
+                category: "In-Class Priority Questions",
+                explanation: "Agonal respirations are not true breathing; they are an abnormal pattern of gasping that occurs after the heart has stopped. This patient needs immediate CPR and ventilation."
+            },
+            {
+                id: 46,
+                text: "To perform effective airway management and CPR, the patient must be placed in what position?",
+                options: ["Recovery position", "Supine on a firm, flat surface", "Fowler's position", "On their stomach (prone)"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "The supine (lying on the back) position on a firm surface is essential for performing effective chest compressions and for accessing and managing the airway."
+            },
+            {
+                id: 47,
+                text: "You are treating an unconscious patient found at the bottom of a flight of stairs. Which airway maneuver is most appropriate?",
+                options: ["Head-tilt-chin-lift", "Jaw-thrust", "Recovery position", "Manual suctioning"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Because the patient fell, there is a significant mechanism of injury. A jaw-thrust maneuver must be used to open the airway while minimizing movement of the cervical spine."
+            },
+            {
+                id: 48,
+                text: "How do you correctly measure an oropharyngeal airway (OPA)?",
+                options: ["From the tip of the nose to the earlobe", "From the corner of the mouth to the angle of the jaw or earlobe", "From the center of the lips to the chin", "Across the width of the patient's mouth"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "A properly sized OPA will extend from the corner of the patient's mouth to the earlobe or the angle of their jaw."
+            },
+            {
+                id: 49,
+                text: "Ventilation is best defined as:",
+                options: ["The exchange of gases at the cellular level", "The process of loading oxygen onto hemoglobin", "The mechanical process of moving air into and out of the lungs", "The circulation of blood through the lungs"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Ventilation is the physical act of breathing—the mechanics of moving air. Respiration, in contrast, is the physiological process of gas exchange."
+            },
+            {
+                id: 50,
+                text: "Which of the following structures is part of the lower airway?",
+                options: ["Pharynx", "Larynx", "Trachea", "Nose"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The lower airway begins below the larynx and includes the trachea, bronchi, bronchioles, and alveoli."
+            },
+            {
+                id: 51,
+                text: "The space within the chest that contains the heart, great vessels, trachea, and esophagus is known as the:",
+                options: ["Pleural space", "Diaphragm", "Mediastinum", "Pericardium"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "The mediastinum is the central compartment of the thoracic cavity, located between the two lungs."
+            },
+            {
+                id: 52,
+                text: "The diaphragm is under both voluntary and involuntary control. This means a person:",
+                options: ["Can only breathe when they think about it", "Can consciously hold their breath, but involuntary controls will eventually take over", "Breathes only when sleeping", "Has no control over their breathing rate"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "While you can consciously decide to hold your breath or breathe deeply (voluntary control), the body's involuntary system, driven by CO2 levels, will ultimately force you to breathe."
+            },
+            {
+                id: 53,
+                text: "Which statement best describes the physiology of inhalation?",
+                options: ["It is a passive process where muscles relax", "It is an active process where the diaphragm contracts, creating negative pressure", "It occurs when abdominal muscles force air into the lungs", "It relies on positive pressure from the outside environment"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Inhalation is an active process. The diaphragm contracts and moves down, increasing the volume of the chest and creating negative pressure that draws air into the lungs."
+            },
+            {
+                id: 54,
+                text: "Normal, quiet exhalation is a passive process that occurs when:",
+                options: ["The abdominal muscles forcefully contract", "The diaphragm and intercostal muscles contract", "The diaphragm and intercostal muscles relax", "The body detects low oxygen levels"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Exhalation is typically passive. It occurs when the diaphragm and intercostal muscles relax, causing the chest cavity to shrink and forcing air out of the lungs."
+            },
+            {
+                id: 55,
+                text: "The term 'tidal volume' refers to:",
+                options: ["The total amount of air the lungs can hold", "The amount of air moved in one single breath", "The amount of air moved in one minute", "The amount of air left in the lungs after exhalation"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Tidal volume is the volume of air that is inhaled or exhaled during a single, normal respiratory cycle."
+            },
+            {
+                id: 56,
+                text: "A patient's minute volume will decrease if their respiratory rate is too fast or their tidal volume is too:",
+                options: ["Deep", "Shallow", "Regular", "Irregular"],
+                correct: 1,
+                category: "In-Class Priority Questions",
+                explanation: "Minute volume (Tidal Volume x Rate) can be diminished by a rate that is too slow or too fast, or by a tidal volume that is too shallow. Rapid, shallow breathing is a common cause of inadequate minute volume."
+            },
+            {
+                id: 57,
+                text: "Metabolism refers to the:",
+                options: ["Mechanical process of breathing", "Circulation of blood", "Biochemical processes within cells that produce energy", "Exchange of gases in the alveoli"],
+                correct: 2,
+                category: "In-Class Priority Questions",
+                explanation: "Metabolism is the set of chemical reactions that occur in living cells to maintain life. Aerobic metabolism uses oxygen to create energy, while anaerobic metabolism does not."
+            },
+
+            // Section 2: Core Concepts & Physiology
+            {
+                id: 69,
+                text: "What is the primary reason for breathing in healthy individuals?",
+                options: ["To bring in oxygen", "To get rid of carbon dioxide", "To regulate body temperature", "To increase heart rate"],
+                correct: 1,
+                category: "Core Concepts & Physiology",
+                explanation: "While oxygen intake is crucial, the body's main trigger for breathing is the need to expel carbon dioxide, a waste product of metabolism, to maintain proper blood pH."
+            },
+            {
+                id: 70,
+                text: "How does the body typically respond to high levels of CO2 in the blood?",
+                options: ["By slowing down breathing", "By increasing the rate and depth of breathing", "By decreasing heart rate", "By constricting blood vessels"],
+                correct: 1,
+                category: "Core Concepts & Physiology",
+                explanation: "Chemoreceptors in the body detect high CO2 levels (hypercarbia) and signal the brain to increase respiratory rate and depth to 'blow off' the excess CO2."
+            },
+            {
+                id: 74,
+                text: "The process where oxygen moves from the alveoli to the capillaries is called:",
+                options: ["Perfusion", "Ventilation", "Diffusion", "Osmosis"],
+                correct: 2,
+                category: "Core Concepts & Physiology",
+                explanation: "Diffusion is the movement of gases from an area of higher partial pressure to an area of lower partial pressure. Oxygen diffuses from the alveoli into the blood because the concentration of oxygen is higher in the alveoli."
+            },
+            {
+                id: 75,
+                text: "Minute volume is calculated by multiplying which two factors?",
+                options: ["Heart rate and stroke volume", "Tidal volume and respiratory rate", "Inspiratory time and expiratory time", "Dead space and tidal volume"],
+                correct: 1,
+                category: "Core Concepts & Physiology",
+                explanation: "Minute volume, the total amount of air moved in one minute, is calculated by multiplying the tidal volume (air per breath) by the respiratory rate (breaths per minute)."
+            },
+            {
+                id: 92,
+                text: "Which term describes the volume of air left in the lungs after maximal exhalation?",
+                options: ["Tidal Volume", "Minute Volume", "Vital Capacity", "Residual Volume"],
+                correct: 3,
+                category: "Core Concepts & Physiology",
+                explanation: "Residual volume is the air that remains in the lungs after you have exhaled as forcefully as possible. This air helps keep the alveoli from collapsing completely."
+            },
+            {
+                id: 94,
+                text: "Which of the following would NOT cause a V/Q (ventilation/perfusion) mismatch?",
+                options: ["A pulmonary embolism blocking blood flow", "Pneumonia filling alveoli with fluid", "A simple rib fracture with no underlying lung injury", "Atelectasis (alveolar collapse)"],
+                correct: 2,
+                category: "Core Concepts & Physiology",
+                explanation: "A V/Q mismatch occurs when either ventilation (air) or perfusion (blood) is impaired. A pulmonary embolism affects perfusion, while pneumonia and atelectasis affect ventilation. A simple rib fracture, without lung injury, does not directly cause a V/Q mismatch."
+            },
+             {
+                id: 102,
+                text: "The process of loading oxygen molecules onto hemoglobin is called:",
+                options: ["Ventilation", "Respiration", "Perfusion", "Oxygenation"],
+                correct: 3,
+                category: "Core Concepts & Physiology",
+                explanation: "Oxygenation is the specific process of binding oxygen to the hemoglobin molecules in red blood cells as they pass through the lungs."
+            },
+            {
+                id: 104,
+                text: "What is the primary danger of a tension pneumothorax?",
+                options: ["It causes severe pain", "It compresses the heart and great vessels, obstructing blood flow", "It always leads to an open chest wound", "It causes fluid to fill the lungs"],
+                correct: 1,
+                category: "Core Concepts & Physiology",
+                explanation: "In a tension pneumothorax, trapped air in the pleural space builds up pressure, which can shift the mediastinum, compress the heart and major blood vessels, and lead to obstructive shock and cardiac arrest."
+            },
+            {
+                id: 106,
+                text: "The term for the actual exchange of gases between the blood cells and the body's tissues is:",
+                options: ["External respiration", "Ventilation", "Internal respiration", "Oxygenation"],
+                correct: 2,
+                category: "Core Concepts & Physiology",
+                explanation: "Internal respiration is the process where oxygen is delivered from the blood to the cells, and carbon dioxide is removed from the cells into the blood, at the capillary level throughout the body."
+            },
+            {
+                id: 110,
+                text: "A patient's blood pressure may drop during positive-pressure ventilation because it:",
+                options: ["Increases intrathoracic pressure, reducing blood return to the heart", "Causes the blood vessels to dilate", "Delivers too much oxygen to the brain", "Is a painful procedure for the patient"],
+                correct: 0,
+                category: "Core Concepts & Physiology",
+                explanation: "Positive-pressure ventilation increases the pressure inside the chest, which can squeeze the vena cava and reduce the amount of blood returning to the heart (preload). This leads to a decrease in cardiac output and blood pressure."
+            },
+
+            // Section 3: Airway Anatomy
+            {
+                id: 76,
+                text: "The point where the trachea divides into the left and right mainstem bronchi is called the:",
+                options: ["Epiglottis", "Larynx", "Carina", "Xiphoid process"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The carina is the ridge of cartilage at the base of the trachea that marks the division into the two main bronchi."
+            },
+            {
+                id: 77,
+                text: "Which of the following structures is NOT considered part of the upper airway?",
+                options: ["Nose", "Pharynx", "Trachea", "Larynx"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The upper airway ends at the larynx (vocal cords). The trachea is the beginning of the lower airway."
+            },
+            {
+                id: 78,
+                text: "The vocal cords are located within the:",
+                options: ["Pharynx", "Trachea", "Larynx", "Oropharynx"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The larynx, or voice box, is a complex cartilaginous structure that houses the vocal cords."
+            },
+            {
+                id: 90,
+                text: "Which of the following describes a key difference between adult and infant airways?",
+                options: ["The infant's tongue is proportionally smaller", "The infant's trachea is more rigid and less flexible", "The narrowest part of the infant's airway is the cricoid ring, not the glottis", "Infants rely more on their intercostal muscles for breathing"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "In an adult, the narrowest part of the airway is the glottis (vocal cords). In an infant, the airway is funnel-shaped, and the narrowest part is the cricoid cartilage ring below the vocal cords."
+            },
+            {
+                id: 101,
+                text: "Which of the following is NOT part of the lower airway?",
+                options: ["Trachea", "Alveoli", "Bronchi", "Pharynx"],
+                correct: 3,
+                category: "Airway Anatomy",
+                explanation: "The pharynx (throat) is a key component of the upper airway. The lower airway begins at the larynx and includes the trachea, bronchi, and alveoli."
+            },
+
+            // Section 4: Patient Assessment
+            {
+                id: 71,
+                text: "What factor primarily determines the severity of hypoxia?",
+                options: ["The patient's age and gender", "The duration of oxygen deprivation", "The ambient air temperature", "The patient's blood pressure"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "The severity and long-term effects of hypoxia are directly related to the length of time the tissues are deprived of adequate oxygen."
+            },
+            {
+                id: 79,
+                text: "An adult patient with a respiratory rate of 6 breaths per minute is considered to be experiencing:",
+                options: ["Tachypnea", "Apnea", "Bradypnea", "Normal respirations"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Bradypnea is the medical term for an abnormally slow breathing rate (less than 12 breaths/min in an adult) and is a sign of inadequate breathing."
+            },
+            {
+                id: 80,
+                text: "You hear a high-pitched whistling sound, primarily on expiration, while assessing a patient's breathing. This sound is called:",
+                options: ["Stridor", "Wheezing", "Rhonchi", "Gurgling"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Wheezing is a high-pitched whistling sound caused by the narrowing of the lower airways (bronchioles) and is commonly heard in patients with asthma or COPD."
+            },
+            {
+                id: 81,
+                text: "A harsh, high-pitched sound heard on inspiration, indicating a partial upper airway obstruction, is known as:",
+                options: ["Wheezing", "Gurgling", "Stridor", "Snoring"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Stridor is a harsh, high-pitched sound caused by turbulent airflow through a partially obstructed upper airway. It is a sign of a significant obstruction."
+            },
+            {
+                id: 82,
+                text: "Infants are often called 'belly breathers' because:",
+                options: ["They have stronger abdominal muscles than adults", "Their intercostal muscles are not well developed and they rely on their diaphragm", "They swallow a lot of air when they cry", "Their lungs are located in their abdominal cavity"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Infants' ribs and chest muscles are not fully developed, so they rely heavily on the diaphragm for breathing. This diaphragmatic movement causes their abdomen to rise and fall noticeably."
+            },
+            {
+                id: 98,
+                text: "A patient with bilateral clear and equal lung sounds, a regular respiratory pattern, and pink skin is showing signs of:",
+                options: ["Respiratory failure", "Hypoxic drive", "Adequate breathing", "Pneumothorax"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "These are all classic signs of adequate, unlabored breathing and good oxygenation."
+            },
+             {
+                id: 103,
+                text: "A patient with a respiratory rate of 28 and shallow breaths has an inadequate:",
+                options: ["Heart rate", "Minute volume", "Gag reflex", "Blood pressure"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Minute volume is the product of respiratory rate and tidal volume. Even with a fast rate, very shallow breaths (low tidal volume) result in an inadequate minute volume and poor gas exchange."
+            },
+            {
+                id: 108,
+                text: "In an infant, what is a sign that they are using accessory muscles to breathe?",
+                options: ["Crying loudly", "A slow heart rate", "See-saw breathing and head bobbing", "A pink and warm trunk"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Because infants rely on their diaphragm, see-saw breathing (chest and abdomen move in opposite directions) and head bobbing (using neck muscles to help lift the chest) are key signs of accessory muscle use and severe respiratory distress."
+            },
+
+            // Section 5: Airway Management & Interventions
+            {
+                id: 72,
+                text: "Which of the following describes the proper placement of hands for the head-tilt-chin-lift maneuver?",
+                options: ["One hand on the chin, one on the chest", "Both hands on the forehead", "One hand on the forehead and fingertips of the other hand under the jaw", "Both hands lifting the angles of the jaw"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "To perform the head-tilt-chin-lift, one hand is placed on the patient's forehead to tilt the head back, while the fingertips of the other hand are placed under the bony part of the lower jaw to lift the chin."
+            },
+            {
+                id: 83,
+                text: "If an adult patient is apneic but has a pulse, how often should you provide ventilations with a BVM?",
+                options: ["Once every 3 seconds", "Once every 6 seconds", "Once every 10 seconds", "Twice every 15 seconds"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "For an adult patient in respiratory arrest with a pulse, you should deliver one breath every 6 seconds, which equates to 10 breaths per minute."
+            },
+            {
+                id: 84,
+                text: "What is the correct insertion technique for an oropharyngeal airway (OPA) in an adult?",
+                options: ["Insert it with the curve facing down and rotate 90 degrees", "Insert it straight in until you meet resistance", "Insert it upside down until you reach the soft palate, then rotate 180 degrees", "Insert it sideways and push it past the tongue"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "The standard technique for OPA insertion in an adult is to insert it with the tip pointing toward the roof of the mouth (upside down). As the tip approaches the soft palate, you rotate it 180 degrees into its final position."
+            },
+            {
+                id: 85,
+                text: "You are ventilating a patient when you notice their stomach begins to distend. What should be your first action?",
+                options: ["Apply pressure to the stomach to release the air", "Suction the patient's airway immediately", "Reposition the patient's head to ensure the airway is properly open", "Increase the rate and force of your ventilations"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "Gastric distention is most often caused by an improperly opened airway, causing air to go down the esophagus. The first corrective action is to re-evaluate and reposition the head to better align the airway."
+            },
+            {
+                id: 91,
+                text: "You are called to a patient who has a tracheal stoma and is in respiratory distress. How should you provide oxygen?",
+                options: ["Place a nasal cannula in their nostrils", "Use a standard non-rebreather mask over their mouth and nose", "Place a tracheostomy mask over the stoma", "Tell them to take deeper breaths"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "A patient with a tracheal stoma breathes through the opening in their neck, not their mouth or nose. A specialized tracheostomy mask is required to deliver oxygen directly to the stoma."
+            },
+            {
+                id: 93,
+                text: "You are assessing a conscious adult male who is showing signs of a mild airway obstruction from food. He is coughing forcefully but is wheezing between coughs. What is your most appropriate action?",
+                options: ["Immediately begin abdominal thrusts", "Perform a blind finger sweep to find the object", "Encourage him to continue coughing and closely monitor him", "Place him in a supine position and begin ventilations"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "For a mild airway obstruction where the patient can still cough forcefully, you should not interfere. The patient's own cough is the most effective way to clear the obstruction. Monitor them closely in case it becomes a severe obstruction."
+            },
+            {
+                id: 95,
+                text: "The process of replacing the nitrogen in the lungs with oxygen to provide a longer period for a safe intubation attempt is called:",
+                options: ["Preoxygenation (denitrogenation)", "Hyperventilation", "Humidification", "Apneic oxygenation"],
+                correct: 0,
+                category: "Airway Management & Interventions",
+                explanation: "Preoxygenation (which involves denitrogenation) is the critical step of administering 100% oxygen before intubation to 'wash out' the nitrogen in the lungs and create a vital oxygen reserve."
+            },
+            {
+                id: 97,
+                text: "Which of the following statements about suctioning is TRUE?",
+                options: ["You should apply suction while inserting the catheter", "You should limit suctioning to 15 seconds in an adult", "Flexible catheters are best for removing large pieces of food", "Suctioning does not pose a risk of hypoxia"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "Suctioning removes oxygen along with secretions, so it must be limited to short durations: 15 seconds for an adult, 10 for a child, and 5 for an infant."
+            },
+            {
+                id: 99,
+                text: "In the context of the airway, what does the term 'patent' mean?",
+                options: ["Narrowed", "Obstructed", "Open and clear", "Inflamed"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "A patent airway is one that is open and clear of any obstruction, allowing air to move freely."
+            },
+            {
+                id: 100,
+                text: "You are ventilating an unresponsive adult patient with a BVM. You should deliver one breath every:",
+                options: ["2-3 seconds", "3-4 seconds", "6 seconds", "8-10 seconds"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "The correct ventilation rate for an apneic adult is one breath every 6 seconds, which equals 10 breaths per minute."
+            },
+             {
+                id: 105,
+                text: "Which is the most appropriate initial treatment for a patient experiencing agonal respirations?",
+                options: ["Place them in the recovery position and monitor", "Administer a non-rebreather mask at 15 L/min", "Begin artificial ventilations with a BVM", "Wait to see if breathing becomes regular"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "Agonal respirations are not adequate to sustain life. They are a sign of cardiac arrest or severe hypoxia and require immediate intervention with positive-pressure ventilations and likely chest compressions."
+            },
+            {
+                id: 107,
+                text: "You are unable to ventilate an unconscious patient after repositioning the head. What is the most likely cause?",
+                options: ["The patient has a hypoxic drive", "The BVM is broken", "An airway obstruction", "The patient's blood pressure is too low"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "If you cannot ventilate a patient despite proper technique and head positioning, you must assume there is an airway obstruction (such as a foreign body) and begin the appropriate clearing procedures (e.g., chest compressions)."
+            },
+            {
+                id: 109,
+                text: "The main benefit of using a two-person BVM technique is the ability to:",
+                options: ["Deliver ventilations more rapidly", "Use less oxygen", "Maintain a much better mask seal", "Leave the patient unattended"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "The two-person technique allows one rescuer to use both hands to hold the mask firmly against the face and maintain a jaw-thrust, ensuring a tight seal, while the other rescuer focuses on squeezing the bag."
+            },
+
+            // Section 6: Oxygen Therapy & Equipment
+            {
+                id: 86,
+                text: "Which oxygen delivery device is most appropriate for a patient with mild respiratory distress and an SpO2 of 92%?",
+                options: ["Non-rebreather mask at 15 L/min", "Bag-mask device", "Nasal cannula at 2-4 L/min", "Simple face mask at 10 L/min"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A nasal cannula is used for patients with mild hypoxia. A non-rebreather is for more significant hypoxia, and a BVM is for patients who are not breathing adequately."
+            },
+            {
+                id: 87,
+                text: "When using a bag-mask device, the reservoir bag should be attached in order to:",
+                options: ["Humidify the delivered air", "Deliver a higher concentration of oxygen", "Make the bag easier to squeeze", "Filter the delivered air"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "The reservoir bag allows the BVM to be filled with 100% oxygen, enabling the delivery of very high oxygen concentrations (nearly 100%) to the patient, as opposed to just room air."
+            },
+            {
+                id: 88,
+                text: "What is the purpose of 'cracking' an oxygen cylinder before attaching the regulator?",
+                options: ["To warm up the valve", "To clear any dust or debris from the valve outlet", "To reduce the pressure inside the tank", "To test the pin-index system"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Briefly opening the cylinder valve before attaching the regulator blows out any contaminants from the outlet port, preventing them from being blown into the regulator or delivered to the patient."
+            },
+            {
+                id: 89,
+                text: "The main hazard associated with the use of supplemental oxygen is that it:",
+                options: ["Is highly explosive", "Is a flammable gas", "Supports combustion and increases fire risk", "Can displace nitrogen in the blood"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Oxygen itself does not burn, but it greatly accelerates the combustion of other materials. This means a small spark can become a large fire in an oxygen-rich environment."
+            },
+             {
+                id: 96,
+                text: "The use of a HEPA mask is specifically designed to protect against:",
+                options: ["Bloodborne pathogens", "Fluid splashes", "Airborne particles", "Chemical vapors"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A High-Efficiency Particulate Air (HEPA) mask, or N95 respirator, is designed to filter out very small airborne particles, such as the bacteria that cause tuberculosis."
+            },
+                    // Section: Airway Anatomy
+            {
+                id: 1,
+                text: "Which of the following structures is NOT considered part of the upper airway?",
+                options: ["Pharynx", "Trachea", "Nose", "Larynx"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "The upper airway consists of the nose, mouth, pharynx, and larynx. The trachea is the beginning of the lower airway, marking the division between the two."
+            },
+            {
+                id: 2,
+                text: "What is the primary function of the upper airway?",
+                options: ["Gas exchange", "To warm, filter, and humidify air", "To produce speech", "To conduct air directly to the alveoli"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "The main function of the upper airway is to warm, filter, and humidify air as it enters the body before it reaches the lower airway structures."
+            },
+            {
+                id: 3,
+                text: "The division between the upper and lower airway occurs at the:",
+                options: ["Carina", "Epiglottis", "Larynx (vocal cords)", "Pharynx"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The larynx, specifically the vocal cords within it, marks the point where the upper airway ends and the lower airway begins."
+            },
+            {
+                id: 4,
+                text: "Which cartilage is the first ring of the trachea and the only complete cartilaginous ring in the lower airway?",
+                options: ["Thyroid cartilage", "Epiglottis", "Cricoid cartilage", "Arytenoid cartilage"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The cricoid cartilage is the first ring of the trachea and is the only lower airway structure that forms a complete ring, providing structural integrity."
+            },
+            {
+                id: 28,
+                text: "A surgically created opening into the trachea that connects it directly to the skin is called a:",
+                options: ["Laryngectomy", "Tracheostomy or stoma", "Cricothyrotomy", "Gastrostomy"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "A permanent tracheal stoma, also known as a tracheostomy, is a surgical opening in the neck used for ventilation in patients who have had a laryngectomy or have other long-term airway issues."
+            },
+            {
+                id: 34,
+                text: "Which structure acts as a flap to prevent food and liquid from entering the larynx during swallowing?",
+                options: ["Uvula", "Vocal cords", "Epiglottis", "Cricoid cartilage"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The epiglottis is superior to the larynx and folds over the glottic opening during swallowing to protect the airway and direct food and liquid into the esophagus."
+            },
+            {
+                id: 35,
+                text: "The thoracic cavity contains all of the following structures EXCEPT:",
+                options: ["Heart and great vessels", "Major bronchi", "Stomach", "Trachea and esophagus"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The thoracic cavity contains the heart, great vessels, esophagus, trachea, and major bronchi within the mediastinum, and the lungs. The stomach is located in the abdominal cavity."
+            },
+            {
+                id: 50,
+                text: "The point at which the trachea divides into the two main stem bronchi is called the:",
+                options: ["Larynx", "Hilum", "Carina", "Epiglottis"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The carina is the ridge of cartilage at the base of the trachea that separates the openings of the right and left main stem bronchi."
+            },
+            {
+                id: 53,
+                text: "The main function of the lower airway is to:",
+                options: ["Humidify and warm incoming air", "Deliver oxygen to the alveoli", "Filter out dust and small particles", "Produce sound for speech"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "While the upper airway warms, filters, and humidifies air, the lower airway's function (trachea, bronchi, bronchioles) is to act as a conduit to deliver oxygen to the alveoli for gas exchange."
+            },
+            {
+                id: 63,
+                text: "The smallest air passages in the lungs, made of smooth muscle, are the:",
+                options: ["Main stem bronchi", "Alveoli", "Trachea", "Bronchioles"],
+                correct: 3,
+                category: "Airway Anatomy",
+                explanation: "The bronchi subdivide into increasingly smaller bronchioles, which are made of smooth muscle and terminate at the alveoli."
+            },
+            {
+                id: 71,
+                text: "What structure marks the beginning of the lower airway?",
+                options: ["Oropharynx", "Epiglottis", "Larynx", "Carina"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The larynx (voice box) is the dividing line; it is where the upper airway ends and the lower airway (starting with the trachea) begins."
+            },
+            {
+                id: 72,
+                text: "The main bronchi are supported by what type of tissue to prevent collapse?",
+                options: ["Smooth muscle", "Cartilage", "Elastic ligaments", "Fibrous tissue"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "The trachea and main stem bronchi are supported by C-shaped rings of cartilage that keep them patent (open) for air to pass through."
+            },
+            {
+                id: 73,
+                text: "The functional site of gas exchange within the lungs are the:",
+                options: ["Bronchioles", "Pleural membranes", "Alveoli", "Pulmonary arteries"],
+                correct: 2,
+                category: "Airway Anatomy",
+                explanation: "The alveoli are millions of tiny, thin-walled, balloon-like sacs at the end of the airway that serve as the functional site for the exchange of oxygen and carbon dioxide with the pulmonary capillaries."
+            },
+            {
+                id: 79,
+                text: "The space between the vocal cords, which is the narrowest portion of the adult's airway, is the:",
+                options: ["Glottis", "Vallecula", "Epiglottis", "Carina"],
+                correct: 0,
+                category: "Airway Anatomy",
+                explanation: "The glottis, or glottic opening, is the space between the vocal cords and is the narrowest part of an adult's airway."
+            },
+            {
+                id: 87,
+                text: "Which term describes the muscular tube extending from the nose and mouth to the level of the esophagus and trachea?",
+                options: ["Pharynx", "Larynx", "Bronchus", "Mediastinum"],
+                correct: 0,
+                category: "Airway Anatomy",
+                explanation: "The pharynx, or throat, is the muscular tube that serves as a passageway for both air and food, extending from the back of the nose and mouth down to the larynx and esophagus."
+            },
+            {
+                id: 99,
+                text: "The nasopharynx, oropharynx, and laryngopharynx are the three components of the:",
+                options: ["Larynx", "Pharynx", "Trachea", "Bronchi"],
+                correct: 1,
+                category: "Airway Anatomy",
+                explanation: "The pharynx (throat) is a muscular tube divided into three sections from top to bottom: the nasopharynx (behind the nose), oropharynx (behind the mouth), and laryngopharynx (leading to the larynx/esophagus)."
+            },
+
+            // Section: Physiology of Respiration
+            {
+                id: 5,
+                text: "The physical act of moving air into and out of the lungs is known as:",
+                options: ["Respiration", "Oxygenation", "Perfusion", "Ventilation"],
+                correct: 3,
+                category: "Physiology of Respiration",
+                explanation: "Ventilation is the physical, mechanical act of moving air into and out of the lungs. Respiration refers to the gas exchange, and oxygenation is the process of loading oxygen onto hemoglobin."
+            },
+            {
+                id: 6,
+                text: "During normal, unlabored inhalation, which two muscles contract to create negative pressure in the thorax?",
+                options: ["Abdominal muscles and sternocleidomastoid", "Diaphragm and intercostal muscles", "Pectoral muscles and diaphragm", "Scalene and abdominal muscles"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Inhalation is an active process. The diaphragm contracts and moves downward, and the intercostal muscles contract to lift the ribs up and out, increasing the thoracic volume and creating negative pressure that draws air in."
+            },
+            {
+                id: 7,
+                text: "The process of loading oxygen molecules onto hemoglobin molecules in the bloodstream is called:",
+                options: ["Ventilation", "Respiration", "Oxygenation", "Metabolism"],
+                correct: 2,
+                category: "Physiology of Respiration",
+                explanation: "Oxygenation is specifically the process of loading oxygen molecules onto hemoglobin molecules within the red blood cells as they pass through the pulmonary capillaries."
+            },
+            {
+                id: 8,
+                text: "What is the actual exchange of oxygen and carbon dioxide in the alveoli and tissues of the body called?",
+                options: ["Respiration", "Ventilation", "Inspiration", "Oxygenation"],
+                correct: 0,
+                category: "Physiology of Respiration",
+                explanation: "Respiration is the physiologic process of gas exchange. External respiration occurs in the alveoli, and internal respiration occurs at the cellular level."
+            },
+            {
+                id: 9,
+                text: "In a healthy individual, what is the primary stimulus to breathe?",
+                options: ["Decreased level of oxygen in the blood", "Increased level of oxygen in the blood", "Decreased level of carbon dioxide in the blood", "Increased level of carbon dioxide in the blood"],
+                correct: 3,
+                category: "Physiology of Respiration",
+                explanation: "The primary drive to breathe is controlled by the brainstem, which responds to rising levels of carbon dioxide in the arterial blood. This stimulates an increase in respiratory rate and depth."
+            },
+            {
+                id: 10,
+                text: "What is the name for the secondary respiratory drive seen in some end-stage COPD patients, which is based on low oxygen levels?",
+                options: ["Hypercarbic drive", "Hypoxic drive", "Acidotic drive", "Metabolic drive"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Hypoxic drive is a backup system to control breathing. It is based on low levels of oxygen dissolved in the plasma and is typically seen in patients with end-stage COPD who have chronically high CO2 levels."
+            },
+            {
+                id: 36,
+                text: "The amount of air moved into or out of the lungs in a single breath is called:",
+                options: ["Minute volume", "Tidal volume", "Dead space", "Vital capacity"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Tidal volume is the volume of air moved during a single normal breath. It is assessed by observing for adequate chest rise and fall."
+            },
+            {
+                id: 37,
+                text: "That portion of the tidal volume that does not reach the alveoli and does not participate in gas exchange is known as:",
+                options: ["Residual volume", "Minute volume", "Alveolar ventilation", "Dead space"],
+                correct: 3,
+                category: "Physiology of Respiration",
+                explanation: "Dead space is the air that remains in the conductive portions of the airway (like the trachea and bronchi) and does not reach the alveoli for gas exchange."
+            },
+            {
+                id: 38,
+                text: "Normal exhalation is a(n) ________ process that ________ muscular effort.",
+                options: ["active; requires", "passive; does not normally require", "active; does not require", "passive; requires"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Unlike inhalation, normal exhalation is a passive process. The diaphragm and intercostal muscles relax, causing the thorax to decrease in size and forcing air out of the lungs without muscular effort."
+            },
+            {
+                id: 39,
+                text: "A failure to match ventilation and perfusion (V/Q mismatch) is the cause of most abnormalities in:",
+                options: ["Oxygen and carbon dioxide exchange", "Cardiac output", "Cellular metabolism", "Airway patency"],
+                correct: 0,
+                category: "Physiology of Respiration",
+                explanation: "For gas exchange to be effective, air flow (ventilation) and blood flow (perfusion) must be directed to the same place at the same time. A mismatch between these two is the root cause of most gas exchange abnormalities."
+            },
+            {
+                id: 40,
+                text: "Which of the following would be considered an intrinsic factor affecting pulmonary ventilation?",
+                options: ["Trauma to the chest wall", "Foreign body airway obstruction", "Unresponsiveness leading to tongue obstruction", "High altitude"],
+                correct: 2,
+                category: "Physiology of Respiration",
+                explanation: "Intrinsic factors originate from within the patient. Unresponsiveness causing the tongue to block the airway is an intrinsic factor, as are infections and allergic reactions. Trauma is an extrinsic factor."
+            },
+            {
+                id: 55,
+                text: "The term for a deficiency of oxygen in the body's tissues and cells is:",
+                options: ["Hypovolemia", "Hypoxia", "Hypercarbia", "Hypoglycemia"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Hypoxia is the condition in which the tissues and cells of the body do not receive an adequate supply of oxygen."
+            },
+            {
+                id: 62,
+                text: "The exchange of oxygen and carbon dioxide between the systemic circulatory system and the cells of the body is known as:",
+                options: ["External respiration", "Internal respiration", "Pulmonary ventilation", "Cellular oxygenation"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Internal respiration is the gas exchange that occurs between the blood in the systemic capillaries and the body's cells."
+            },
+            {
+                id: 76,
+                text: "Chemoreceptors in the nervous system monitor all of the following EXCEPT:",
+                options: ["Oxygen levels", "Carbon dioxide levels", "Blood glucose levels", "pH of cerebrospinal fluid"],
+                correct: 2,
+                category: "Physiology of Respiration",
+                explanation: "Chemoreceptors monitor chemical changes related to respiration, including levels of oxygen, carbon dioxide, and hydrogen ions (pH), to provide feedback to the respiratory centers. They do not monitor blood glucose."
+            },
+            {
+                id: 91,
+                text: "What is the definition of external respiration?",
+                options: ["The physical act of breathing in and out.", "The exchange of gases between the blood cells and the body tissues.", "The use of oxygen by cells to create energy.", "The exchange of gases between the lungs and the blood cells in the pulmonary capillaries."],
+                correct: 3,
+                category: "Physiology of Respiration",
+                explanation: "External respiration, also known as pulmonary respiration, is the process of gas exchange that takes place in the lungs between the alveoli and the blood."
+            },
+            {
+                id: 93,
+                text: "The main purpose of surfactant in the alveoli is to:",
+                options: ["Trap foreign particles", "Reduce surface tension and keep the alveoli from collapsing", "Transport oxygen into the capillaries", "Humidify the air"],
+                correct: 1,
+                category: "Physiology of Respiration",
+                explanation: "Surfactant is a liquid protein substance that reduces the surface tension within the alveoli, making them easier to expand and preventing them from collapsing at the end of exhalation."
+            },
+            {
+                id: 98,
+                text: "The primary component of caring for any patient is ensuring that they can:",
+                options: ["Communicate clearly", "Maintain a normal blood pressure", "Breathe adequately", "Remain comfortable"],
+                correct: 2,
+                category: "Physiology of Respiration",
+                explanation: "The primary component of patient care, often summarized as 'Airway, Breathing, Circulation,' begins with ensuring the patient has a patent airway and can breathe adequately. Without this, all other interventions are futile."
+            },
+            {
+                id: 101,
+                text: "Which of the following describes passive ventilation?",
+                options: ["Using a BVM to force air into the lungs", "The patient breathing on their own without assistance", "The movement of air into and out of the lungs during chest compressions", "Using CPAP to maintain airway pressure"],
+                correct: 2,
+                category: "Physiology of Respiration",
+                explanation: "Passive ventilation occurs during CPR. The compression of the chest forces air out, and as the chest recoils, a negative pressure is created that passively draws air in."
+            },
+            
+            // Section: Patient Assessment
+            {
+                id: 11,
+                text: "Which of the following is a sign of adequate breathing in an adult?",
+                options: ["A respiratory rate of 8 breaths/min", "Use of accessory muscles", "A regular pattern of inhalation and exhalation", "Pale or cyanotic skin"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Adequate breathing is characterized by a normal rate (12-20 breaths/min), regular pattern, clear and equal lung sounds, equal chest rise and fall, and adequate depth (tidal volume)."
+            },
+            {
+                id: 12,
+                text: "A patient is found with an irregular breathing pattern of increasing rate and depth followed by periods of apnea. This pattern is known as:",
+                options: ["Kussmaul respirations", "Cheyne-Stokes respirations", "Ataxic respirations", "Agonal gasps"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Cheyne-Stokes respirations are an irregular pattern often seen in patients with stroke or head injury, characterized by a crescendo-decrescendo pattern followed by apnea."
+            },
+            {
+                id: 13,
+                text: "Deep, rapid respirations commonly seen in patients with metabolic acidosis (like diabetic ketoacidosis) are called:",
+                options: ["Cheyne-Stokes respirations", "Agonal gasps", "Kussmaul respirations", "Ataxic respirations"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Kussmaul respirations are deep, rapid breaths that represent the body's attempt to blow off excess acid in the form of carbon dioxide."
+            },
+            {
+                id: 30,
+                text: "The universal sign of choking for a severe airway obstruction is:",
+                options: ["Coughing forcefully", "Wheezing loudly", "Grasping the throat", "Turning pale"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "The universal distress signal for a severe airway obstruction (choking) is when a person grasps their throat with one or both hands. They will be unable to speak, breathe, or cough."
+            },
+            {
+                id: 32,
+                text: "What is the normal range for end-tidal CO2 (ETCO2) in an adult?",
+                options: ["15-25 mm Hg", "25-35 mm Hg", "35-45 mm Hg", "45-55 mm Hg"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "The normal range for end-tidal CO2, which measures the maximal concentration of CO2 at the end of an exhaled breath, is 35-45 mm Hg."
+            },
+            {
+                id: 33,
+                text: "A low end-tidal CO2 level could indicate all of the following EXCEPT:",
+                options: ["Hyperventilation", "Decreased cardiac output (shock)", "Ventilatory inadequacy (hypoventilation)", "Reduced CO2 production at the cellular level"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "A low ETCO2 level is caused by conditions that reduce CO2 return to the lungs, such as hyperventilation or poor perfusion. Ventilatory inadequacy (hypoventilation) causes CO2 retention, leading to a HIGH ETCO2 level."
+            },
+            {
+                id: 41,
+                text: "What does pulse oximetry measure?",
+                options: ["The amount of carbon dioxide in the blood", "The partial pressure of oxygen in arterial blood", "The percentage of hemoglobin saturated with oxygen", "The effectiveness of ventilation"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Pulse oximetry measures the oxygen saturation (SpO2) of hemoglobin, which is the percentage of hemoglobin molecules in arterial blood that are bound with oxygen."
+            },
+            {
+                id: 47,
+                text: "A harsh, high-pitched respiratory sound heard during inspiration, caused by a partial upper airway obstruction, is known as:",
+                options: ["Wheezing", "Rhonchi", "Rales", "Stridor"],
+                correct: 3,
+                category: "Patient Assessment",
+                explanation: "Stridor is a high-pitched sound heard on inspiration that indicates a partial obstruction in the upper airway, such as in croup or from a foreign body."
+            },
+            {
+                id: 52,
+                text: "Which of the following is a sign of inadequate artificial ventilation?",
+                options: ["The patient's chest rises and falls with each breath", "The patient's skin color improves from cyanotic to pink", "The heart rate returns to a normal range", "Minimal or no chest rise and fall is observed"],
+                correct: 3,
+                category: "Patient Assessment",
+                explanation: "The primary indicator of adequate ventilation is visible chest rise and fall. If you do not see the chest move, your ventilations are not effective, regardless of other factors."
+            },
+            {
+                id: 60,
+                text: "A patient is breathing 28 times per minute with shallow depth. This pattern of breathing is:",
+                options: ["Adequate, as the rate is fast", "Inadequate, due to reduced tidal volume", "Normal for a patient in distress", "A sign of hyperoxygenation"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Rapid, shallow breathing is inadequate. Although the rate is fast, the shallow depth (reduced tidal volume) means very little air is reaching the alveoli for gas exchange, leading to hypoxia."
+            },
+            {
+                id: 64,
+                text: "Which of the following is a late sign of hypoxia?",
+                options: ["Restlessness", "Anxiety", "Tachycardia", "Cyanosis"],
+                correct: 3,
+                category: "Patient Assessment",
+                explanation: "Early signs of hypoxia include restlessness, anxiety, and tachycardia. Cyanosis (a bluish discoloration of the skin) is a late and serious sign of significant oxygen deprivation."
+            },
+            {
+                id: 70,
+                text: "Occasional, gasping breaths that occur after the heart has stopped are known as:",
+                options: ["Cheyne-Stokes respirations", "Ataxic respirations", "Agonal gasps", "Kussmaul respirations"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Agonal gasps are infrequent, gasping breaths that occur when the respiratory center in the brain continues to send signals after cardiac arrest. They are not adequate to sustain life and require immediate intervention."
+            },
+            {
+                id: 75,
+                text: "A patient with snoring respirations most likely has an airway obstruction caused by:",
+                options: ["Fluid in the lower airways", "Swelling in the larynx", "A foreign body in the trachea", "The tongue partially blocking the pharynx"],
+                correct: 3,
+                category: "Patient Assessment",
+                explanation: "Snoring sounds are produced by the vibration of soft tissues in the upper airway, typically indicating a partial obstruction by the tongue in an unconscious or semiconscious patient."
+            },
+            {
+                id: 77,
+                text: "Skin that is pale, cyanotic, cool, or moist is a sign of:",
+                options: ["Adequate breathing and perfusion", "An allergic reaction", "Abnormal breathing and inadequate perfusion", "A neurological injury"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "These skin signs (pallor, cyanosis, coolness, moisture) are classic indicators that the body is not receiving enough oxygen, either due to a breathing problem, a circulation problem, or both."
+            },
+            {
+                id: 81,
+                text: "During assisted ventilation, what is the most reliable sign that you are delivering an adequate tidal volume?",
+                options: ["The patient's stomach rises", "You feel minimal resistance from the bag", "You see the patient's chest rise and fall", "The pulse oximeter reading increases"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "The single most important indicator of adequate tidal volume during artificial ventilation is observing visible and equal rise and fall of the patient's chest."
+            },
+            {
+                id: 83,
+                text: "Which of these breathing patterns is considered immediately life-threatening and requires intervention?",
+                options: ["Respiratory rate of 18 with good depth", "Regular pattern of inhalation and exhalation", "Agonal gasps", "Speaking in full sentences"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Agonal gasps are inadequate for life and are a sign of cardiac arrest or severe hypoxia. This patient requires immediate ventilation and likely chest compressions."
+            },
+            {
+                id: 89,
+                text: "A patient with increased effort of breathing, using muscles in the neck, chest, and abdomen, is described as having:",
+                options: ["Agonal gasps", "Labored breathing", "Ataxic respirations", "Apnea"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Labored breathing requires effort and involves the use of accessory muscles (like the sternocleidomastoid in the neck) to help expand the chest when air movement is impaired."
+            },
+            {
+                id: 90,
+                text: "Why might a pulse oximeter give an inaccurate reading in a patient with carbon monoxide poisoning?",
+                options: ["Carbon monoxide causes vasoconstriction, reducing blood flow to the finger.", "The device cannot distinguish between hemoglobin saturated with oxygen and hemoglobin saturated with carbon monoxide.", "Carbon monoxide damages the red blood cells.", "The device is not calibrated for poisonous gases."],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "Pulse oximeters measure hemoglobin saturation but cannot differentiate what it is saturated with. Carbon monoxide binds strongly to hemoglobin, so the oximeter may show a falsely high reading (e.g., 99%) even when the patient is severely hypoxic."
+            },
+            {
+                id: 92,
+                text: "A patient who is sitting upright and leaning forward onto their arms to facilitate breathing is in the:",
+                options: ["Recovery position", "Shock position", "Tripod position", "Supine position"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "The tripod position is commonly seen in patients with significant respiratory distress. It uses the arms to help support the chest and maximize the effectiveness of the accessory muscles of breathing."
+            },
+            {
+                id: 94,
+                text: "Which airway sound would you most expect to hear in a patient having an asthma attack?",
+                options: ["Stridor", "Snoring", "Gurgling", "Wheezing"],
+                correct: 3,
+                category: "Patient Assessment",
+                explanation: "Wheezing is a high-pitched whistling sound, most prominent on expiration, caused by the narrowing or obstruction of the lower airways (bronchioles), which is characteristic of an asthma attack."
+            },
+            {
+                id: 96,
+                text: "A patient with an altered mental status, inadequate minute volume, and excessive accessory muscle use is showing signs of:",
+                options: ["Adequate ventilation", "Cardiac compromise", "Inadequate ventilation", "Neurologic shock"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "These are classic signs and symptoms of inadequate ventilation. The altered mental status is due to hypoxia, and the accessory muscle use indicates a high work of breathing that is failing."
+            },
+            {
+                id: 104,
+                text: "The term for an absence of spontaneous breathing is:",
+                options: ["Dyspnea", "Hypoxia", "Apnea", "Bradypnea"],
+                correct: 2,
+                category: "Patient Assessment",
+                explanation: "Apnea is the medical term for the cessation or absence of breathing."
+            },
+            {
+                id: 105,
+                text: "A patient with poor air exchange, increased difficulty breathing, stridor, and cyanosis is likely experiencing:",
+                options: ["A mild airway obstruction", "A severe airway obstruction", "An asthma attack", "Hyperventilation"],
+                correct: 1,
+                category: "Patient Assessment",
+                explanation: "While a mild obstruction may involve coughing, signs like stridor (a high-pitched sound on inspiration), cyanosis, and a weak/ineffective cough indicate poor air exchange and should be treated as a severe obstruction."
+            },
+
+            // Section: Airway Management & Interventions
+            {
+                id: 14,
+                text: "What is the most common airway obstruction in an unconscious patient?",
+                options: ["Food", "The tongue", "Vomitus", "Dentures"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "In an unconscious patient, the muscles of the throat and tongue relax, causing the tongue to fall back and occlude the pharynx. This is the most common cause of airway obstruction."
+            },
+            {
+                id: 15,
+                text: "Which maneuver is used to open the airway of an unconscious patient with NO suspected spinal injury?",
+                options: ["Jaw-thrust maneuver", "Head tilt-chin lift maneuver", "Cross-finger technique", "Sellick maneuver"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The head tilt-chin lift maneuver is the primary technique for opening the airway in a patient who has not sustained trauma. It lifts the tongue away from the back of the throat."
+            },
+            {
+                id: 16,
+                text: "For a patient who has sustained trauma and is suspected of having a cervical spine injury, which maneuver should be used to open the airway?",
+                options: ["Head tilt-chin lift maneuver", "Jaw-thrust maneuver", "Head tilt-neck lift maneuver", "Cross-finger technique"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The jaw-thrust maneuver is used for trauma patients to open the airway without moving the head or neck, thus protecting the cervical spine from further injury."
+            },
+            {
+                id: 17,
+                text: "What is the maximum amount of time you should suction an adult patient's airway at one time?",
+                options: ["5 seconds", "10 seconds", "15 seconds", "30 seconds"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "Suctioning should never be done for more than 15 seconds in an adult (10 for children, 5 for infants) because it removes oxygen from the airway along with secretions, which can cause hypoxia."
+            },
+            {
+                id: 18,
+                text: "An oropharyngeal airway (OPA) is indicated for which type of patient?",
+                options: ["A conscious patient complaining of shortness of breath", "A semiconscious patient with an intact gag reflex", "An unresponsive patient without a gag reflex", "Any patient with a suspected airway obstruction"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "An OPA is used only on unresponsive patients who do not have a gag reflex. Inserting it into a patient with a gag reflex will likely cause vomiting and aspiration."
+            },
+            {
+                id: 19,
+                text: "A nasopharyngeal airway (NPA) is contraindicated in a patient with:",
+                options: ["An intact gag reflex", "An altered level of consciousness", "Severe head injury with blood in the nose", "An inability to maintain their own airway"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "NPAs are contraindicated in patients with severe head injury or a suspected nasal bone fracture, as the device could potentially be inserted into the cranial vault."
+            },
+            {
+                id: 20,
+                text: "The position used to help maintain a clear airway in an unconscious, uninjured patient who is breathing on their own is called the:",
+                options: ["Supine position", "Prone position", "Recovery position", "Fowler's position"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "The recovery position (placing the patient on their side) helps maintain a clear airway by allowing secretions or vomitus to drain from the mouth, preventing aspiration."
+            },
+            {
+                id: 24,
+                text: "What is the primary danger of using positive pressure ventilation?",
+                options: ["It delivers less oxygen than normal breathing", "It can increase intrathoracic pressure, reducing blood return to the heart", "It requires two rescuers to be effective", "It cannot be used with airway adjuncts"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "Positive pressure ventilation forces air into the chest, which increases pressure within the thorax. This can reduce venous blood return to the heart, leading to a decrease in cardiac output and hypotension."
+            },
+            {
+                id: 25,
+                text: "Inflation of the stomach with air during artificial ventilation is called:",
+                options: ["Pneumothorax", "Gastric distention", "Atelectasis", "Aspiration"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "Gastric distention occurs when artificial ventilation fills the stomach with air, often from ventilating too forcefully or too rapidly. It increases the risk of vomiting and aspiration."
+            },
+            {
+                id: 26,
+                text: "CPAP (Continuous Positive Airway Pressure) is a form of:",
+                options: ["Invasive ventilatory support", "Negative pressure ventilation", "Noninvasive ventilatory support", "Surgical airway management"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "CPAP is a noninvasive form of positive pressure ventilation used for patients in respiratory distress. It increases pressure in the lungs to open collapsed alveoli and improve oxygenation."
+            },
+            {
+                id: 27,
+                text: "Which of the following is a key contraindication for the use of CPAP?",
+                options: ["Patient is alert and able to follow commands", "Patient has a pulse oximetry reading of 88%", "Patient is in respiratory arrest or is hypoventilating", "Patient has a history of asthma"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "CPAP is only for patients who are breathing spontaneously. It is contraindicated for patients in respiratory arrest or who are hypoventilating, as they require assisted or full artificial ventilation."
+            },
+            {
+                id: 29,
+                text: "A patient with a mild airway obstruction and good air exchange should be managed by:",
+                options: ["Performing immediate abdominal thrusts", "Encouraging the patient to cough", "Performing a blind finger sweep", "Applying a nonrebreathing mask"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "For a mild airway obstruction with good air exchange (the patient can still cough forcefully), do not interfere. Encourage the patient to continue coughing to expel the object on their own."
+            },
+            {
+                id: 31,
+                text: "The main purpose of the BE MAGIC mnemonic is to:",
+                options: ["Outline steps for basic airway management", "Provide a sequence for assisting with ALS airway procedures", "List the signs of inadequate breathing", "Describe how to use a bag-mask device"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The BE MAGIC mnemonic (Bag-mask, Evaluate, Manipulate, Attempt, Glottic airway, Confirm/Correct) outlines the typical steps for an EMT to assist a paramedic with an advanced airway procedure like intubation."
+            },
+            {
+                id: 42,
+                text: "When ventilating an apneic adult with a bag-mask device, you should squeeze the bag:",
+                options: ["As hard as possible to ensure full lung inflation", "Over a period of 1 second until visible chest rise is noted", "At a rate of 20 breaths/min", "Only when the patient makes a gasping effort"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "Ventilations should be delivered over 1 second, with just enough volume to produce visible chest rise. This minimizes the risk of gastric distention and decreased cardiac output."
+            },
+            {
+                id: 44,
+                text: "What is the correct procedure if a patient begins to vomit during insertion of an oropharyngeal airway?",
+                options: ["Continue insertion to secure the airway", "Immediately turn the patient on their side, remove the airway, and suction", "Remove the airway and attempt a smaller size", "Suction around the airway while it is in place"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "If a patient vomits or gags, the first priority is to prevent aspiration. Immediately turn the patient to their side to allow drainage, then remove the OPA and suction the mouth."
+            },
+            {
+                id: 48,
+                text: "If a patient produces frothy secretions as quickly as you can suction them, you should:",
+                options: ["Suction continuously until the airway is clear", "Ventilate the patient and ignore the secretions", "Suction for 15 seconds, ventilate for 2 minutes, and repeat", "Focus only on chest compressions"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "For copious frothy secretions (like in pulmonary edema), you must alternate between suctioning and ventilation. Suction for 15 seconds, then provide positive pressure ventilation for 2 minutes, and repeat the pattern."
+            },
+            {
+                id: 49,
+                text: "Which statement about dental appliances and airway management is correct?",
+                options: ["All dentures should be removed immediately", "Well-fitting dentures should be left in place to provide structure for a mask seal", "Loose dentures can be ignored during BVM ventilation", "Only upper dentures need to be removed"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "Well-fitting dentures should be left in place as they help maintain the structure of the face, making it easier to get a good mask seal. Loose dentures, however, should be removed as they can become an airway obstruction."
+            },
+            {
+                id: 51,
+                text: "You are ventilating a patient and notice their stomach is becoming distended. What is the MOST appropriate first action?",
+                options: ["Increase the force of ventilations", "Apply manual pressure to the abdomen", "Reposition the head to ensure the airway is properly opened", "Suction the stomach contents"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "Gastric distention is often caused by an improperly opened airway, which allows air to enter the esophagus instead of the trachea. The first step is to recheck and reposition the patient's head."
+            },
+            {
+                id: 54,
+                text: "A patient who fell 20 feet and landed on their head is found unconscious with slow, irregular respirations. What is your immediate priority?",
+                options: ["Place the patient in the recovery position", "Apply a nonrebreathing mask", "Suction the airway for 15 seconds", "Open the airway with a jaw-thrust and assist breathing with a BVM"],
+                correct: 3,
+                category: "Airway Management & Interventions",
+                explanation: "The patient has a significant mechanism of injury and inadequate breathing. The immediate priority is to open the airway using a jaw-thrust maneuver (due to trauma) and provide assisted ventilations with a bag-mask device."
+            },
+            {
+                id: 56,
+                text: "When should you use the cross-finger technique?",
+                options: ["To measure for an OPA", "To perform a jaw-thrust maneuver", "To open the mouth of an unconscious patient", "To secure a BVM mask to the face"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "The cross-finger technique, using the thumb and index finger on the patient's teeth, is used to open the mouth of a patient when the airway is open but the mouth is closed, allowing for suctioning or airway adjunct insertion."
+            },
+            {
+                id: 59,
+                text: "When assisting with a BVM on a patient who is breathing spontaneously but inadequately, you should:",
+                options: ["Squeeze the bag in between the patient's breaths", "Squeeze the bag each time the patient begins to inhale", "Ventilate at a fixed rate of 10 breaths/min regardless of patient effort", "Wait for the patient to stop breathing before assisting"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "To assist a patient's ventilations, you should squeeze the bag as the patient begins to inhale, synchronizing your efforts with theirs to augment their tidal volume."
+            },
+            {
+                id: 65,
+                text: "When performing a jaw-thrust maneuver, where should you place your fingers?",
+                options: ["On the patient's chin", "On the patient's forehead", "Behind the angles of the lower jaw", "On the soft tissue under the chin"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "To perform a jaw-thrust, place your fingers behind the angles of the patient's lower jaw and move the jaw upward, using your thumbs to help position it."
+            },
+            {
+                id: 67,
+                text: "All of the following are potential complications of CPAP EXCEPT:",
+                options: ["Claustrophobia", "Increased blood pressure", "Pneumothorax", "Lowered cardiac output"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "CPAP increases intrathoracic pressure, which can lead to a decrease in blood pressure and cardiac output. It also carries a risk of pneumothorax and can cause claustrophobia. It does not typically increase blood pressure."
+            },
+            {
+                id: 68,
+                text: "What is the correct way to measure an oropharyngeal airway (OPA)?",
+                options: ["From the corner of the eye to the earlobe", "From the corner of the mouth to the earlobe or angle of the jaw", "From the tip of the nose to the chin", "From the center of the mouth to the angle of the jaw"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "A properly sized OPA is measured from the corner of the patient's mouth to the earlobe or the angle of the jaw."
+            },
+            {
+                id: 69,
+                text: "What is the correct way to measure a nasopharyngeal airway (NPA)?",
+                options: ["From the corner of the mouth to the earlobe", "From the nostril to the chin", "From the tip of the nose to the earlobe", "Across the bridge of the nose"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "A properly sized NPA is measured from the tip of the patient's nose to their earlobe."
+            },
+            {
+                id: 74,
+                text: "If a patient has a stoma but no tracheostomy tube in place, how should you attempt to ventilate them?",
+                options: ["Use a standard adult mask over the mouth and nose", "Use an infant or child mask to make a seal over the stoma", "Perform mouth-to-stoma ventilations only", "Intubate the stoma before ventilating"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "If there is no tube in the stoma, an infant or child mask attached to a BVM can often create an effective seal over the opening to provide ventilations."
+            },
+            {
+                id: 78,
+                text: "Which type of suction catheter is rigid and best used for suctioning the oropharynx?",
+                options: ["French catheter", "Whistle-tip catheter", "Tonsil-tip (Yankauer) catheter", "Flexible catheter"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "A tonsil-tip or Yankauer catheter is a rigid, large-bore device designed for effective and rapid suctioning of the oropharynx."
+            },
+            {
+                id: 80,
+                text: "What is the primary risk of inserting an OPA that is too large?",
+                options: ["It can fall out easily", "It can damage the teeth", "It can push the tongue back, worsening the obstruction", "It can enter the esophagus"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "An OPA that is too large can press against the posterior pharynx and push the base of the tongue backward, creating an airway obstruction rather than relieving one."
+            },
+            {
+                id: 85,
+                text: "Which of the following patients would benefit MOST from a nasopharyngeal airway (NPA)?",
+                options: ["An unresponsive patient who has no gag reflex", "A conscious patient with clear and open airways", "A patient with severe facial trauma and bleeding from the nose", "A semiconscious patient with an intact gag reflex who is unable to maintain their airway"],
+                correct: 3,
+                category: "Airway Management & Interventions",
+                explanation: "An NPA is ideal for patients who cannot maintain their own airway but have an intact gag reflex that would make an OPA unsafe. It is tolerated better than an OPA in semiconscious patients."
+            },
+            {
+                id: 95,
+                text: "At what rate should you ventilate an apneic adult with a pulse?",
+                options: ["1 breath every 3-5 seconds (12-20 breaths/min)", "1 breath every 6 seconds (10 breaths/min)", "1 breath every 8-10 seconds (6-8 breaths/min)", "2 breaths every 15 seconds"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "An apneic adult with a pulse should be ventilated at a rate of 1 breath every 6 seconds, which equates to 10 breaths per minute."
+            },
+            {
+                id: 97,
+                text: "You should NOT use a head tilt-chin lift maneuver if you suspect:",
+                options: ["A cardiac event", "A cervical spine injury", "A diabetic emergency", "An airway obstruction by the tongue"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The head tilt-chin lift involves manipulating the head and neck. It is contraindicated if there is any suspicion of a cervical spine injury; the jaw-thrust maneuver should be used instead."
+            },
+            {
+                id: 100,
+                text: "When ventilating a patient with a BVM, you notice air leaking around the mask. What is the appropriate action?",
+                options: ["Increase the ventilation rate", "Use a smaller mask", "Reposition the mask and improve your seal", "Increase the oxygen flow rate"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "An air leak indicates a poor mask seal. You should reposition the mask and your hands (e.g., using the EC-clamp technique) to achieve a better seal before continuing ventilations."
+            },
+            {
+                id: 102,
+                text: "Which of these is a contraindication for a nasopharyngeal airway (NPA)?",
+                options: ["The patient is semiconscious with a gag reflex.", "The patient has a history of a fractured nasal bone.", "The patient will not tolerate an oropharyngeal airway.", "The patient has an altered level of consciousness."],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "A history of a fractured nasal bone is a contraindication for an NPA due to the risk of incorrect placement and further injury."
+            },
+            {
+                id: 107,
+                text: "The main benefit of using a two-person BVM technique over a one-person technique is:",
+                options: ["It requires less oxygen", "It allows for a much faster ventilation rate", "It allows one rescuer to maintain an effective mask seal with two hands", "It eliminates the risk of gastric distention"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "In a two-person technique, one rescuer can dedicate both hands to holding the mask firmly on the patient's face and maintaining a jaw thrust, resulting in a much better seal and more effective ventilations."
+            },
+            {
+                id: 108,
+                text: "How does CPAP improve oxygenation in a patient with pulmonary edema?",
+                options: ["It suctions fluid out of the lungs", "It forces interstitial fluid back into the pulmonary circulation and opens collapsed alveoli", "It decreases the patient's respiratory rate", "It acts as a powerful bronchodilator"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The positive pressure from CPAP increases pressure in the lungs, which pushes fluid out of the alveoli and back into the capillaries. It also splints open collapsed alveoli, increasing the surface area for gas exchange."
+            },
+            {
+                id: 109,
+                text: "When ventilating a patient with a suspected spinal injury, who is being held in-line by a partner, you should use which airway maneuver?",
+                options: ["Head tilt-chin lift", "Jaw-thrust", "Cross-finger technique", "Recovery position"],
+                correct: 1,
+                category: "Airway Management & Interventions",
+                explanation: "The jaw-thrust is the only appropriate manual maneuver for opening the airway in a patient with a suspected C-spine injury, as it avoids movement of the head and neck."
+            },
+            {
+                id: 110,
+                text: "A patient has vomited and you hear gurgling sounds with each breath. What is your most immediate action?",
+                options: ["Insert an oropharyngeal airway", "Begin positive pressure ventilation", "Immediately suction the oropharynx", "Place the patient on a nonrebreathing mask"],
+                correct: 2,
+                category: "Airway Management & Interventions",
+                explanation: "Gurgling sounds indicate fluid in the upper airway. You must immediately suction the airway to clear the fluid and prevent aspiration before taking any other action."
+            },
+            {
+                id: 21,
+                text: "What is the purpose of the pin-indexing system on oxygen cylinders?",
+                options: ["To measure the remaining pressure in the tank", "To regulate the flow rate of oxygen", "To prevent connecting a regulator for one gas to a cylinder of another gas", "To secure the cylinder during transport"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "The pin-indexing system uses a specific pattern of pins for each type of gas to ensure that, for example, an oxygen regulator cannot be accidentally attached to a carbon dioxide cylinder."
+            },
+            {
+                id: 22,
+                text: "What is the preferred oxygen delivery device for a patient who is breathing adequately but is suspected of having significant hypoxia?",
+                options: ["Nasal cannula", "Nonrebreathing mask", "Venturi mask", "Simple face mask"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A nonrebreathing mask with a flow rate of 10-15 L/min can deliver up to 90% inspired oxygen and is the preferred method for treating patients with significant hypoxia."
+            },
+            {
+                id: 23,
+                text: "A nasal cannula set at a flow rate of 1-6 L/min can provide what percentage of inspired oxygen?",
+                options: ["10% to 20%", "24% to 44%", "50% to 70%", "80% to 95%"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A nasal cannula is a low-flow device that delivers 24% to 44% inspired oxygen at flow rates of 1 to 6 liters per minute. It is used for patients with mild hypoxemia."
+            },
+            {
+                id: 43,
+                text: "Which of the following is an aerosol-generating procedure (AGP) requiring enhanced PPE?",
+                options: ["Checking a pulse", "Applying a splint", "Nebulizer treatments", "Bandaging a wound"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Aerosol-generating procedures include CPR, nebulizer treatments, endotracheal intubation, and CPAP. They induce the production of aerosols and require enhanced PPE like an N95 mask."
+            },
+            {
+                id: 45,
+                text: "The main hazard associated with supplemental oxygen, other than oxygen toxicity, is:",
+                options: ["It is explosive", "It is highly flammable", "It supports combustion", "It displaces nitrogen in the blood"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Oxygen itself does not burn or explode, but it does speed up the combustion process. An oxygen-rich environment can cause a small spark to become a significant fire."
+            },
+            {
+                id: 46,
+                text: "What is the main advantage of a Venturi mask?",
+                options: ["It delivers nearly 100% oxygen", "It allows for precise control over the percentage of delivered oxygen", "It is the most comfortable mask for patients", "It can be used on non-breathing patients"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A Venturi mask uses attachments that allow the user to deliver a specific, controlled percentage of oxygen (e.g., 24%, 28%, 40%) while a constant flow is maintained from the regulator."
+            },
+            {
+                id: 57,
+                text: "What is the purpose of a pressure regulator on an oxygen cylinder?",
+                options: ["To reduce the cylinder's high pressure to a safe therapeutic range", "To measure the remaining oxygen in the tank", "To set the liters per minute flow rate", "To humidify the oxygen"],
+                correct: 0,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "An oxygen cylinder has a pressure of about 2,000 psi. A pressure regulator reduces this high pressure to a useful and safe therapeutic range, typically 40 to 70 psi."
+            },
+            {
+                id: 58,
+                text: "A partial rebreathing mask differs from a nonrebreathing mask because it lacks:",
+                options: ["A reservoir bag", "A one-way valve between the mask and the reservoir", "Flapper valves on the sides of the mask", "An oxygen inlet port"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A partial rebreathing mask is similar to a nonrebreather but does not have a one-way valve between the mask and reservoir bag, allowing the patient to rebreathe a small amount of exhaled air."
+            },
+            {
+                id: 61,
+                text: "When administering oxygen via nasal cannula, what is a common patient complaint that can be addressed with humidification?",
+                options: ["A feeling of claustrophobia", "A burning sensation or dryness in the nose", "Difficulty speaking", "Nausea and vomiting"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Administering 'dry' oxygen, especially over a prolonged period, can dry out the nasal membranes, causing a burning sensation. Humidified oxygen can keep the membranes moist and increase patient comfort."
+            },
+            {
+                id: 66,
+                text: "A bag-mask device with an oxygen reservoir and a good seal can deliver nearly what percentage of oxygen?",
+                options: ["21%", "44%", "75%", "100%"],
+                correct: 3,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A bag-mask device connected to supplemental oxygen at 15 L/min with a reservoir and a good mask-to-face seal can deliver nearly 100% oxygen."
+            },
+            {
+                id: 82,
+                text: "What is the purpose of 'cracking' an oxygen cylinder before attaching the regulator?",
+                options: ["To check the remaining pressure", "To warm up the cylinder valve", "To clear dirt and debris from the valve opening", "To test the pin-indexing system"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Briefly opening and closing the cylinder valve ('cracking' it) blows out any dust or debris from the opening, preventing it from entering the regulator or being delivered to the patient."
+            },
+            {
+                id: 84,
+                text: "When using a BVM, a pop-off valve is generally not recommended for adult devices because:",
+                options: ["It makes the device more expensive", "It may prevent delivery of adequate tidal volume in patients with poor lung compliance", "It increases the risk of gastric distention", "It requires a special regulator to function"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "A pop-off valve is designed to release pressure at a certain point to prevent barotrauma, but in an adult with poor lung compliance or high airway resistance, it may open prematurely and prevent the delivery of a sufficient tidal volume."
+            },
+            {
+                id: 86,
+                text: "When applying a nonrebreathing mask, you must ensure the reservoir bag is _______ before placing it on the patient.",
+                options: ["Completely empty", "At least one-third full", "Completely full (inflated)", "Removed from the mask"],
+                correct: 2,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "The reservoir bag must be fully inflated with oxygen before placing the mask on the patient. This ensures the patient immediately inhales a high concentration of oxygen rather than room air."
+            },
+            {
+                id: 103,
+                text: "A BVM with no oxygen connected will deliver what concentration of oxygen to the patient?",
+                options: ["16%", "21%", "50%", "100%"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "Without supplemental oxygen, a BVM will deliver room air, which contains approximately 21% oxygen."
+            },
+            {
+                id: 106,
+                text: "An automatic transport ventilator (ATV) is a device that:",
+                options: ["Automatically suctions the patient's airway", "Provides manually triggered ventilations and frees the EMT to perform other tasks", "Measures end-tidal CO2 automatically", "Is another name for a CPAP machine"],
+                correct: 1,
+                category: "Oxygen Therapy & Equipment",
+                explanation: "An ATV is a manually triggered device attached to a control box that allows the variables of ventilation (rate, volume) to be set. It provides positive pressure ventilation, freeing the rescuer from squeezing a bag."
+            }
+        ];
+                const vocabData = [
+            { term: "Aerobic Metabolism", definition: "The cellular process of producing energy from nutrients, which requires the presence of oxygen." },
+            { term: "Aerosol-Generating Procedure (AGP)", definition: "Any medical procedure that can produce airborne particles or droplets, such as CPR, nebulizer treatments, and intubation, requiring enhanced PPE." },
+            { term: "Agonal Respirations", definition: "Slow, gasping, and ineffective breaths that are an abnormal breathing pattern and a sign of severe hypoxia or cardiac arrest. Not adequate to sustain life." },
+            { term: "Airway", definition: "The path air takes from the nose and mouth to the lungs. It is divided into the upper and lower airway." },
+            { term: "Alveolar Minute Volume", definition: "The volume of air that reaches the alveoli for gas exchange in one minute. (Tidal Volume - Dead Space) x Respiratory Rate." },
+            { term: "Anaerobic Metabolism", definition: "The cellular process of producing energy without oxygen, resulting in the byproduct of lactic acid." },
+            { term: "Apnea", definition: "The complete absence of spontaneous breathing; respiratory arrest." },
+            { term: "Aspiration", definition: "The introduction of vomitus or other foreign material into the lungs." },
+            { term: "Ataxic Respirations", definition: "An irregular, ineffective breathing pattern with no identifiable rhythm, often caused by serious head injury." },
+            { term: "Bag-Mask Device (BVM)", definition: "A device used to provide positive-pressure ventilation to a patient who is not breathing or is breathing inadequately." },
+            { term: "Bradypnea", definition: "An abnormally slow respiratory rate (less than 12 breaths/min in an adult)." },
+            { term: "Bronchi", definition: "The two main branches of the trachea that lead into the right and left lungs." },
+            { term: "Carbon Monoxide (CO)", definition: "A toxic gas that binds to hemoglobin much more effectively than oxygen, leading to severe hypoxia." },
+            { term: "Carina", definition: "The point at the base of the trachea where it bifurcates (divides) into the left and right mainstem bronchi." },
+            { term: "Cheyne-Stokes Respirations", definition: "An abnormal breathing pattern characterized by a cycle of progressively deeper and faster breathing, followed by a gradual decrease that results in apnea." },
+            { term: "Cricoid Cartilage", definition: "A firm, complete ring of cartilage that forms the lower part of the larynx." },
+            { term: "Cyanosis", definition: "A bluish discoloration of the skin and mucous membranes, which is a late sign of significant hypoxia." },
+            { term: "Dead Space", definition: "The portion of the airway that holds air but does not participate in gas exchange, such as the trachea and bronchi." },
+            { term: "Diaphoresis", definition: "Profuse or excessive sweating, often a sign of a significant medical emergency like respiratory distress or a heart attack." },
+            { term: "Diaphragm", definition: "A large, dome-shaped muscle at the bottom of the chest cavity that is the primary muscle of respiration." },
+            { term: "Diffusion", definition: "The movement of a gas from an area of higher concentration to an area of lower concentration, which is how gas exchange occurs in the lungs." },
+            { term: "Dyspnea", definition: "The subjective sensation of difficulty breathing or shortness of breath." },
+            { term: "Epiglottis", definition: "A leaf-shaped flap of cartilage located behind the tongue that closes over the larynx during swallowing to prevent aspiration." },
+            { term: "Exhalation", definition: "The passive part of breathing where the diaphragm and intercostal muscles relax, forcing air out of the lungs." },
+            { term: "External Respiration", definition: "The exchange of gases between the alveoli of the lungs and the blood in the pulmonary capillaries." },
+            { term: "Gag Reflex", definition: "A protective reflex that causes retching when the back of the throat is stimulated, helping to prevent foreign objects from entering the airway." },
+            { term: "Gastric Distention", definition: "The inflation of the stomach with air, often a complication of positive-pressure ventilation when air is forced down the esophagus." },
+            { term: "Grunting", definition: "A sound heard on exhalation in infants and children in respiratory distress, representing an attempt to keep alveoli open." },
+            { term: "Head-Tilt-Chin-Lift Maneuver", definition: "A technique used to open the airway in a non-trauma patient by tilting the head back and lifting the chin." },
+            { term: "HEPA Mask", definition: "A High-Efficiency Particulate Air mask (or N95 respirator) used to protect against airborne pathogens like tuberculosis." },
+            { term: "Humidified Oxygen", definition: "Oxygen that has moisture added to it, used to prevent drying of the mucous membranes during long transports or for patients on chronic oxygen therapy." },
+            { term: "Hypercarbia", definition: "An increased level of carbon dioxide in the blood." },
+            { term: "Hypoxia", definition: "A condition in which the body's tissues and cells do not have an adequate supply of oxygen." },
+            { term: "Hypoxic Drive", definition: "A state in which the primary stimulus to breathe is a low level of oxygen in the blood, rather than a high level of carbon dioxide. Often seen in end-stage COPD patients." },
+            { term: "Inhalation", definition: "The active part of breathing where the diaphragm and intercostal muscles contract, creating negative pressure in the chest to draw air into the lungs." },
+            { term: "Internal Respiration", definition: "The exchange of gases between the blood in the systemic capillaries and the body's cells." },
+            { term: "Intercostal Muscles", definition: "Muscles located between the ribs that contract during inhalation to help expand the chest cavity." },
+            { term: "Jaw-Thrust Maneuver", definition: "A technique used to open the airway in a patient with a suspected cervical spine injury by lifting the jaw forward without tilting the head." },
+            { term: "Kussmaul Respirations", definition: "Deep, rapid respirations that are the body's attempt to compensate for metabolic acidosis by blowing off excess CO2." },
+            { term: "Labored Breathing", definition: "Breathing that requires significant effort, characterized by the use of accessory muscles." },
+            { term: "Laryngopharynx", definition: "The lowest part of the pharynx, located just above the larynx and esophagus." },
+            { term: "Larynx", definition: "The voice box; a complex structure containing the vocal cords that marks the division between the upper and lower airway." },
+            { term: "Lower Airway", definition: "The portion of the respiratory system from the larynx downward, including the trachea, bronchi, bronchioles, and alveoli." },
+            { term: "Mediastinum", definition: "The space in the chest between the lungs that contains the heart, great vessels, esophagus, and trachea." },
+            { term: "Metabolism", definition: "The set of biochemical processes that occur within living cells to produce energy and maintain life." },
+            { term: "Minute Volume", definition: "The total volume of air that moves into and out of the lungs in one minute (Tidal Volume x Respiratory Rate)." },
+            { term: "Nasal Cannula", definition: "An oxygen delivery device that provides low concentrations of oxygen (24-44%) through two small prongs in the nostrils." },
+            { term: "Nasal Flaring", definition: "The widening of the nostrils during inhalation, a sign of respiratory distress, especially in infants and children." },
+            { term: "Nasopharyngeal Airway (NPA)", definition: "A flexible airway adjunct inserted through a nostril to maintain a patent airway, often used in patients with a gag reflex." },
+            { term: "Nasopharynx", definition: "The upper part of the pharynx, located posterior to the nasal cavity." },
+            { term: "Negative Pressure Ventilation", definition: "The normal process of breathing, where the contraction of respiratory muscles creates a negative pressure within the chest to draw air into the lungs." },
+            { term: "Non-rebreather Mask", definition: "An oxygen delivery device with a reservoir bag that can provide high concentrations of oxygen (up to 90%) to a breathing patient." },
+            { term: "Oropharyngeal Airway (OPA)", definition: "A rigid, curved airway adjunct inserted into the mouth of an unresponsive patient without a gag reflex to keep the tongue from blocking the airway." },
+            { term: "Oropharynx", definition: "The part of the pharynx posterior to the oral cavity (mouth)." },
+            { term: "Oxygenation", definition: "The process of loading oxygen molecules onto hemoglobin in the bloodstream." },
+            { term: "Perfusion", definition: "The circulation of blood within an organ or tissue in adequate amounts to meet the cells' current needs for oxygen and nutrients." },
+            { term: "Pharynx", definition: "The throat; the muscular tube that serves as a passageway for both air and food." },
+            { term: "Pin-Index Safety System (PISS)", definition: "A safety system on portable oxygen cylinders that uses a specific pin configuration to prevent attaching the wrong type of regulator." },
+            { term: "Positive-Pressure Ventilation", definition: "The act of forcing air into the lungs, such as with a BVM." },
+            { term: "Pulse Oximeter", definition: "A noninvasive device that measures the oxygen saturation of hemoglobin (SpO2) in the arterial blood." },
+            { term: "Recovery Position", definition: "A side-lying position used for unresponsive, uninjured patients who are breathing adequately to help protect the airway from secretions." },
+            { term: "Respiration", definition: "The physiological process of gas exchange at the alveolar and cellular levels." },
+            { term: "Respiratory Arrest", definition: "The complete cessation of breathing (apnea)." },
+            { term: "Respiratory Distress", definition: "A condition in which a patient has difficulty breathing but is still able to compensate by increasing their work of breathing (e.g., using accessory muscles)." },
+            { term: "Respiratory Failure", definition: "A condition in which the respiratory system is unable to meet the body's oxygen demands; the compensatory mechanisms are failing, leading to inadequate breathing." },
+            { term: "Retractions", definition: "The visible pulling in of the skin between the ribs (intercostal), above the clavicles (supraclavicular), or below the ribcage (subcostal) during inhalation; a sign of respiratory distress." },
+            { term: "Snoring Respirations", definition: "A sound indicating a partial upper airway obstruction, usually by the tongue." },
+            { term: "Spontaneous Respiration", definition: "Breathing that occurs without any outside assistance." },
+            { term: "Stridor", definition: "A harsh, high-pitched sound heard on inspiration, indicating a significant partial obstruction of the upper airway." },
+            { term: "Supine", definition: "Lying flat on the back." },
+            { term: "Tachypnea", definition: "An abnormally rapid respiratory rate (greater than 20 breaths/min in an adult)." },
+            { term: "Tension Pneumothorax", definition: "A life-threatening condition where air accumulates in the pleural space, causing a collapsed lung and compressing the heart and great vessels." },
+            { term: "Tidal Volume", definition: "The volume of air moved into or out of the lungs during a single breath." },
+            { term: "Trachea", definition: "The windpipe; the tube that carries air from the larynx to the bronchi." },
+            { term: "Tracheostomy", definition: "A surgical opening (stoma) in the neck that passes directly into the trachea." },
+            { term: "Tripod Position", definition: "A position where a patient with respiratory distress sits and leans forward, supporting their upper body with their hands on their knees or another surface." },
+            { term: "Tuberculosis (TB)", definition: "An infectious disease caused by airborne bacteria that primarily affects the lungs." },
+            { term: "Upper Airway", definition: "The portion of the respiratory system from the nose and mouth down to the larynx." },
+            { term: "Ventilation", definition: "The physical, mechanical act of moving air into and out of the lungs." },
+            { term: "Wheezing", definition: "A high-pitched, whistling sound, usually heard on exhalation, caused by the narrowing of the lower airways (bronchioles)." }
+        ];
+        // ===================================================================================
+        // APPLICATION LOGIC
+        // ===================================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Global State ---
+            let activeQuestions = [];
+            let currentQuestionIndex = 0;
+            let bookmarkedQuestionIds = JSON.parse(localStorage.getItem('bookmarkedQuestionIds')) || [];
+            let activeCategory = 'Random';
+            let currentSeed = null;
+
+            // --- Element Selectors ---
+            const views = document.querySelectorAll('.view');
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const categoryContainer = document.getElementById('category-filter-container');
+            const questionCounterEl = document.getElementById('question-counter');
+            const questionTextEl = document.getElementById('question-text');
+            const optionsContainerEl = document.getElementById('options-container');
+            const explanationContainerEl = document.getElementById('explanation-container');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            const bookmarkBtn = document.getElementById('bookmark-btn');
+            const bookmarkedContainer = document.getElementById('bookmarked-questions-container');
+            const modal = document.getElementById('question-modal');
+            const modalBody = document.getElementById('modal-body');
+            const closeModalBtn = document.querySelector('.close-btn');
+            const vocabSearchEl = document.getElementById('vocab-search');
+            const vocabListEl = document.getElementById('vocab-list');
+            const seedInput = document.getElementById('seed-input');
+            const syncBtn = document.getElementById('sync-btn');
+            const generateSeedBtn = document.getElementById('generate-seed-btn');
+            
+            // --- Utility: Seeded Shuffle for Classroom Sync ---
+            function seededShuffle(array, seed) {
+                let currentIndex = array.length, temporaryValue, randomIndex;
+                const seededRandom = () => {
+                    var x = Math.sin(seed++) * 10000;
+                    return x - Math.floor(x);
+                };
+                const newArray = [...array]; // Create a copy to avoid modifying original
+                while (0 !== currentIndex) {
+                    randomIndex = Math.floor(seededRandom() * currentIndex);
+                    currentIndex -= 1;
+                    temporaryValue = newArray[currentIndex];
+                    newArray[currentIndex] = newArray[randomIndex];
+                    newArray[randomIndex] = temporaryValue;
+                }
+                return newArray;
+            }
+
+            // --- View/Tab Management ---
+            const switchView = (viewId, focusTerm = null) => {
+                views.forEach(view => view.classList.remove('active'));
+                navTabs.forEach(tab => tab.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                document.querySelector(`.nav-tab[data-view="${viewId}"]`).classList.add('active');
+
+                if (viewId === 'bank-view') renderQuestionBank();
+                if (viewId === 'vocab-view') {
+                    renderVocabList();
+                    if (focusTerm) {
+                        const termId = `vocab-${focusTerm.replace(/\s+/g, '-').toLowerCase()}`;
+                        const termElement = document.getElementById(termId);
+                        if (termElement) {
+                            vocabListEl.scrollTop = termElement.offsetTop - vocabListEl.offsetTop;
+                            termElement.classList.add('highlight');
+                            setTimeout(() => termElement.classList.remove('highlight'), 2000);
+                        }
+                    }
+                }
+            };
+
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', () => switchView(tab.dataset.view));
+            });
+
+            // --- Clickable Vocabulary Logic ---
+            const highlightVocabTerms = (text) => {
+                const vocabTerms = vocabData.map(v => v.term);
+                vocabTerms.sort((a, b) => b.length - a.length);
+                const regex = new RegExp(`\\b(${vocabTerms.join('|')})\\b`, 'gi');
+                return text.replace(regex, (match) => 
+                    `<a class="vocab-link" data-term="${match}">${match}</a>`
+                );
+            };
+
+            document.body.addEventListener('click', function(e) {
+                if (e.target.classList.contains('vocab-link')) {
+                    const term = e.target.dataset.term;
+                    switchView('vocab-view', term);
+                }
+            });
+
+            // --- Practice Mode & Category Logic ---
+            const setupCategories = () => {
+                const categories = ['Random', ...new Set(quizData.map(q => q.category))];
+                categoryContainer.innerHTML = '';
+                categories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.classList.add('category-btn');
+                    btn.textContent = category;
+                    btn.dataset.category = category;
+                    btn.addEventListener('click', () => {
+                        activeCategory = category;
+                        startQuizSession(); // Directly starts the new session
+                    });
+                    categoryContainer.appendChild(btn);
+                });
+            };
+
+            const startQuizSession = () => {
+                let dataToShuffle = [...quizData];
+                
+                if (currentSeed) {
+                    activeQuestions = seededShuffle(dataToShuffle, currentSeed);
+                } else {
+                    activeQuestions = shuffleArray(dataToShuffle);
+                }
+
+                if (activeCategory !== 'Random') {
+                    activeQuestions = activeQuestions.filter(q => q.category === activeCategory);
+                }
+                
+                currentQuestionIndex = 0;
+                
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.category === activeCategory);
+                });
+
+                if (activeQuestions.length > 0) {
+                    loadPracticeQuestion(currentQuestionIndex);
+                } else {
+                    questionCounterEl.textContent = '0 of 0';
+                    questionTextEl.textContent = 'No questions found for this category.';
+                    optionsContainerEl.innerHTML = '';
+                    explanationContainerEl.style.display = 'none';
+                }
+            };
+            
+            const loadPracticeQuestion = (index) => {
+                explanationContainerEl.style.display = 'none';
+                optionsContainerEl.innerHTML = '';
+                
+                const question = activeQuestions[index];
+                questionCounterEl.textContent = `Question ${index + 1} of ${activeQuestions.length}`;
+                questionTextEl.innerHTML = highlightVocabTerms(question.text);
+
+                updateBookmarkStar(question.id);
+
+                question.options.forEach((optionText, optionIndex) => {
+                    const optionEl = document.createElement('button');
+                    optionEl.classList.add('option');
+                    optionEl.textContent = optionText;
+                    optionEl.addEventListener('click', () => handleOptionClick(optionIndex, question.correct, question.explanation));
+                    optionsContainerEl.appendChild(optionEl);
+                });
+
+                updatePracticeNavButtons();
+            };
+
+            const handleOptionClick = (selectedIndex, correctIndex, explanation) => {
+                const options = optionsContainerEl.children;
+                Array.from(options).forEach(opt => opt.classList.remove('correct', 'incorrect'));
+                options[correctIndex].classList.add('correct');
+                if (selectedIndex !== correctIndex) {
+                    options[selectedIndex].classList.add('incorrect');
+                }
+                explanationContainerEl.innerHTML = `<strong>Explanation:</strong> ${explanation}`;
+                explanationContainerEl.style.display = 'block';
+            };
+
+            const updatePracticeNavButtons = () => {
+                prevBtn.disabled = currentQuestionIndex === 0;
+                nextBtn.disabled = currentQuestionIndex >= activeQuestions.length - 1;
+            };
+
+            // --- Classroom Sync Logic ---
+            generateSeedBtn.addEventListener('click', () => {
+                const seed = Math.floor(Math.random() * 10000);
+                seedInput.value = seed;
+                currentSeed = seed;
+                startQuizSession();
+            });
+
+            syncBtn.addEventListener('click', () => {
+                const seed = parseInt(seedInput.value, 10);
+                if (!isNaN(seed)) {
+                    currentSeed = seed;
+                    startQuizSession();
+                } else {
+                    alert('Please enter a valid session code.');
+                }
+            });
+
+            // --- Bookmark & Question Bank Logic ---
+            const updateBookmarkStar = (questionId) => {
+                bookmarkBtn.classList.toggle('bookmarked', bookmarkedQuestionIds.includes(questionId));
+                bookmarkBtn.title = bookmarkedQuestionIds.includes(questionId) ? "Remove bookmark" : "Bookmark this question";
+            };
+            
+            const toggleBookmark = () => {
+                if (activeQuestions.length === 0) return;
+                const currentQuestionId = activeQuestions[currentQuestionIndex].id;
+                const index = bookmarkedQuestionIds.indexOf(currentQuestionId);
+
+                if (index > -1) {
+                    bookmarkedQuestionIds.splice(index, 1);
+                } else {
+                    bookmarkedQuestionIds.push(currentQuestionId);
+                }
+                localStorage.setItem('bookmarkedQuestionIds', JSON.stringify(bookmarkedQuestionIds));
+                updateBookmarkStar(currentQuestionId);
+            };
+            
+            const renderQuestionBank = () => {
+                bookmarkedContainer.innerHTML = bookmarkedQuestionIds.length === 0 
+                    ? '<p>You have not bookmarked any questions yet. Use the star icon in Practice Mode to save questions for review.</p>'
+                    : '';
+                
+                const bookmarkedQuestions = quizData.filter(q => bookmarkedQuestionIds.includes(q.id));
+                bookmarkedQuestions.forEach(question => {
+                    const item = document.createElement('div');
+                    item.classList.add('bookmarked-question-item');
+                    item.textContent = `(${question.category}) ${question.text}`;
+                    item.addEventListener('click', () => showQuestionInModal(question));
+                    bookmarkedContainer.appendChild(item);
+                });
+            };
+
+            const showQuestionInModal = (question) => {
+                const optionsHTML = question.options.map((opt, i) => 
+                    `<div class="option ${i === question.correct ? 'correct' : ''}">${opt}</div>`
+                ).join('');
+
+                modalBody.innerHTML = `
+                    <h3>${highlightVocabTerms(question.text)}</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">${optionsHTML}</div>
+                    <div id="explanation-container" style="display: block; margin-top: 20px;">
+                        <strong>Explanation:</strong> ${question.explanation}
+                    </div>
+                `;
+                modal.style.display = 'block';
+            };
+            closeModalBtn.onclick = () => modal.style.display = 'none';
+            window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
+            
+            // --- Vocabulary Logic ---
+            const renderVocabList = (filter = '') => {
+                vocabListEl.innerHTML = '';
+                const filteredVocab = vocabData.filter(item => item.term.toLowerCase().includes(filter.toLowerCase()));
+                
+                if (filteredVocab.length === 0) {
+                     vocabListEl.innerHTML = '<li>No terms found.</li>';
+                     return;
+                }
+
+                filteredVocab.sort((a, b) => a.term.localeCompare(b.term));
+
+                filteredVocab.forEach(item => {
+                    const li = document.createElement('li');
+                    li.id = `vocab-${item.term.replace(/\s+/g, '-').toLowerCase()}`;
+                    li.innerHTML = `<strong>${item.term}:</strong> ${item.definition}`;
+                    vocabListEl.appendChild(li);
+                });
+            };
+            vocabSearchEl.addEventListener('input', (e) => renderVocabList(e.target.value));
+            
+            // --- Event Listeners ---
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    loadPracticeQuestion(currentQuestionIndex);
+                }
+            });
+            nextBtn.addEventListener('click', () => {
+                if (currentQuestionIndex < activeQuestions.length - 1) {
+                    currentQuestionIndex++;
+                    loadPracticeQuestion(currentQuestionIndex);
+                }
+            });
+            shuffleBtn.addEventListener('click', () => {
+                activeCategory = 'Random';
+                seedInput.value = '';
+                currentSeed = null;
+                startQuizSession();
+            });
+            bookmarkBtn.addEventListener('click', toggleBookmark);
+            
+            // --- Initial Load ---
+            setupCategories();
+            startQuizSession();
+        });
+    </script>
+
+</body>
+</html>
