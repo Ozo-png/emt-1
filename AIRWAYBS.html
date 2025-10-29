@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Respiratory Emergencies Quiz</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --light-gray: #bdc3c7;
+            --white: #ffffff;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+            --star-color: #f1c40f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        #controls {
+            padding: 15px 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #controls select, #controls button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            font-size: 1em;
+            cursor: pointer;
+            background-color: var(--white);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        #controls select {
+            flex-grow: 1;
+        }
+
+        #controls button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #controls button:hover {
+            background-color: #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #quiz-area {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        #progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #progress-bar-container {
+            flex-grow: 1;
+            height: 10px;
+            background-color: var(--background-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease-in-out;
+        }
+
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        #question-text {
+            font-size: 1.2em;
+            font-weight: 500;
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+        
+        #star-btn {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--light-gray);
+            transition: color 0.2s, transform 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        #star-btn.starred {
+            color: var(--star-color);
+        }
+        #star-btn:hover {
+            transform: scale(1.2);
+        }
+
+        #options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            padding: 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-item:not(.answered):hover {
+            border-color: var(--primary-color);
+            background-color: #f0f8ff;
+        }
+
+        .option-item.answered {
+            cursor: default;
+        }
+
+        .option-item.correct {
+            background-color: #e6f9e6;
+            border-color: var(--correct-color);
+            color: #1e851e;
+            font-weight: bold;
+        }
+        
+        .option-item.incorrect.selected {
+            background-color: #fdeaea;
+            border-color: var(--incorrect-color);
+            color: #b92c2c;
+        }
+
+        #explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 4px;
+            display: none;
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        #navigation button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--white);
+            color: var(--primary-color);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            min-width: 100px;
+        }
+
+        #navigation button:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        #navigation button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+            #app-container {
+                border-radius: 0;
+                box-shadow: none;
+            }
+            header h1 {
+                font-size: 1.4em;
+            }
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #quiz-area {
+                padding: 15px;
+            }
+            #question-text {
+                font-size: 1.1em;
+            }
+            .option-item {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1>EMT: Respiratory Emergencies Study Tool</h1>
+        </header>
+
+        <div id="controls">
+            <select id="category-select"></select>
+            <button id="scramble-btn">Scramble Set</button>
+            <button id="review-starred-btn">Review Starred</button>
+        </div>
+
+        <main id="quiz-area">
+            <div id="progress-container">
+                <span id="question-counter"></span>
+                <div id="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div id="question-header">
+                 <p id="question-text"></p>
+                 <button id="star-btn" title="Star this question for later review">☆</button>
+            </div>
+
+            <ul id="options-list"></ul>
+            <div id="explanation"></div>
+
+            <div id="navigation">
+                <button id="prev-btn">Previous</button>
+                <button id="next-btn">Next</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Questions Database ---
+        // This is the complete and corrected list of 100 questions.
+        const allQuestions = [
+    {
+        category: "Anatomy and Physiology",
+        question: "An EMT is explaining the breathing process to a new partner. Which structure is considered the primary muscle of breathing and separates the thorax from the abdomen?",
+        options: ["Intercostal muscles", "Diaphragm", "Sternocleidomastoid", "Esophagus"],
+        correctAnswer: "Diaphragm",
+        explanation: "The diaphragm is the main muscle of respiration. It contracts during inhalation to increase thoracic volume and relaxes during exhalation. The intercostal and sternocleidomastoid muscles are accessory muscles."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You arrive on scene to find an elderly male leaning forward on his knees, using his arms to support his upper body. You recognize this as the tripod position, which indicates:",
+        options: ["Severe abdominal pain", "A potential spinal injury", "Significant difficulty breathing", "A decreased level of consciousness"],
+        correctAnswer: "Significant difficulty breathing",
+        explanation: "The tripod position allows a patient to use their accessory muscles more effectively and increases the capacity of the thoracic cavity, making it easier to breathe. It is a classic sign of severe respiratory distress."
+    },
+    {
+        category: "Patient Assessment",
+        question: "While auscultating the lungs of a patient with shortness of breath, you hear high-pitched, whistling sounds, primarily on exhalation. This breath sound is known as:",
+        options: ["Rhonchi", "Crackles (rales)", "Stridor", "Wheezing"],
+        correctAnswer: "Wheezing",
+        explanation: "Wheezing is a high-pitched whistling sound caused by air trying to pass through narrowed lower airways (bronchioles). It is commonly associated with asthma, COPD, and sometimes anaphylaxis."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "You respond to a 2-year-old child with a low-grade fever, hoarseness, and a distinct 'seal-bark' cough. The parents state the symptoms developed over a few days. These signs are most indicative of:",
+        options: ["Epiglottitis", "Croup", "Pneumonia", "Asthma"],
+        correctAnswer: "Croup",
+        explanation: "Croup is a viral infection of the pharynx, larynx, and trachea. Its hallmark signs are a seal-bark cough and stridor, typically seen in young children with a gradual onset."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "A 68-year-old male with a long history of smoking presents with a barrel-shaped chest, pursed-lip breathing, and diminished breath sounds. This clinical picture is most characteristic of:",
+        options: ["Asthma", "Chronic bronchitis", "Emphysema", "Pulmonary fibrosis"],
+        correctAnswer: "Emphysema",
+        explanation: "Emphysema, a form of COPD, involves the destruction of alveoli, leading to air trapping. This causes the classic signs of a barrel chest (from chronic hyperinflation) and pursed-lip breathing (to keep airways open during exhalation)."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "A 70-year-old female who recently had hip surgery complains of a sudden onset of sharp chest pain and severe dyspnea. Her skin is cyanotic, but her breath sounds are clear. You should have a high index of suspicion for:",
+        options: ["Pneumonia", "Spontaneous pneumothorax", "Pulmonary embolism", "Myocardial infarction"],
+        correctAnswer: "Pulmonary embolism",
+        explanation: "A pulmonary embolism is a blood clot that lodges in the pulmonary artery. Risk factors include recent surgery and immobility. The classic presentation is sudden onset dyspnea and pleuritic chest pain with clear breath sounds, as the problem is with perfusion, not ventilation."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "A patient with asthma is prescribed albuterol, which is administered via a metered-dose inhaler (MDI). What is the primary action of this medication?",
+        options: ["It reduces inflammation in the airways.", "It dries up mucus secretions.", "It dilates the bronchioles.", "It acts as a respiratory stimulant."],
+        correctAnswer: "It dilates the bronchioles.",
+        explanation: "Albuterol is a beta-2 agonist, a class of drugs known as bronchodilators. Its primary action is to relax the smooth muscles surrounding the bronchioles, causing them to dilate and making it easier to breathe."
+    },
+    {
+        category: "Patient Assessment",
+        question: "Which of the following is NOT a sign of inadequate breathing?",
+        options: ["A respiratory rate of 16 breaths/min with equal chest rise", "Accessory muscle use and nasal flaring", "An irregular breathing rhythm", "Pale, cyanotic, or cool skin"],
+        correctAnswer: "A respiratory rate of 16 breaths/min with equal chest rise",
+        explanation: "A respiratory rate of 16 is within the normal range for an adult (12-20), and equal chest rise indicates adequate tidal volume. The other options are all classic signs of inadequate breathing and respiratory distress."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "A patient experiencing a panic attack is breathing rapidly and complains of tingling in their hands and feet (carpopedal spasms). This is caused by the body blowing off too much carbon dioxide, resulting in:",
+        options: ["Respiratory acidosis", "Respiratory alkalosis", "Metabolic acidosis", "Anaphylaxis"],
+        correctAnswer: "Respiratory alkalosis",
+        explanation: "Hyperventilation leads to an excessive loss of CO2. Since CO2 helps maintain the blood's acidity, losing too much makes the blood too alkaline (basic), causing respiratory alkalosis and the associated symptoms like tingling."
+    },
+    {
+        category: "Special Populations",
+        question: "You are called to a 4-year-old child sitting upright, drooling, with a high fever and inspiratory stridor. They appear very ill. What is your most important treatment consideration?",
+        options: ["Immediately lay the child flat to open the airway.", "Attempt to visualize the airway with a tongue depressor.", "Provide calm transport and avoid agitating the child.", "Administer a small-volume nebulizer with albuterol."],
+        correctAnswer: "Provide calm transport and avoid agitating the child.",
+        explanation: "These are classic signs of epiglottitis. Any attempt to visualize the airway or agitate the child can cause a complete airway obstruction. The priority is to provide oxygen in a position of comfort and transport rapidly and calmly."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "In a patient with end-stage COPD, the brain may begin to regulate breathing based on low oxygen levels rather than high carbon dioxide levels. This phenomenon is known as:",
+        options: ["Cheyne-Stokes respiration", "Kussmaul breathing", "Hypoxic drive", "Carbon dioxide retention"],
+        correctAnswer: "Hypoxic drive",
+        explanation: "Hypoxic drive is a condition in which the body's stimulus to breathe is chronically low levels of oxygen, as the respiratory centers have become desensitized to chronically high levels of carbon dioxide."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing four patients. Which one demonstrates the most significant sign of respiratory failure?",
+        options: ["A 25-year-old asthmatic who is wheezing loudly and speaking in full sentences.", "A 70-year-old with COPD who is breathing at 24 breaths/min with pursed lips.", "A 6-year-old with a barking cough who is crying but can be consoled.", "A 50-year-old who was in distress but is now drowsy with a slowing respiratory rate."],
+        correctAnswer: "A 50-year-old who was in distress but is now drowsy with a slowing respiratory rate.",
+        explanation: "A patient tiring out is a sign of impending respiratory arrest. Drowsiness and a slowing respiratory rate after a period of distress indicate the patient can no longer compensate. This is the most critical patient."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "All of the following are common signs and symptoms of pneumonia in an elderly patient EXCEPT:",
+        options: ["Fever and chills", "Productive cough", "Bradycardia and hypertension", "Altered mental status"],
+        correctAnswer: "Bradycardia and hypertension",
+        explanation: "Pneumonia typically causes tachycardia (fast heart rate) and potentially hypotension if sepsis develops. Bradycardia is not a common finding. Altered mental status can be a primary presenting sign in the elderly."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Which of the following patients would be the MOST appropriate candidate for CPAP?",
+        options: ["A patient who is apneic after an opioid overdose.", "A patient with a tension pneumothorax from a stab wound.", "An alert patient with severe pulmonary edema, tachypnea, and an SpO2 of 86%.", "A patient who is actively vomiting and has a decreased level of consciousness."],
+        correctAnswer: "An alert patient with severe pulmonary edema, tachypnea, and an SpO2 of 86%.",
+        explanation: "The ideal CPAP candidate is alert, able to maintain their own airway, and in severe respiratory distress from a condition like CHF/pulmonary edema or COPD. The other options represent major contraindications."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "A patient complains of a sudden onset of shortness of breath. Which of the following conditions typically presents with a gradual, worsening onset of dyspnea over days or weeks?",
+        options: ["Pulmonary embolism", "Spontaneous pneumothorax", "Anaphylaxis", "Emphysema (COPD)"],
+        correctAnswer: "Emphysema (COPD)",
+        explanation: "Emphysema is a chronic disease that worsens progressively over time. While patients may have acute exacerbations, the underlying disease process is gradual. The other three options are all acute conditions with a characteristically sudden onset."
+    },
+    {
+        category: "Patient Assessment",
+        question: "A patient with suspected carbon monoxide poisoning may have a misleadingly high pulse oximetry reading because the device cannot distinguish between oxygen and carbon monoxide. This is an important detail to remember because:",
+        options: ["It proves the patient is not hypoxic.", "It suggests the patient needs a bronchodilator.", "The EMT might be falsely reassured by a 'normal' SpO2 and fail to provide high-flow oxygen.", "It indicates the patient also has COPD."],
+        correctAnswer: "The EMT might be falsely reassured by a 'normal' SpO2 and fail to provide high-flow oxygen.",
+        explanation: "This is a classic clinical pitfall. The pulse oximeter is unreliable in CO poisoning. The patient can be severely hypoxic at the cellular level despite a reading of 99%. Treatment should be based on the mechanism of injury and clinical suspicion, not the SpO2."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "When assisting a patient with a small-volume nebulizer, you should instruct them to:",
+        options: ["Breathe rapidly and shallowly through their nose.", "Hold their breath for as long as possible before the treatment.", "Seal their lips around the mouthpiece and breathe slowly and deeply.", "Take one quick puff and then stop the treatment."],
+        correctAnswer: "Seal their lips around the mouthpiece and breathe slowly and deeply.",
+        explanation: "To ensure the aerosolized medication reaches the lower airways, the patient should breathe slowly and deeply through their mouth, with occasional breath holds for 3-5 seconds to promote absorption."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "Which statement BEST describes the pathophysiology of chronic bronchitis?",
+        options: ["Destruction of alveolar walls and loss of elastic recoil.", "Irritation and inflammation of the major lung passageways with excessive mucus production.", "An acute allergic reaction causing bronchospasm.", "Accumulation of air in the pleural space."],
+        correctAnswer: "Irritation and inflammation of the major lung passageways with excessive mucus production.",
+        explanation: "Chronic bronchitis is defined by inflammation of the bronchi, leading to a chronic productive cough due to an overproduction of mucus. Alveolar destruction is characteristic of emphysema."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "What is the primary purpose of the pulmonary capillaries surrounding the alveoli?",
+        options: ["To provide structural support to the air sacs.", "To facilitate the exchange of oxygen and carbon dioxide with the blood.", "To produce surfactant to keep the alveoli open.", "To constrict during an asthma attack."],
+        correctAnswer: "To facilitate the exchange of oxygen and carbon dioxide with the blood.",
+        explanation: "The thin walls of the alveoli and the surrounding pulmonary capillaries create the respiratory membrane, where diffusion allows oxygen to enter the bloodstream and carbon dioxide to exit."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are dispatched to a patient with 'difficulty breathing.' During your scene size-up, you find three family members in the same house all complaining of headache, nausea, and shortness of breath. What should be your first action?",
+        options: ["Assess the first patient's airway immediately.", "Remove everyone from the residence and call for additional resources.", "Ask the family about their medical histories.", "Apply oxygen to all three patients inside the house."],
+        correctAnswer: "Remove everyone from the residence and call for additional resources.",
+        explanation: "Multiple patients with similar, non-specific symptoms in an enclosed space strongly suggests an environmental cause, such as carbon monoxide poisoning. The first priority is to remove everyone (including yourself) from the hazardous environment."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "An unresponsive adult patient has shallow, gurgling respirations at a rate of 6 breaths/min. Which of the following represents the most appropriate sequence of interventions?",
+        options: ["Apply a nonrebreathing mask, check a blood pressure, and transport.", "Insert an OPA and apply a nasal cannula.", "Immediately suction the airway, insert an airway adjunct, and begin ventilations with a BVM.", "Place the patient in the recovery position and monitor their SpO2."],
+        correctAnswer: "Immediately suction the airway, insert an airway adjunct, and begin ventilations with a BVM.",
+        explanation: "This patient is in respiratory failure. The gurgling indicates fluid that must be suctioned first (A). The shallow rate of 6 requires assisted ventilation with a BVM (B). An adjunct is needed to maintain patency (A). This is the correct, prioritized sequence."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "A patient with a history of congestive heart failure complains of waking up suddenly with severe shortness of breath that is only relieved by sitting up. This complaint is known as:",
+        options: ["Orthopnea", "Pleurisy", "Paroxysmal nocturnal dyspnea (PND)", "Sleep apnea"],
+        correctAnswer: "Paroxysmal nocturnal dyspnea (PND)",
+        explanation: "PND is a hallmark of worsening left-sided heart failure. When the patient lies flat, fluid from the extremities is redistributed to the lungs, overwhelming the failing heart and causing sudden, severe dyspnea that awakens them from sleep."
+    },
+    {
+        category: "Special Populations",
+        question: "Retractions are more commonly and visibly seen in pediatric patients in respiratory distress than in adults primarily because:",
+        options: ["Children have a faster respiratory rate.", "Their chest wall is softer and more pliable.", "They have a smaller tidal volume.", "Their diaphragm is weaker."],
+        correctAnswer: "Their chest wall is softer and more pliable.",
+        explanation: "The bones and cartilage of a child's chest are less rigid than an adult's. During respiratory distress, the strong negative pressure created during inhalation easily pulls the soft tissue between the ribs inward, making retractions prominent."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You hear coarse, low-pitched rattling sounds in a patient's lungs. The patient then coughs productively, and when you re-auscultate, the sounds are gone. This breath sound was most likely:",
+        options: ["Crackles", "Wheezing", "Stridor", "Rhonchi"],
+        correctAnswer: "Rhonchi",
+        explanation: "Rhonchi are caused by mucus in the larger airways. A key characteristic that distinguishes them from crackles is that they may change or clear with coughing as the mucus is mobilized. Crackles, caused by fluid in the alveoli, do not clear with coughing."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "All of the following are components of the upper airway, EXCEPT:",
+        options: ["Nose", "Pharynx", "Larynx", "Trachea"],
+        correctAnswer: "Trachea",
+        explanation: "The trachea, or windpipe, is the beginning of the lower airway. The upper airway consists of all structures above the vocal cords, including the nose, mouth, pharynx, and larynx."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "Which of the following interventions would be contraindicated in a child with suspected epiglottitis?",
+        options: ["Administering high-flow oxygen", "Allowing the child to sit in a position of comfort", "Using a tongue depressor to look in their mouth", "Transporting the patient rapidly to the hospital"],
+        correctAnswer: "Using a tongue depressor to look in their mouth",
+        explanation: "In a patient with suspected epiglottitis, any manipulation of the oropharynx (like using a tongue depressor) can cause laryngospasm and complete airway obstruction. Management focuses on keeping the child calm and providing oxygen."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "You are ventilating a patient in respiratory arrest. How can you best determine if your ventilations are adequate?",
+        options: ["The abdomen rises with each breath.", "The pulse oximetry reading increases to 100%.", "You observe visible and equal chest rise and fall.", "You are ventilating at a rate of 24 breaths/min."],
+        correctAnswer: "You observe visible and equal chest rise and fall.",
+        explanation: "The most reliable, immediate sign of adequate ventilation is seeing the chest rise and fall with each breath delivered. This indicates air is entering the lungs. Gastric distention (abdomen rising) is a complication of improper technique."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "A 'silent chest' in a patient during a severe asthma attack is an ominous sign because it indicates:",
+        options: ["The patient's bronchospasm has resolved.", "The patient is no longer making an effort to breathe.", "Air movement is so restricted that no wheezing can be heard.", "The patient's MDI has started to work effectively."],
+        correctAnswer: "Air movement is so restricted that no wheezing can be heard.",
+        explanation: "Wheezing requires some air movement. In a patient who was previously wheezing and is still in distress, a 'silent chest' means their airways are now so constricted that almost no air is moving at all. This is a sign of impending respiratory failure."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing a patient with right-sided heart failure. Which sign would you be most likely to find?",
+        options: ["Pink, frothy sputum", "Crackles in the lung bases", "Dependent edema in the feet and ankles", "A barrel-shaped chest"],
+        correctAnswer: "Dependent edema in the feet and ankles",
+        explanation: "Right-sided heart failure causes a backup of blood in the systemic circulation. This leads to fluid leaking into the tissues, most noticeably as dependent edema in the lower extremities (ankles, feet) and sometimes sacral edema or JVD. Lung symptoms like crackles are classic for left-sided failure."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "Which statement accurately describes the mechanics of normal inhalation?",
+        options: ["The diaphragm and intercostal muscles relax, decreasing chest size.", "It is a passive process that relies on elastic recoil.", "The diaphragm and intercostal muscles contract, increasing chest size.", "The epiglottis opens to allow air into the esophagus."],
+        correctAnswer: "The diaphragm and intercostal muscles contract, increasing chest size.",
+        explanation: "Inhalation is an active process. The diaphragm contracts (moves down) and the intercostal muscles contract (lift the rib cage up and out), which increases the volume of the thoracic cavity and creates negative pressure, drawing air into the lungs."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "Which of the following is the MOST common cause of a pulmonary embolism?",
+        options: ["A ruptured alveolus", "An air bubble from an IV line", "A blood clot from a vein in the leg or pelvis", "A fractured rib that punctures an artery"],
+        correctAnswer: "A blood clot from a vein in the leg or pelvis",
+        explanation: "The most common cause of a pulmonary embolism is a deep vein thrombosis (DVT), where a blood clot forms in a large vein (usually in the lower extremities) and then breaks off, traveling to the lungs."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "You are treating a conscious adult with a complete foreign body airway obstruction. They have become unresponsive. What is your next immediate action?",
+        options: ["Deliver five back blows.", "Begin providing high-quality chest compressions.", "Check for a carotid pulse for 30 seconds.", "Perform a blind finger sweep of the mouth."],
+        correctAnswer: "Begin providing high-quality chest compressions.",
+        explanation: "According to BLS guidelines, once a choking victim becomes unresponsive, you should immediately lower them to the ground and start chest compressions. The compressions may help dislodge the object. You will look in the mouth for the object *before* giving breaths."
+    },
+    {
+        category: "Patient Assessment",
+        question: "Digital clubbing (an abnormal, rounded appearance of the ends of the fingers) is a chronic sign most often associated with which condition?",
+        options: ["Acute pneumonia", "Anaphylaxis", "Long-standing hypoxia, such as from COPD", "A recent myocardial infarction"],
+        correctAnswer: "Long-standing hypoxia, such as from COPD",
+        explanation: "Digital clubbing is a physical sign that develops over a long period due to chronic low blood oxygen levels. It is frequently seen in patients with advanced chronic respiratory diseases like COPD or cystic fibrosis."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "Which of the following best describes the pathophysiology of bronchiolitis?",
+        options: ["Bacterial infection of the epiglottis", "Inflammation and swelling of the small bronchioles, often due to RSV", "Fluid filling the alveoli due to left-sided heart failure", "Allergic spasm of the larger bronchi"],
+        correctAnswer: "Inflammation and swelling of the small bronchioles, often due to RSV",
+        explanation: "Bronchiolitis is an infection of the bronchioles, the smallest air passages in the lungs. It is most common in infants and young children and is typically caused by the Respiratory Syncytial Virus (RSV)."
+    },
+    {
+        category: "Special Populations",
+        question: "You are assessing a geriatric patient who takes a beta-blocker for hypertension. How might this medication affect their response to hypoxia?",
+        options: ["It may prevent their heart rate from increasing.", "It will cause them to hyperventilate.", "It will cause their blood pressure to rise dramatically.", "It increases the risk of bronchospasm."],
+        correctAnswer: "It may prevent their heart rate from increasing.",
+        explanation: "A key compensatory mechanism for hypoxia is tachycardia (an increased heart rate). Beta-blockers are designed to slow the heart rate and can blunt or prevent this response, masking a sign of shock and limiting the body's ability to compensate."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "All of the following are potential side effects of using an albuterol inhaler EXCEPT:",
+        options: ["Nervousness or anxiety", "Muscle tremors", "Increased heart rate", "Drowsiness and a decreased respiratory rate"],
+        correctAnswer: "Drowsiness and a decreased respiratory rate",
+        explanation: "Albuterol is a stimulant of the sympathetic nervous system. It commonly causes an increased heart rate, tremors, and a feeling of nervousness. It would not cause drowsiness or respiratory depression."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "Which of the following best describes 'dead space' in the respiratory system?",
+        options: ["The volume of the lungs that has collapsed due to atelectasis.", "The area of the lungs where no gas exchange occurs, such as the trachea and bronchi.", "The volume of air remaining in the lungs after a maximal exhalation.", "The space between the visceral and parietal pleura."],
+        correctAnswer: "The area of the lungs where no gas exchange occurs, such as the trachea and bronchi.",
+        explanation: "Anatomic dead space is the portion of the airway (from the mouth down to the terminal bronchioles) where air is present but no gas exchange takes place. It's essentially the 'plumbing' of the system."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You arrive at the scene of a single-vehicle MVC. The driver is unresponsive, has an open airway, and is breathing at 22 breaths/min. You hear snoring respirations. Which of the following is the most likely cause of the snoring?",
+        options: ["Fluid in the lower airways.", "Narrowing of the bronchioles.", "The tongue partially obstructing the pharynx.", "A foreign body in the trachea."],
+        correctAnswer: "The tongue partially obstructing the pharynx.",
+        explanation: "Snoring is the sound produced by the soft tissues of the upper airway (primarily the tongue and soft palate) vibrating as air passes. In an unresponsive patient, this is most often due to loss of muscle tone allowing the tongue to fall back and partially block the airway."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "What is the primary difference between a spontaneous pneumothorax and a tension pneumothorax?",
+        options: ["A spontaneous pneumothorax is caused by trauma, while a tension pneumothorax is not.", "A tension pneumothorax involves a progressive build-up of air in the pleural space that shifts the mediastinum and compromises circulation.", "A spontaneous pneumothorax only occurs in patients with COPD.", "A tension pneumothorax involves fluid, while a spontaneous pneumothorax involves only air."],
+        correctAnswer: "A tension pneumothorax involves a progressive build-up of air in the pleural space that shifts the mediastinum and compromises circulation.",
+        explanation: "While both involve air in the pleural space, a tension pneumothorax is a life-threatening emergency where a one-way valve effect traps air, increasing pressure that collapses the lung and pushes the heart and great vessels to the other side, causing obstructive shock."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Which patient would require a head-tilt, chin-lift maneuver to open their airway?",
+        options: ["A 45-year-old male who is alert and complaining of chest pain.", "A 22-year-old female who fell from a ladder and is unresponsive.", "A 78-year-old male found unresponsive in bed by family with no signs of trauma.", "A 5-year-old child who is conscious and drooling in the tripod position."],
+        correctAnswer: "A 78-year-old male found unresponsive in bed by family with no signs of trauma.",
+        explanation: "The head-tilt, chin-lift is used for unresponsive patients with no suspected spinal injury. The fall victim requires a jaw-thrust maneuver. The alert patient and the child with suspected epiglottitis do not require manual airway opening."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "A patient with asthma tells you they use two inhalers: an albuterol inhaler and a fluticasone (Flovent) inhaler. Which of these is considered their 'rescue' inhaler for an acute attack?",
+        options: ["Fluticasone (Flovent)", "Both are equally effective", "Albuterol", "Neither; they should use a nebulizer"],
+        correctAnswer: "Albuterol",
+        explanation: "Albuterol is a fast-acting bronchodilator designed for immediate relief of symptoms ('rescue'). Fluticasone is an inhaled corticosteroid used for long-term control of inflammation ('maintenance') and provides no immediate relief."
+    },
+    {
+        category: "Patient Assessment",
+        question: "Your 70-year-old patient with congestive heart failure has a respiratory rate of 28, is pale and diaphoretic, and can only speak in two-word sentences. His SpO2 is 90% on room air. The patient is in:",
+        options: ["Respiratory arrest", "Adequate respiratory status", "Mild respiratory distress", "Severe respiratory distress"],
+        correctAnswer: "Severe respiratory distress",
+        explanation: "The combination of tachypnea, poor skin signs, inability to speak in full sentences, and borderline hypoxia are all clear indicators of severe respiratory distress, requiring aggressive intervention."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "The process by which carbon dioxide moves from the bloodstream into the alveoli to be exhaled is called:",
+        options: ["Perfusion", "Diffusion", "Ventilation", "Osmosis"],
+        correctAnswer: "Diffusion",
+        explanation: "Diffusion is the movement of a substance from an area of higher concentration to an area of lower concentration. CO2 is more concentrated in the pulmonary capillary blood than in the alveoli, so it diffuses across the membrane to be exhaled."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "A 'pandemic' is best defined as:",
+        options: ["An outbreak of disease confined to a small community.", "A disease that is always present in a certain population.", "An outbreak of a disease that occurs on a global scale.", "A bacterial infection that is resistant to antibiotics."],
+        correctAnswer: "An outbreak of a disease that occurs on a global scale.",
+        explanation: "A pandemic, such as influenza type A (H1N1) in 2009 or COVID-19, is an epidemic that has spread over multiple countries or continents, affecting a large number of people."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "After assisting with an MDI, you should instruct the patient to hold their breath for how long?",
+        options: ["1-2 seconds", "As long as is comfortably possible", "30 seconds", "They should exhale immediately"],
+        correctAnswer: "As long as is comfortably possible",
+        explanation: "Instructing the patient to hold their breath for as long as is comfortable (often up to 10 seconds) allows the aerosolized medication time to settle on the surfaces of the airways and be absorbed, increasing its effectiveness."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "You are treating a patient rescued from a house fire. They have soot around their nose and mouth and a hoarse voice. Even if their breathing seems adequate now, you should be highly concerned about:",
+        options: ["Carbon monoxide poisoning", "Developing airway edema and obstruction", "Hypothermia from being sprayed with water", "Both A and B"],
+        correctAnswer: "Both A and B",
+        explanation: "Patients from fires are at risk for two major respiratory threats. CO poisoning from inhaling smoke is one. The other is thermal and chemical injury to the upper airway, which can cause delayed but severe swelling (edema) leading to complete obstruction."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing a patient's breathing quality. Which of the following would be considered an abnormal quality of breathing?",
+        options: ["Quiet and unlabored", "Shallow depth (poor tidal volume)", "A regular rhythm", "A rate of 14 breaths/min"],
+        correctAnswer: "Shallow depth (poor tidal volume)",
+        explanation: "Quality of breathing refers to its character—depth, effort, and sound. Shallow breathing indicates poor tidal volume and is an inadequate quality. The other options describe normal qualities of breathing."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "The thin, slippery membranes that surround the lungs are called the:",
+        options: ["Pericardium", "Pleura", "Meninges", "Peritoneum"],
+        correctAnswer: "Pleura",
+        explanation: "The pleura consists of two layers: the visceral pleura (covering the lung) and the parietal pleura (lining the chest wall). The space between them is the pleural space. Pleurisy is inflammation of these membranes."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Which of the following is the primary reason for NOT having a hyperventilating patient breathe into a paper bag?",
+        options: ["It is not effective at raising CO2 levels.", "It can cause the patient to become claustrophobic.", "If the patient's hyperventilation is due to a medical cause like acidosis, rebreathing CO2 can be harmful.", "The bag might tear during use."],
+        correctAnswer: "If the patient's hyperventilation is due to a medical cause like acidosis, rebreathing CO2 can be harmful.",
+        explanation: "While hyperventilation can be caused by anxiety, it can also be the body's compensation for a serious medical problem (like DKA or a PE). In these cases, the patient needs to eliminate CO2. Forcing them to rebreathe it can worsen their acidosis or hypoxia. It is not an appropriate field intervention."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "A patient with emphysema typically has difficulty with which phase of breathing, leading to a prolonged expiratory phase and air trapping?",
+        options: ["Inhaling deeply", "Exhaling completely", "Holding their breath", "Coughing"],
+        correctAnswer: "Exhaling completely",
+        explanation: "The loss of elastic recoil in the lungs of an emphysema patient means that exhalation is no longer a passive process. They must actively force air out, which is inefficient and leads to a prolonged expiratory phase as they struggle to empty their lungs."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing an infant and note that their abdomen and chest move in opposite directions when they breathe (seesaw breathing). This indicates:",
+        options: ["A normal breathing pattern for an infant.", "Mild respiratory distress.", "Severe respiratory distress and impending failure.", "Abdominal pain or injury."],
+        correctAnswer: "Severe respiratory distress and impending failure.",
+        explanation: "Seesaw respirations are a sign of extreme respiratory effort in infants. It indicates that the diaphragm is pulling down so forcefully that it sucks the weaker chest wall inward, a sign of fatigue and impending respiratory arrest."
+    },
+    {
+        category: "Special Populations",
+        question: "Foreign body aspiration in a toddler is most likely to cause obstruction and diminished breath sounds in which lung?",
+        options: ["The right lung", "The left lung", "Both lungs equally", "The upper lobes only"],
+        correctAnswer: "The right lung",
+        explanation: "The right mainstem bronchus is wider, shorter, and more vertical than the left. Due to this anatomical difference, aspirated foreign objects are statistically more likely to lodge in the right lung."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Contraindications for assisting a patient with their prescribed MDI include all of the following EXCEPT:",
+        options: ["The patient is unable to coordinate inhalation with pressing the canister.", "The patient has already taken the maximum prescribed dose.", "The patient is complaining of shortness of breath and has a history of asthma.", "You are unable to contact medical control and your protocol requires it."],
+        correctAnswer: "The patient is complaining of shortness of breath and has a history of asthma.",
+        explanation: "This statement describes the *indication* for using the MDI, not a contraindication. The other options are all valid reasons to withhold assistance with the medication."
+    },
+    {
+        category: "Patient Assessment",
+        question: "A patient with both COPD and congestive heart failure is in respiratory distress. You auscultate their lungs and hear both wheezes and crackles. Which finding is the most reliable indicator of acute left-sided heart failure (pulmonary edema)?",
+        options: ["The presence of wheezing.", "The patient's history of smoking.", "The presence of crackles in the lung bases.", "The patient's use of a home nebulizer."],
+        correctAnswer: "The presence of crackles in the lung bases.",
+        explanation: "While wheezing can be present in both ('cardiac asthma'), crackles (rales) are specifically caused by fluid in the alveoli and are the hallmark sign of pulmonary edema from CHF. COPD typically presents with 'dry' sounds like wheezes."
+    },
+    {
+        category: "Special Populations",
+        question: "You are assessing a 6-month-old infant in respiratory distress. You observe prominent nasal flaring with each breath. This is a sign of:",
+        options: ["A normal finding in a sleeping infant.", "Significant increase in the work of breathing.", "A partial upper airway obstruction from a foreign body.", "The infant attempting to cool down."],
+        correctAnswer: "Significant increase in the work of breathing.",
+        explanation: "Infants are obligate nose breathers. Nasal flaring is an attempt to open the nares as wide as possible to reduce air resistance and draw in more air. It is a significant sign of respiratory distress in this age group."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "A patient with a history of cancer and recent immobility reports a sudden onset of dyspnea. They deny any cough or fever. This presentation should make an EMT most suspicious for:",
+        options: ["Pneumonia", "Pleural effusion", "Pulmonary embolism", "COPD exacerbation"],
+        correctAnswer: "Pulmonary embolism",
+        explanation: "Cancer and immobility are major risk factors for developing a DVT, which can lead to a pulmonary embolism. The sudden onset of dyspnea without the infectious signs of pneumonia (fever/cough) makes a PE a top differential."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing four patients with chief complaints of shortness of breath. Which patient is the highest priority for immediate transport?",
+        options: ["A 19-year-old with asthma who is wheezing but has an SpO2 of 96% after one puff of their inhaler.", "A 60-year-old with a cold who has a respiratory rate of 20 and a slight cough.", "A 4-year-old with a high fever, stridor, and who is drooling.", "An 80-year-old with COPD who has an SpO2 of 91% on home oxygen and is speaking in full sentences."],
+        correctAnswer: "A 4-year-old with a high fever, stridor, and who is drooling.",
+        explanation: "The 4-year-old's presentation is classic for epiglottitis, a life-threatening emergency with a high risk of complete airway obstruction. This patient requires the most immediate and careful intervention and transport."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "The process of breathing is controlled by the respiratory center located in what part of the brain?",
+        options: ["Cerebrum", "Cerebellum", "Brainstem (medulla and pons)", "Frontal lobe"],
+        correctAnswer: "Brainstem (medulla and pons)",
+        explanation: "The brainstem contains the primary respiratory control centers which automatically regulate the rate and depth of breathing based on input from chemoreceptors that monitor CO2, O2, and pH levels."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "A patient with pertussis (whooping cough) is most contagious during which phase of the illness?",
+        options: ["Only after the 'whoop' develops.", "During the initial cold-like symptom phase.", "They are not contagious to adults.", "Only if they have a high fever."],
+        correctAnswer: "During the initial cold-like symptom phase.",
+        explanation: "Pertussis is highly contagious, especially early in its course when it resembles a common cold. This is an often-overlooked detail that contributes to its spread before the more dramatic coughing fits begin."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "What is the maximum amount of time you should suction the oropharynx of an adult patient before re-oxygenating?",
+        options: ["5 seconds", "15 seconds", "30 seconds", "As long as it takes to clear the airway"],
+        correctAnswer: "15 seconds",
+        explanation: "Suctioning removes oxygen along with secretions. To prevent severe hypoxia, suctioning in an adult should be limited to no more than 15 seconds at a time (10 for a child, 5 for an infant) before re-applying oxygen."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "Atelectasis refers to the collapse of alveoli. Which of the following is NOT a common cause of atelectasis?",
+        options: ["A mucus plug obstructing a bronchiole.", "A foreign body aspiration.", "Prolonged shallow breathing after surgery.", "Hyperventilation from a panic attack."],
+        correctAnswer: "Hyperventilation from a panic attack.",
+        explanation: "Atelectasis is caused by a lack of ventilation to a part of the lung. Obstructions (mucus, foreign body) or prolonged shallow breathing prevent air from reaching the alveoli, causing them to collapse. Hyperventilation involves moving too much air and would not cause atelectasis."
+    },
+    {
+        category: "Patient Assessment",
+        question: "A patient describes a sensation of being unable to get enough air, despite breathing rapidly. This subjective feeling is best termed:",
+        options: ["Apnea", "Bradypnea", "Air hunger", "Eupnea"],
+        correctAnswer: "Air hunger",
+        explanation: "Air hunger is the patient's own perception of not getting enough air. It is a subjective complaint and a powerful symptom of dyspnea, indicating significant respiratory distress."
+    },
+    {
+        category: "Respiratory Conditions: Chronic",
+        question: "In addition to repeated lung infections, patients with cystic fibrosis often have significant problems with which other body system?",
+        options: ["The renal system", "The digestive system", "The nervous system", "The cardiovascular system"],
+        correctAnswer: "The digestive system",
+        explanation: "Cystic fibrosis also affects the cells that line the pancreas, blocking the release of digestive enzymes. This leads to malabsorption of nutrients, poor weight gain, and bulky, foul-smelling stools."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Management of a patient hyperventilating from a panic attack should include all of the following EXCEPT:",
+        options: ["Reassuring the patient in a calm manner.", "Coaching them to slow their breathing.", "Applying supplemental oxygen.", "Having the patient breathe into a paper bag."],
+        correctAnswer: "Having the patient breathe into a paper bag.",
+        explanation: "Having a patient rebreathe CO2 from a paper bag is an outdated and potentially dangerous practice. You cannot be certain the cause is anxiety, and if it's a medical issue, this could cause harm. The standard of care is reassurance and supplemental oxygen."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "The life-threatening complication of a tension pneumothorax is obstructive shock, which is caused by:",
+        options: ["Severe hypoxia from the collapsed lung.", "Compression of the heart and great vessels, impairing blood return.", "A systemic inflammatory response.", "Bleeding into the pleural space."],
+        correctAnswer: "Compression of the heart and great vessels, impairing blood return.",
+        explanation: "In a tension pneumothorax, the mediastinal shift compresses the vena cava, which severely reduces preload (the amount of blood returning to the heart). This causes a catastrophic drop in cardiac output, leading to obstructive shock."
+    },
+    {
+        category: "Special Populations",
+        question: "An 82-year-old female with a history of dementia and hypertension presents with a sudden onset of shortness of breath and confusion. She takes multiple medications. This presentation could be consistent with all of the following EXCEPT:",
+        options: ["A 'silent' myocardial infarction", "A pulmonary embolism", "Pneumonia", "A simple upper respiratory infection"],
+        correctAnswer: "A simple upper respiratory infection",
+        explanation: "While possible, a simple URI is unlikely to cause a *sudden* onset of *severe* dyspnea and confusion. The other conditions are serious and can present atypically in the elderly with dyspnea or confusion as the primary sign."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You observe a bluish discoloration only in the fingertips and toes of a patient who was outside in the cold. This is most likely:",
+        options: ["Central cyanosis, a sign of severe hypoxia.", "Peripheral cyanosis, likely due to cold-induced vasoconstriction.", "A normal finding in all patients.", "Lividity, a sign of death."],
+        correctAnswer: "Peripheral cyanosis, likely due to cold-induced vasoconstriction.",
+        explanation: "Peripheral cyanosis affects the extremities and is often caused by poor local circulation (like from cold). Central cyanosis (lips, mucous membranes) is a more ominous sign of systemic hypoxia. While both indicate poor oxygenation, the location is key to determining the likely cause."
+    },
+    {
+        category: "Respiratory Conditions: Infections",
+        question: "What is the key difference in the typical onset of symptoms between croup and epiglottitis?",
+        options: ["Croup is bacterial, while epiglottitis is viral.", "Croup has a gradual onset over days, while epiglottitis has a rapid onset over hours.", "Croup causes drooling, while epiglottitis causes a barking cough.", "Croup affects adults, while epiglottitis affects children."],
+        correctAnswer: "Croup has a gradual onset over days, while epiglottitis has a rapid onset over hours.",
+        explanation: "This is a critical distinguishing feature. Croup usually follows a few days of cold-like symptoms. Epiglottitis can make a child appear healthy in the morning and critically ill by the afternoon."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "You are treating a patient who was ejected from a vehicle and is unresponsive with snoring respirations. Which is the most appropriate method to open their airway?",
+        options: ["Head-tilt, chin-lift", "Jaw-thrust maneuver", "Insertion of an OPA only", "Placing them in a sitting position"],
+        correctAnswer: "Jaw-thrust maneuver",
+        explanation: "This patient has a significant mechanism of injury, so a spinal injury must be suspected. The jaw-thrust maneuver is the appropriate technique to open the airway while maintaining manual cervical spine stabilization."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "While hay fever is not typically an emergency, why is it important to note in a patient's history?",
+        options: ["It often leads to pneumonia.", "It indicates the patient is more likely to have other allergies and a risk for anaphylaxis.", "It is a sign of a compromised immune system.", "It causes bronchospasm just like asthma."],
+        correctAnswer: "It indicates the patient is more likely to have other allergies and a risk for anaphylaxis.",
+        explanation: "People with hay fever are considered 'atopic,' meaning they have a genetic predisposition to allergic diseases. This places them at a higher risk of developing other allergies, including life-threatening anaphylactic reactions."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "A patient with an asthma attack asks for their steroid inhaler (e.g., fluticasone) instead of their albuterol inhaler. You should:",
+        options: ["Assist them with the steroid inhaler as requested.", "Explain that the steroid inhaler is a 'controller' medication and will not provide immediate relief.", "Administer both inhalers at the same time.", "Withhold all inhalers and apply CPAP immediately."],
+        correctAnswer: "Explain that the steroid inhaler is a 'controller' medication and will not provide immediate relief.",
+        explanation: "It's a common point of confusion for patients. EMTs must know the difference. Steroid inhalers reduce inflammation over the long term but have no bronchodilating effect for an acute attack. The patient needs their rescue inhaler (albuterol)."
+    },
+    {
+        category: "Patient Assessment",
+        question: "You are assessing a patient in respiratory distress who denies chest pain. In your radio report to the hospital, this finding is considered a:",
+        options: ["Non-essential detail", "Symptom of malingering", "Pertinent negative", "Positive finding"],
+        correctAnswer: "Pertinent negative",
+        explanation: "A pertinent negative is the absence of a sign or symptom that would normally be expected with a particular condition. Since many respiratory emergencies can have a cardiac cause, the absence of chest pain is an important piece of information to relay."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "The underlying pathophysiology of acute pulmonary edema is MOST often related to the failure of which chamber of the heart?",
+        options: ["Right atrium", "Right ventricle", "Left atrium", "Left ventricle"],
+        correctAnswer: "Left ventricle",
+        explanation: "When the left ventricle fails to pump effectively, it cannot keep up with the blood returning from the lungs. This causes pressure to back up into the pulmonary circulation, forcing fluid from the capillaries into the alveoli."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Your patient has a tracheostomy tube that is obstructed by a mucus plug. After attempting to suction with no success, what is your immediate priority?",
+        options: ["Attempting to ventilate through the patient's mouth and nose.", "Requesting ALS and considering caregiver assistance to replace the tube.", "Transporting rapidly without further intervention.", "Applying CPAP over the stoma."],
+        correctAnswer: "Requesting ALS and considering caregiver assistance to replace the tube.",
+        explanation: "If you cannot clear the obstruction, the airway is not patent. Ventilating through the mouth may not work if the larynx is sealed. The definitive solution is often replacing the tube, which may be done by trained caregivers or an ALS provider. Your priority is to get that help on the way."
+    },
+    {
+        category: "Special Populations",
+        question: "An infant in severe respiratory distress may exhibit a short, low-pitched sound at the end of exhalation. This sound, called 'grunting,' is an attempt to:",
+        options: ["Clear fluid from their airway.", "Signal hunger or pain.", "Keep alveoli open by creating back pressure (PEEP).", "Generate a more forceful cough."],
+        correctAnswer: "Keep alveoli open by creating back pressure (PEEP).",
+        explanation: "Grunting is the sound of an infant exhaling against a partially closed glottis. This creates a natural form of Positive End-Expiratory Pressure (PEEP) to prevent the alveoli from collapsing. It is a sign of significant distress."
+    },
+    {
+        category: "Respiratory Conditions: Acute/Obstructive",
+        question: "Causes of sudden-onset dyspnea include all of the following EXCEPT:",
+        options: ["Pulmonary embolism", "Anaphylaxis", "Spontaneous pneumothorax", "Pneumonia"],
+        correctAnswer: "Pneumonia",
+        explanation: "While pneumonia can cause acute distress, the onset of the illness itself is typically gradual over a day or more, often following an upper respiratory infection. The other conditions characteristically have a very sudden, acute onset."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "You are treating a patient for an anaphylactic reaction from a bee sting. The stinger is still in their arm. What is the proper technique for removal?",
+        options: ["Squeeze it with tweezers to pull it straight out.", "Scrape it away with the edge of a credit card or similar object.", "Leave it in place until you reach the hospital.", "Apply ice directly to the stinger to numb the area first."],
+        correctAnswer: "Scrape it away with the edge of a credit card or similar object.",
+        explanation: "The venom sac is often still attached to the stinger. Squeezing it with tweezers or fingers can inject the remaining venom into the patient. Scraping it off minimizes this risk."
+    },
+    {
+        category: "Patient Assessment",
+        question: "When applying the OPQRST mnemonic to a patient with dyspnea, asking 'What were you doing when this started?' helps to determine:",
+        options: ["Quality", "Radiation", "Severity", "Onset/Provocation"],
+        correctAnswer: "Onset/Provocation",
+        explanation: "This question helps establish the circumstances of the event. Did it start suddenly at rest (suggesting a PE or pneumothorax) or during exertion (suggesting angina or COPD exacerbation)? This information is vital for determining the onset and what might provoke the symptom."
+    },
+    {
+        category: "Anatomy and Physiology",
+        question: "The main reason patients with emphysema utilize pursed-lip breathing is to:",
+        options: ["Increase their respiratory rate.", "Create back pressure in the airways to prevent their premature collapse.", "Help them inhale more deeply.", "Humidify the air they are breathing."],
+        correctAnswer: "Create back pressure in the airways to prevent their premature collapse.",
+        explanation: "Pursed-lip breathing creates a natural form of PEEP (Positive End-Expiratory Pressure). This back pressure helps to splint the weakened and collapsible small airways open during exhalation, allowing for more complete emptying of trapped air."
+    },
+    {
+        category: "Pharmacology and Interventions",
+        question: "Your patient, who was on CPAP for severe pulmonary edema, suddenly becomes apneic. Your immediate action should be to:",
+        options: ["Increase the PEEP setting on the CPAP machine.", "Remove the CPAP mask and begin ventilating with a BVM.", "Check the patient's blood pressure.", "Reposition the patient's head."],
+        correctAnswer: "Remove the CPAP mask and begin ventilating with a BVM.",
+        explanation: "CPAP is a treatment for spontaneously breathing patients. If the patient becomes apneic (stops breathing), CPAP is no longer effective and is contraindicated. The standard of care for apnea is to provide positive pressure ventilations with a BVM."
+    },
+    {
+        category: "Patient Assessment",
+        question: "Jugular vein distention (JVD) in a patient with respiratory distress is a potential sign of:",
+        options: ["Anaphylaxis", "Asthma", "Tension pneumothorax or right-sided heart failure", "A simple upper respiratory infection"],
+        correctAnswer: "Tension pneumothorax or right-sided heart failure",
+        explanation: "JVD is caused by a backup of blood in the venous system. This can happen when the right side of the heart is failing or when pressure in the chest (from a tension pneumothorax or severe pericardial tamponade) prevents the heart from filling properly."
+    },
+    {
+        category: "Special Populations",
+        question: "A significant concern when assessing a geriatric patient in respiratory distress is polypharmacy, which means:",
+        options: ["The patient is not compliant with their medications.", "The patient is taking multiple medications for various conditions.", "The patient is allergic to many common medications.", "The patient requires medication for their breathing problem."],
+        correctAnswer: "The patient is taking multiple medications for various conditions.",
+        explanation: "Polypharmacy is the concurrent use of multiple medications. In geriatric patients, this increases the risk of drug interactions and can cause atypical presentations or mask compensatory signs (like a beta-blocker preventing tachycardia)."
+    },
+    {
+        category: "Patient Assessment",
+        question: "A patient with both COPD and CHF is wheezing. Which of the following details would most strongly suggest the wheezing is from CHF ('cardiac asthma') rather than a COPD exacerbation?",
+        options: ["The patient has a history of smoking.", "The patient is coughing up pink, frothy sputum.", "The patient uses a daily inhaler.", "The wheezing is only heard on expiration."],
+        correctAnswer: "The patient is coughing up pink, frothy sputum.",
+        explanation: "While both conditions can cause wheezing, pink frothy sputum is the hallmark sign of severe pulmonary edema, which is caused by CHF. This finding points strongly toward a cardiac origin for the respiratory distress."
+    }
+];
+        
+
+        // --- DOM Elements ---
+        const categorySelect = document.getElementById('category-select');
+        const scrambleBtn = document.getElementById('scramble-btn');
+        const reviewStarredBtn = document.getElementById('review-starred-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const starBtn = document.getElementById('star-btn');
+        const optionsList = document.getElementById('options-list');
+        const explanationDiv = document.getElementById('explanation');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- State Management ---
+        let currentQuizSet = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { questionIndex: 'selected answer' }
+        let starredQuestions = new Set(); 
+
+        // --- Functions ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function populateCategories() {
+            const categories = ['All Questions', ...new Set(allQuestions.map(q => q.category))];
+            categorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            const randomOption = document.createElement('option');
+            randomOption.value = 'Random20';
+            randomOption.textContent = 'Random Quiz (20 Questions)';
+            categorySelect.appendChild(randomOption);
+        }
+
+        function loadQuiz(category) {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            
+            if (category === 'All Questions') {
+                currentQuizSet = [...allQuestions];
+            } else if (category === 'Random20') {
+                const shuffled = [...allQuestions];
+                shuffleArray(shuffled);
+                currentQuizSet = shuffled.slice(0, 20);
+            } else if (category === 'Starred') {
+                 if (starredQuestions.size === 0) {
+                    alert("You haven't starred any questions yet!");
+                    // Revert dropdown to 'All Questions' if starred is empty
+                    categorySelect.value = 'All Questions';
+                    loadQuiz('All Questions');
+                    return;
+                }
+                currentQuizSet = [...starredQuestions];
+            } else {
+                currentQuizSet = allQuestions.filter(q => q.category === category);
+            }
+            
+            if(currentQuizSet.length > 0) {
+                 displayQuestion(currentQuestionIndex);
+            } else {
+                questionText.textContent = "No questions in this set.";
+                optionsList.innerHTML = '';
+                explanationDiv.style.display = 'none';
+                updateProgress();
+                updateNavButtons();
+            }
+        }
+
+        function displayQuestion(index) {
+            if (index < 0 || index >= currentQuizSet.length) return;
+
+            const question = currentQuizSet[index];
+            questionText.textContent = question.question;
+            optionsList.innerHTML = '';
+            
+            // Shuffle options for each question view
+            let shuffledOptions = [...question.options];
+            shuffleArray(shuffledOptions);
+
+            shuffledOptions.forEach(option => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                li.textContent = option;
+                li.addEventListener('click', () => handleAnswerSelect(option));
+                optionsList.appendChild(li);
+            });
+
+            explanationDiv.style.display = 'none';
+            
+            if (userAnswers.hasOwnProperty(index)) {
+                showFeedback(userAnswers[index]);
+            }
+
+            updateProgress();
+            updateNavButtons();
+            updateStarButton();
+        }
+        
+        function handleAnswerSelect(selectedOption) {
+            if (userAnswers.hasOwnProperty(currentQuestionIndex)) return;
+            userAnswers[currentQuestionIndex] = selectedOption;
+            showFeedback(selectedOption);
+        }
+
+        function showFeedback(selectedOption) {
+            const question = currentQuizSet[currentQuestionIndex];
+            const options = optionsList.querySelectorAll('.option-item');
+            
+            options.forEach(optionLi => {
+                optionLi.classList.add('answered');
+                
+                if (optionLi.textContent === question.correctAnswer) {
+                    optionLi.classList.add('correct');
+                } else if (optionLi.textContent === selectedOption) {
+                    optionLi.classList.add('incorrect', 'selected');
+                }
+            });
+
+            explanationDiv.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
+            explanationDiv.style.display = 'block';
+        }
+
+        function updateProgress() {
+            const progress = currentQuizSet.length > 0 ? ((currentQuestionIndex + 1) / currentQuizSet.length) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+            questionCounter.textContent = currentQuizSet.length > 0 ? `${currentQuestionIndex + 1} / ${currentQuizSet.length}` : '0 / 0';
+        }
+
+        function updateNavButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === currentQuizSet.length - 1;
+        }
+
+        function updateStarButton() {
+            if (currentQuizSet.length === 0) {
+                 starBtn.classList.remove('starred');
+                 starBtn.innerHTML = '☆';
+                 return;
+            }
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starBtn.classList.add('starred');
+                starBtn.innerHTML = '★'; // Filled star
+            } else {
+                starBtn.classList.remove('starred');
+                starBtn.innerHTML = '☆'; // Empty star
+            }
+        }
+        
+        function toggleStar() {
+            if (currentQuizSet.length === 0) return;
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starredQuestions.delete(currentQuestionObject);
+            } else {
+                starredQuestions.add(currentQuestionObject);
+            }
+            updateStarButton();
+        }
+
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            loadQuiz(categorySelect.value); // Initial load
+        });
+
+        categorySelect.addEventListener('change', (e) => loadQuiz(e.target.value));
+
+        scrambleBtn.addEventListener('click', () => {
+            if (currentQuizSet.length > 0) {
+                shuffleArray(currentQuizSet);
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        reviewStarredBtn.addEventListener('click', () => {
+            let starredOption = categorySelect.querySelector('option[value="Starred"]');
+            if (!starredOption) {
+                 starredOption = document.createElement('option');
+                 starredOption.value = 'Starred';
+                 starredOption.textContent = '★ Starred Questions';
+                 categorySelect.appendChild(starredOption);
+            }
+            categorySelect.value = 'Starred';
+            loadQuiz('Starred');
+        });
+        
+        starBtn.addEventListener('click', toggleStar);
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuizSet.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+    </script>
+</body>
+</html>
