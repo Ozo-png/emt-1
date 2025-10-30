@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Respiratory Emergencies Quiz</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --light-gray: #bdc3c7;
+            --white: #ffffff;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+            --star-color: #f1c40f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        #controls {
+            padding: 15px 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #controls select, #controls button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            font-size: 1em;
+            cursor: pointer;
+            background-color: var(--white);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        #controls select {
+            flex-grow: 1;
+        }
+
+        #controls button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #controls button:hover {
+            background-color: #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #quiz-area {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        #progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #progress-bar-container {
+            flex-grow: 1;
+            height: 10px;
+            background-color: var(--background-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease-in-out;
+        }
+
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        #question-text {
+            font-size: 1.2em;
+            font-weight: 500;
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+        
+        #star-btn {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--light-gray);
+            transition: color 0.2s, transform 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        #star-btn.starred {
+            color: var(--star-color);
+        }
+        #star-btn:hover {
+            transform: scale(1.2);
+        }
+
+        #options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            padding: 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-item:not(.answered):hover {
+            border-color: var(--primary-color);
+            background-color: #f0f8ff;
+        }
+
+        .option-item.answered {
+            cursor: default;
+        }
+
+        .option-item.correct {
+            background-color: #e6f9e6;
+            border-color: var(--correct-color);
+            color: #1e851e;
+            font-weight: bold;
+        }
+        
+        .option-item.incorrect.selected {
+            background-color: #fdeaea;
+            border-color: var(--incorrect-color);
+            color: #b92c2c;
+        }
+
+        #explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 4px;
+            display: none;
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        #navigation button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--white);
+            color: var(--primary-color);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            min-width: 100px;
+        }
+
+        #navigation button:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        #navigation button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+            #app-container {
+                border-radius: 0;
+                box-shadow: none;
+            }
+            header h1 {
+                font-size: 1.4em;
+            }
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #quiz-area {
+                padding: 15px;
+            }
+            #question-text {
+                font-size: 1.1em;
+            }
+            .option-item {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1>EMT: Respiratory Emergencies Study Tool</h1>
+        </header>
+
+        <div id="controls">
+            <select id="category-select"></select>
+            <button id="scramble-btn">Scramble Set</button>
+            <button id="review-starred-btn">Review Starred</button>
+        </div>
+
+        <main id="quiz-area">
+            <div id="progress-container">
+                <span id="question-counter"></span>
+                <div id="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div id="question-header">
+                 <p id="question-text"></p>
+                 <button id="star-btn" title="Star this question for later review">☆</button>
+            </div>
+
+            <ul id="options-list"></ul>
+            <div id="explanation"></div>
+
+            <div id="navigation">
+                <button id="prev-btn">Previous</button>
+                <button id="next-btn">Next</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Questions Database ---
+        // This is the complete and corrected list of 100 questions.
+        const allQuestions = [
+    {
+        category: "Vital Vocabulary",
+        question: "What is the correct definition of 'acidosis'?",
+        options: [
+            "The buildup of excess acid in the blood or body tissues that can result from a primary illness.",
+            "A condition where the body has too much base, often caused by hyperventilation.",
+            "A dangerous condition where the body's tissues and cells do not have enough oxygen.",
+            "The process of exchanging oxygen and carbon dioxide in the lungs."
+        ],
+        correctAnswer: "The buildup of excess acid in the blood or body tissues that can result from a primary illness.",
+        explanation: "Acidosis is specifically the buildup of excess acid (a low pH state) in the body, often as a result of a medical condition like DKA or certain poisonings. Alkalosis is the opposite (buildup of base). Hypoxia is a lack of oxygen."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following best defines 'adventitious breath sounds'?",
+        options: [
+            "Normal, clear breath sounds heard in a healthy individual.",
+            "Abnormal breath sounds such as wheezing, stridor, rhonchi, and crackles.",
+            "The sound of air moving through the main bronchi, which is a normal finding.",
+            "A complete absence of breath sounds in one or both lungs."
+        ],
+        correctAnswer: "Abnormal breath sounds such as wheezing, stridor, rhonchi, and crackles.",
+        explanation: "The term 'adventitious' means abnormal or extra. These are sounds heard in addition to, or in place of, normal breath sounds and indicate a pathologic condition."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is the definition of 'alkalosis'?",
+        options: [
+            "The buildup of excess base (lack of acids) in the body fluids.",
+            "A condition where the body has too much acid, often from a lung disease.",
+            "A substance that causes an allergic reaction.",
+            "The process of delivering oxygen to the blood from the alveoli."
+        ],
+        correctAnswer: "The buildup of excess base (lack of acids) in the body fluids.",
+        explanation: "Alkalosis is the opposite of acidosis. It is a state of high pH caused by an excess of base or a lack of acid, often seen in patients who are hyperventilating."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "An 'allergen' is defined as:",
+        options: [
+            "A severe, life-threatening allergic reaction.",
+            "A substance that causes an allergic reaction.",
+            "A medication used to treat allergic reactions, such as epinephrine.",
+            "A type of white blood cell that fights infection."
+        ],
+        correctAnswer: "A substance that causes an allergic reaction.",
+        explanation: "An allergen is the trigger for an allergic reaction. Examples include pollen, pet dander, or peanuts. Anaphylaxis is the reaction itself."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which definition best describes 'anaphylaxis'?",
+        options: [
+            "A minor allergic reaction characterized by a runny nose, also known as hay fever.",
+            "A substance, such as pollen or peanuts, that triggers an allergic response.",
+            "An extreme, life-threatening, systemic allergic reaction that may include shock and respiratory failure.",
+            "An acute spasm of the smaller air passages, commonly called asthma."
+        ],
+        correctAnswer: "An extreme, life-threatening, systemic allergic reaction that may include shock and respiratory failure.",
+        explanation: "Anaphylaxis is the most severe form of allergic reaction. It is systemic, affecting multiple body systems, and can rapidly become fatal without intervention."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The definition of 'asthma' is:",
+        options: [
+            "A chronic lung disease characterized by irreversible obstruction of airflow.",
+            "An acute spasm of the smaller air passages, called bronchioles, associated with excessive mucus production and swelling.",
+            "Inflammation of the bronchioles, usually seen in children and caused by RSV.",
+            "A bacterial infection of the epiglottis causing it to become inflamed and enlarged."
+        ],
+        correctAnswer: "An acute spasm of the smaller air passages, called bronchioles, associated with excessive mucus production and swelling.",
+        explanation: "Asthma is a reactive airway disease involving bronchospasm, mucus, and inflammation, leading to reversible lower airway obstruction. This is distinct from COPD, which is not fully reversible."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What does 'atelectasis' refer to?",
+        options: [
+            "Collapse of the alveolar air spaces of the lungs.",
+            "Inflammation of the pleural lining of the lungs.",
+            "Fluid accumulation within the pleural space.",
+            "Destruction of the alveolar walls, as seen in emphysema."
+        ],
+        correctAnswer: "Collapse of the alveolar air spaces of the lungs.",
+        explanation: "Atelectasis is the collapse of alveoli, which prevents them from participating in gas exchange. It can be caused by obstructions or prolonged shallow breathing."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Bronchial breath sounds' are defined as:",
+        options: [
+            "Abnormal rattling sounds that signal fluid in the air spaces.",
+            "Normal breath sounds made by air moving through the bronchi.",
+            "A harsh, high-pitched sound caused by upper airway obstruction.",
+            "A high-pitched whistling sound caused by lower airway narrowing."
+        ],
+        correctAnswer: "Normal breath sounds made by air moving through the bronchi.",
+        explanation: "Bronchial breath sounds are normal sounds heard over the larger airways (the bronchi). They are distinct from abnormal (adventitious) sounds like crackles or wheezing."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following best defines 'bronchiolitis'?",
+        options: [
+            "Irritation of the major lung passageways from long-term exposure to smoke.",
+            "Inflammation of the bronchioles that usually occurs in children younger than 2 years and is often caused by RSV.",
+            "An acute spasm of the bronchioles associated with an allergic reaction.",
+            "An acute or chronic inflammation of the lungs that damages lung tissue."
+        ],
+        correctAnswer: "Inflammation of the bronchioles that usually occurs in children younger than 2 years and is often caused by RSV.",
+        explanation: "The key identifiers for bronchiolitis are inflammation of the *small airways* (bronchioles), the typical age group (infants/toddlers), and the common viral cause (RSV)."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The definition of 'bronchitis' is:",
+        options: [
+            "An acute spasm of the smaller air passages, or bronchioles.",
+            "Inflammation of the bronchioles, typically caused by RSV in young children.",
+            "An acute or chronic inflammation of the lung that may damage lung tissue; usually associated with cough and sputum production.",
+            "Irreversible destruction of the alveolar walls, leading to air trapping."
+        ],
+        correctAnswer: "An acute or chronic inflammation of the lung that may damage lung tissue; usually associated with cough and sputum production.",
+        explanation: "Bronchitis specifically refers to inflammation of the bronchi (larger airways), which leads to cough and sputum. It is distinct from bronchiolitis (smaller airways) and emphysema (alveolar destruction)."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is 'carbon dioxide retention'?",
+        options: [
+            "A condition where the body breathes too fast, blowing off too much CO2.",
+            "The process of exchanging CO2 for oxygen in the alveoli.",
+            "A condition characterized by a chronically high blood level of carbon dioxide in which the respiratory center no longer responds to high CO2 levels.",
+            "Poisoning from inhaling an odorless, colorless gas."
+        ],
+        correctAnswer: "A condition characterized by a chronically high blood level of carbon dioxide in which the respiratory center no longer responds to high CO2 levels.",
+        explanation: "This condition, common in end-stage COPD, leads to the development of a hypoxic drive, as the body's primary stimulus to breathe shifts from high CO2 to low O2."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following accurately defines 'carbon monoxide'?",
+        options: [
+            "The gas that is the primary stimulus for breathing in healthy people.",
+            "An odorless, colorless, tasteless, and highly poisonous gas that results from incomplete oxidation of carbon.",
+            "A buildup of acid in the body, often caused by lung disease.",
+            "A medication used as a bronchodilator in asthma attacks."
+        ],
+        correctAnswer: "An odorless, colorless, tasteless, and highly poisonous gas that results from incomplete oxidation of carbon.",
+        explanation: "Carbon monoxide (CO) is a toxic gas that binds to hemoglobin far more effectively than oxygen, leading to cellular hypoxia. Carbon dioxide (CO2) is the primary stimulus for breathing."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Chronic bronchitis' is best defined as:",
+        options: [
+            "An acute infection of the bronchi, usually viral, that resolves in a few weeks.",
+            "Inflammation of the smaller bronchioles in infants.",
+            "Irritation of the major lung passageways from long-term exposure to infectious disease or irritants such as smoke.",
+            "Extreme dilation and destruction of the alveoli."
+        ],
+        correctAnswer: "Irritation of the major lung passageways from long-term exposure to infectious disease or irritants such as smoke.",
+        explanation: "The key elements of this definition are the *chronic* nature of the irritation and the location in the *major lung passageways* (bronchi), differentiating it from acute bronchitis or emphysema."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is the definition of 'chronic obstructive pulmonary disease (COPD)'?",
+        options: [
+            "A severe, life-threatening allergic reaction.",
+            "A lung disease characterized by chronic obstruction of lung airflow that interferes with normal breathing and is not fully reversible.",
+            "An acute spasm of the smaller air passages that is fully reversible with treatment.",
+            "A collection of fluid in the pleural space that compresses the lung."
+        ],
+        correctAnswer: "A lung disease characterized by chronic obstruction of lung airflow that interferes with normal breathing and is not fully reversible.",
+        explanation: "COPD is an umbrella term for diseases like emphysema and chronic bronchitis. The key feature is the chronic, progressive, and not fully reversible nature of the airway obstruction."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The term 'continuous positive airway pressure (CPAP)' describes:",
+        options: [
+            "A device used to suction secretions from a patient's airway.",
+            "A medication canister used to deliver a bronchodilator.",
+            "A method of ventilation used to treat respiratory distress that can prevent the need for endotracheal intubation.",
+            "The natural back-pressure created by pursed-lip breathing."
+        ],
+        correctAnswer: "A method of ventilation used to treat respiratory distress that can prevent the need for endotracheal intubation.",
+        explanation: "CPAP provides non-invasive ventilatory support by delivering a constant stream of pressurized air, which keeps alveoli open and improves oxygenation in spontaneously breathing patients."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'COVID-19' is defined as:",
+        options: [
+            "A bacterial infection of the lungs, also known as tuberculosis.",
+            "A respiratory disease caused by the virus SARS-CoV-2.",
+            "A condition of chronically high carbon dioxide levels.",
+            "A viral infection that causes a barking cough, usually in children."
+        ],
+        correctAnswer: "A respiratory disease caused by the virus SARS-CoV-2.",
+        explanation: "COVID-19 is the name of the disease caused by the specific coronavirus named SARS-CoV-2. It is distinct from other respiratory illnesses like TB or croup."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What are 'crackles'?",
+        options: [
+            "Crackling, rattling breath sounds that signal fluid in the air spaces of the lungs.",
+            "Coarse, low-pitched sounds heard in patients with chronic mucus in the upper airways.",
+            "A high-pitched whistling sound prominent on expiration.",
+            "Normal sounds of air moving through the bronchi."
+        ],
+        correctAnswer: "Crackling, rattling breath sounds that signal fluid in the air spaces of the lungs.",
+        explanation: "Crackles (or rales) are caused by air being forced through fluid in the alveoli. They are a hallmark sign of pulmonary edema and pneumonia."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The definition of 'croup' is:",
+        options: [
+            "A bacterial infection where the epiglottis becomes inflamed and enlarged.",
+            "A viral inflammatory disease of the upper respiratory system characterized by a barking cough, usually seen in children.",
+            "An infectious disease where a pseudomembrane forms in the pharynx.",
+            "Inflammation of the small bronchioles, often caused by RSV."
+        ],
+        correctAnswer: "A viral inflammatory disease of the upper respiratory system characterized by a barking cough, usually seen in children.",
+        explanation: "Croup is specifically a viral infection of the larynx and trachea (upper airway) in children, with the barking cough and stridor being its most identifiable features."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following best defines 'diphtheria'?",
+        options: [
+            "An airborne bacterial infection that causes a 'whooping' sound.",
+            "A viral disease that causes a barking cough.",
+            "An infectious disease in which a pseudomembrane forms, lining the pharynx.",
+            "A bacterial infection of the epiglottis."
+        ],
+        correctAnswer: "An infectious disease in which a pseudomembrane forms, lining the pharynx.",
+        explanation: "The key feature of diphtheria is the formation of a thick, gray pseudomembrane that can cause severe upper airway obstruction. It is distinct from pertussis, croup, and epiglottitis."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Dyspnea' is the medical term for:",
+        options: [
+            "A rapid respiratory rate.",
+            "A slow respiratory rate.",
+            "The absence of breathing.",
+            "Shortness of breath."
+        ],
+        correctAnswer: "Shortness of breath.",
+        explanation: "Dyspnea is the subjective sensation or feeling of difficulty breathing. It is a symptom reported by the patient."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "An 'embolus' is defined as:",
+        options: [
+            "A collection of fluid between the lung and chest wall.",
+            "A blood clot or other substance that travels in the circulatory system and causes a blockage.",
+            "A weak spot on an artery wall that bulges out.",
+            "A buildup of plaque within an artery."
+        ],
+        correctAnswer: "A blood clot or other substance that travels in the circulatory system and causes a blockage.",
+        explanation: "An embolus is a moving obstruction. The most common type is a thromboembolus (a traveling blood clot), which can lead to a pulmonary embolism, stroke, or other blockages."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is the correct definition of 'emphysema'?",
+        options: [
+            "Irritation of the major lung passageways from long-term exposure to smoke.",
+            "An acute spasm of the smaller air passages, associated with excessive mucus.",
+            "A disease of the lungs with extreme dilation and eventual destruction of the pulmonary alveoli.",
+            "A viral inflammatory disease of the upper respiratory system."
+        ],
+        correctAnswer: "A disease of the lungs with extreme dilation and eventual destruction of the pulmonary alveoli.",
+        explanation: "Emphysema is a form of COPD characterized by damage to the alveolar walls, which leads to loss of elastic recoil and air trapping. This is different from chronic bronchitis, which affects the larger airways."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Epiglottitis' is best defined as:",
+        options: [
+            "A viral infection causing a barking cough.",
+            "Inflammation of the small bronchioles in an infant.",
+            "A bacterial infection in which the epiglottis becomes inflamed and enlarged, potentially causing an upper airway obstruction.",
+            "An infection of the lung tissue (alveoli)."
+        ],
+        correctAnswer: "A bacterial infection in which the epiglottis becomes inflamed and enlarged, potentially causing an upper airway obstruction.",
+        explanation: "Epiglottitis is a specific, life-threatening bacterial infection of the epiglottis, a key structure of the upper airway. It's crucial to distinguish it from the viral infection, croup."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The term 'hay fever' describes:",
+        options: [
+            "A severe, systemic allergic reaction that includes shock.",
+            "An allergic response, usually to outdoor airborne allergens like pollen; also called allergic rhinitis.",
+            "An airborne bacterial infection that causes a 'whooping' sound.",
+            "A common viral infection of the nose and throat."
+        ],
+        correctAnswer: "An allergic response, usually to outdoor airborne allergens like pollen; also called allergic rhinitis.",
+        explanation: "Hay fever is a specific type of allergic reaction affecting the upper airways, causing cold-like symptoms. It is distinct from the more severe systemic reaction of anaphylaxis."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following defines 'hyperventilation'?",
+        options: [
+            "Rapid, usually deep, breathing that lowers the blood carbon dioxide level below normal.",
+            "A condition where chronically low oxygen levels stimulate breathing.",
+            "A dangerous condition where the body's tissues do not have enough oxygen.",
+            "A breathing pattern that is too slow to support life."
+        ],
+        correctAnswer: "Rapid, usually deep, breathing that lowers the blood carbon dioxide level below normal.",
+        explanation: "Hyperventilation is specifically about over-breathing to the point that it causes a drop in arterial CO2 levels, leading to respiratory alkalosis. It is not the same as simple rapid breathing (tachypnea)."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Hyperventilation syndrome' is a condition that:",
+        options: [
+            "Is the body's response to severe acidosis from a medical illness.",
+            "Occurs in the absence of physical problems and is often associated with panic attacks.",
+            "Is caused by a chronically high level of carbon dioxide.",
+            "Is treated by having the patient breathe into a paper bag."
+        ],
+        correctAnswer: "Occurs in the absence of physical problems and is often associated with panic attacks.",
+        explanation: "This term distinguishes hyperventilation due to psychological stress (panic attack) from hyperventilation that is a compensatory mechanism for a medical problem like DKA. It is a diagnosis of exclusion."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is 'hypoxia'?",
+        options: [
+            "A dangerous condition in which the body tissues and cells do not have enough oxygen.",
+            "A condition where low levels of oxygen stimulate the respiratory drive.",
+            "The process of delivering oxygen to the blood.",
+            "A buildup of excess acid in the blood."
+        ],
+        correctAnswer: "A dangerous condition in which the body tissues and cells do not have enough oxygen.",
+        explanation: "Hypoxia is the state of oxygen deficiency at the tissue level. It is the dangerous outcome of many respiratory and circulatory emergencies. Hypoxic drive is a specific breathing stimulus, not the condition itself."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The term 'hypoxic drive' refers to:",
+        options: [
+            "A dangerous condition where tissues lack sufficient oxygen.",
+            "A condition in which chronically low levels of oxygen in the blood stimulate the respiratory drive.",
+            "A rapid, deep breathing pattern seen in patients with acidosis.",
+            "The primary stimulus for breathing in a healthy person."
+        ],
+        correctAnswer: "A condition in which chronically low levels of oxygen in the blood stimulate the respiratory drive.",
+        explanation: "Hypoxic drive is a backup system for breathing regulation, seen in some patients with chronic lung disease, where the body relies on low O2 instead of high CO2 to breathe."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is 'influenza type A'?",
+        options: [
+            "A common cold virus.",
+            "A virus that has crossed the animal/human barrier and has infected humans, such as the H1N1 strain.",
+            "A bacterial infection that causes a pseudomembrane in the throat.",
+            "A virus that typically causes bronchiolitis in infants."
+        ],
+        correctAnswer: "A virus that has crossed the animal/human barrier and has infected humans, such as the H1N1 strain.",
+        explanation: "Influenza type A viruses are notable for their ability to mutate and cross from animal hosts to humans, sometimes leading to widespread outbreaks or pandemics."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "A 'metered-dose inhaler (MDI)' is:",
+        options: [
+            "A device that turns liquid medicine into a fine mist over several minutes.",
+            "A miniature spray canister used to direct medications through the mouth and into the lungs.",
+            "A non-invasive ventilation device used for pulmonary edema.",
+            "An oxygen delivery device that provides a high concentration of O2."
+        ],
+        correctAnswer: "A miniature spray canister used to direct medications through the mouth and into the lungs.",
+        explanation: "An MDI delivers a specific, measured dose of medication in a single puff. This is different from a small-volume nebulizer, which delivers medication over a longer period."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The term 'orthopnea' is defined as:",
+        options: [
+            "Severe shortness of breath that awakens someone from sleep.",
+            "Severe dyspnea experienced when lying down and relieved by sitting up.",
+            "Sharp, stabbing pain in the chest that worsens with a deep breath.",
+            "A complete stop in breathing."
+        ],
+        correctAnswer: "Severe dyspnea experienced when lying down and relieved by sitting up.",
+        explanation: "Orthopnea is difficulty breathing specifically related to a reclining position. It is a classic symptom of congestive heart failure. Paroxysmal nocturnal dyspnea is a related but different symptom."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Oxygenation' is the process of:",
+        options: [
+            "Exchanging air between the lungs and the environment.",
+            "Exchanging oxygen and carbon dioxide at the cellular level.",
+            "Delivering oxygen to the blood by diffusion from the alveoli following inhalation.",
+            "Stimulating the respiratory drive using low oxygen levels."
+        ],
+        correctAnswer: "Delivering oxygen to the blood by diffusion from the alveoli following inhalation.",
+        explanation: "Oxygenation specifically refers to loading oxygen onto hemoglobin in the pulmonary capillaries. It is one part of the larger process of respiration."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "A 'pandemic' is:",
+        options: [
+            "An outbreak that is limited to a single hospital.",
+            "An outbreak that occurs on a global scale.",
+            "A disease that is highly resistant to antibiotics.",
+            "A type of allergic reaction."
+        ],
+        correctAnswer: "An outbreak that occurs on a global scale.",
+        explanation: "A pandemic is an epidemic that has spread across multiple continents or worldwide, affecting a substantial number of people."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Paroxysmal nocturnal dyspnea (PND)' is:",
+        options: [
+            "Difficulty breathing experienced when lying down.",
+            "Severe shortness of breath, especially at night after several hours of reclining; the person is forced to sit up to breathe.",
+            "A chronic cough that is worse at night.",
+            "A condition where a person stops breathing intermittently during sleep."
+        ],
+        correctAnswer: "Severe shortness of breath, especially at night after several hours of reclining; the person is forced to sit up to breathe.",
+        explanation: "PND is a specific symptom of left-sided heart failure where fluid accumulates in the lungs over several hours of sleep, causing a sudden, severe attack of dyspnea that awakens the patient."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following defines 'pertussis (whooping cough)'?",
+        options: [
+            "A viral infection with a barking cough.",
+            "An airborne bacterial infection that affects mostly children younger than 6 years and causes severe coughing attacks.",
+            "A bacterial infection of the epiglottis.",
+            "A contagious disease that attacks the lungs and can remain dormant for decades."
+        ],
+        correctAnswer: "An airborne bacterial infection that affects mostly children younger than 6 years and causes severe coughing attacks.",
+        explanation: "Pertussis is a bacterial infection known for its characteristic 'whooping' sound on inspiration after a prolonged, violent coughing spell."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "A 'pleural effusion' is:",
+        options: [
+            "An accumulation of air or gas in the pleural cavity.",
+            "A collection of fluid between the lung and chest wall that may compress the lung.",
+            "Inflammation of the lining of the lungs, causing sharp pain.",
+            "A buildup of fluid within the alveoli."
+        ],
+        correctAnswer: "A collection of fluid between the lung and chest wall that may compress the lung.",
+        explanation: "An effusion is a collection of fluid in a body space. A pleural effusion specifically occurs in the pleural space, outside the lung itself. Fluid *inside* the lung is pulmonary edema."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Pleuritic chest pain' is best described as:",
+        options: [
+            "A dull, crushing pressure in the center of the chest.",
+            "Sharp, stabbing pain in the chest that is worsened by a deep breath or other chest wall movement.",
+            "A burning sensation behind the sternum that is relieved by antacids.",
+            "Pain that starts in the chest and radiates to the arm or jaw."
+        ],
+        correctAnswer: "Sharp, stabbing pain in the chest that is worsened by a deep breath or other chest wall movement.",
+        explanation: "This type of pain is caused by irritation of the pleura (the lining of the lungs). The pain is exacerbated by any movement that causes the two pleural layers to rub against each other."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The definition of 'pneumonia' is:",
+        options: [
+            "An accumulation of air in the pleural cavity.",
+            "A collection of fluid between the lung and the chest wall.",
+            "An infectious disease of the lung that damages lung tissue.",
+            "A chronic lung disease characterized by irreversible airway obstruction."
+        ],
+        correctAnswer: "An infectious disease of the lung that damages lung tissue.",
+        explanation: "Pneumonia is an infection *of the lung tissue itself*, where fluid and pus fill the alveoli, impairing gas exchange. This is different from a pneumothorax (air) or pleural effusion (fluid outside the lung)."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is a 'pneumothorax'?",
+        options: [
+            "An accumulation of air or gas in the pleural cavity.",
+            "An infectious disease that damages lung tissue.",
+            "A buildup of fluid in the lungs, often from heart failure.",
+            "Collapse of the alveolar air spaces."
+        ],
+        correctAnswer: "An accumulation of air or gas in the pleural cavity.",
+        explanation: "A pneumothorax is air in the pleural space, which is the space between the lung and the chest wall. This air causes the lung to collapse."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Pulmonary edema' is defined as:",
+        options: [
+            "A collection of fluid between the lung and chest wall.",
+            "A blood clot that travels to the blood vessels of the lung.",
+            "A buildup of fluid in the lungs, often as a result of congestive heart failure.",
+            "An accumulation of air in the pleural cavity."
+        ],
+        correctAnswer: "A buildup of fluid in the lungs, often as a result of congestive heart failure.",
+        explanation: "Pulmonary edema is fluid *inside* the lungs, specifically in the interstitial tissue and the alveoli. It is distinct from a pleural effusion, which is fluid *outside* the lung."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following best defines 'pulmonary embolism'?",
+        options: [
+            "A buildup of fluid in the lungs from heart failure.",
+            "A blood clot that breaks off from a large vein and travels to the blood vessels of the lung, causing obstruction of blood flow.",
+            "A spontaneous collapse of the lung due to a ruptured alveolus.",
+            "An infection of the lung tissue that damages the alveoli."
+        ],
+        correctAnswer: "A blood clot that breaks off from a large vein and travels to the blood vessels of the lung, causing obstruction of blood flow.",
+        explanation: "A pulmonary embolism is a perfusion problem. The airway and alveoli may be clear, but blood flow is blocked, preventing gas exchange from occurring in that section of the lung."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The term 'respiration' refers to:",
+        options: [
+            "The process of exchanging oxygen and carbon dioxide.",
+            "The exchange of air between the lungs and the environment.",
+            "The muscular act of breathing in.",
+            "A normal rate of breathing between 12 and 20 breaths/min."
+        ],
+        correctAnswer: "The process of exchanging oxygen and carbon dioxide.",
+        explanation: "Respiration is the physiologic process of gas exchange, which occurs at both the pulmonary (in the lungs) and cellular (in the tissues) levels. Ventilation is the mechanical act of moving air."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is 'respiratory syncytial virus (RSV)'?",
+        options: [
+            "A virus that causes an infection of the lungs and breathing passages; can lead to bronchiolitis.",
+            "A virus that has crossed the animal/human barrier, like the H1N1 strain.",
+            "A bacterial infection that affects mostly children and causes a 'whooping' cough.",
+            "A respiratory disease caused by the virus SARS-CoV-2."
+        ],
+        correctAnswer: "A virus that causes an infection of the lungs and breathing passages; can lead to bronchiolitis.",
+        explanation: "RSV is an extremely common virus that is the leading cause of bronchiolitis and pneumonia in infants and young children."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The breath sound 'rhonchi' is described as:",
+        options: [
+            "A high-pitched whistling sound most prominent on expiration.",
+            "Crackling, rattling sounds that signal fluid in the alveoli.",
+            "Coarse, low-pitched breath sounds heard in patients with chronic mucus in the upper airways.",
+            "A harsh, high-pitched sound heard during inspiration."
+        ],
+        correctAnswer: "Coarse, low-pitched breath sounds heard in patients with chronic mucus in the upper airways.",
+        explanation: "Rhonchi are low-pitched, snoring, or rattling sounds caused by mucus or secretions in the larger airways (bronchi). They are often referred to as 'junky' lung sounds and may clear with coughing."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "A 'small-volume nebulizer' is:",
+        options: [
+            "A miniature spray canister that delivers one puff of medication.",
+            "A respiratory device that holds liquid medicine that is turned into a fine mist.",
+            "A non-invasive ventilation device that provides continuous pressure.",
+            "An airway adjunct used to keep the tongue from blocking the airway."
+        ],
+        correctAnswer: "A respiratory device that holds liquid medicine that is turned into a fine mist.",
+        explanation: "A nebulizer uses compressed air or oxygen to aerosolize liquid medication (like albuterol), allowing the patient to inhale it as a mist over several minutes."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "What is 'stridor'?",
+        options: [
+            "A harsh, high-pitched respiratory sound, generally heard during inspiration, caused by partial blockage of the upper airway.",
+            "A high-pitched, whistling breath sound most prominent on expiration, suggesting lower airway obstruction.",
+            "Coarse, low-pitched breath sounds caused by mucus in the larger airways.",
+            "Crackling sounds that signal fluid in the alveoli."
+        ],
+        correctAnswer: "A harsh, high-pitched respiratory sound, generally heard during inspiration, caused by partial blockage of the upper airway.",
+        explanation: "Stridor is a sign of significant upper airway obstruction (in the larynx or trachea). It is a high-priority finding that signals a potential for complete airway compromise."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "The definition of 'tuberculosis (TB)' is:",
+        options: [
+            "An infectious disease of the lung that damages lung tissue, usually caused by a common virus.",
+            "A contagious disease that attacks the lungs, can remain dormant, and many strains are resistant to antibiotics.",
+            "An airborne bacterial infection that causes severe 'whooping' cough.",
+            "A respiratory disease caused by the SARS-CoV-2 coronavirus."
+        ],
+        correctAnswer: "A contagious disease that attacks the lungs, can remain dormant, and many strains are resistant to antibiotics.",
+        explanation: "TB is a specific bacterial infection known for its ability to lie dormant (latent) and for the emergence of multi-drug resistant strains, making it a significant public health concern."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Ventilation' is the:",
+        options: [
+            "Exchange of air between the lungs and the environment.",
+            "Process of exchanging oxygen and carbon dioxide in the alveoli.",
+            "Delivery of oxygen to the tissues via the bloodstream.",
+            "Buildup of excess acid in the body fluids."
+        ],
+        correctAnswer: "Exchange of air between the lungs and the environment.",
+        explanation: "Ventilation is the purely mechanical process of moving air into and out of the lungs (breathing). It is distinct from respiration, which is the gas exchange itself."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "'Vesicular breath sounds' are:",
+        options: [
+            "Abnormal sounds like wheezing or crackles.",
+            "Normal breath sounds made by air moving in and out of the alveoli.",
+            "Loud sounds heard over the trachea.",
+            "The sound of fluid in the pleural space."
+        ],
+        correctAnswer: "Normal breath sounds made by air moving in and out of the alveoli.",
+        explanation: "Vesicular sounds are the soft, rustling sounds of normal breathing heard over the lung periphery. They are what you expect to hear in a healthy lung."
+    },
+    {
+        category: "Vital Vocabulary",
+        question: "Which of the following best defines 'wheezing'?",
+        options: [
+            "A harsh, high-pitched sound heard on inspiration from an upper airway obstruction.",
+            "A high-pitched, whistling breath sound most prominent on expiration, which suggests obstruction of the lower airways.",
+            "A crackling, rattling sound signaling fluid in the alveoli.",
+            "A coarse, low-pitched sound from mucus in the larger airways."
+        ],
+        correctAnswer: "A high-pitched, whistling breath sound most prominent on expiration, which suggests obstruction of the lower airways.",
+        explanation: "Wheezing is the classic sound of bronchoconstriction (narrowing of the lower airways), as seen in asthma and COPD. It is caused by air being forced through these narrowed passages."
+    }
+];
+        
+
+        // --- DOM Elements ---
+        const categorySelect = document.getElementById('category-select');
+        const scrambleBtn = document.getElementById('scramble-btn');
+        const reviewStarredBtn = document.getElementById('review-starred-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const starBtn = document.getElementById('star-btn');
+        const optionsList = document.getElementById('options-list');
+        const explanationDiv = document.getElementById('explanation');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- State Management ---
+        let currentQuizSet = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { questionIndex: 'selected answer' }
+        let starredQuestions = new Set(); 
+
+        // --- Functions ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function populateCategories() {
+            const categories = ['All Questions', ...new Set(allQuestions.map(q => q.category))];
+            categorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            const randomOption = document.createElement('option');
+            randomOption.value = 'Random20';
+            randomOption.textContent = 'Random Quiz (20 Questions)';
+            categorySelect.appendChild(randomOption);
+        }
+
+        function loadQuiz(category) {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            
+            if (category === 'All Questions') {
+                currentQuizSet = [...allQuestions];
+            } else if (category === 'Random20') {
+                const shuffled = [...allQuestions];
+                shuffleArray(shuffled);
+                currentQuizSet = shuffled.slice(0, 20);
+            } else if (category === 'Starred') {
+                 if (starredQuestions.size === 0) {
+                    alert("You haven't starred any questions yet!");
+                    // Revert dropdown to 'All Questions' if starred is empty
+                    categorySelect.value = 'All Questions';
+                    loadQuiz('All Questions');
+                    return;
+                }
+                currentQuizSet = [...starredQuestions];
+            } else {
+                currentQuizSet = allQuestions.filter(q => q.category === category);
+            }
+            
+            if(currentQuizSet.length > 0) {
+                 displayQuestion(currentQuestionIndex);
+            } else {
+                questionText.textContent = "No questions in this set.";
+                optionsList.innerHTML = '';
+                explanationDiv.style.display = 'none';
+                updateProgress();
+                updateNavButtons();
+            }
+        }
+
+        function displayQuestion(index) {
+            if (index < 0 || index >= currentQuizSet.length) return;
+
+            const question = currentQuizSet[index];
+            questionText.textContent = question.question;
+            optionsList.innerHTML = '';
+            
+            // Shuffle options for each question view
+            let shuffledOptions = [...question.options];
+            shuffleArray(shuffledOptions);
+
+            shuffledOptions.forEach(option => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                li.textContent = option;
+                li.addEventListener('click', () => handleAnswerSelect(option));
+                optionsList.appendChild(li);
+            });
+
+            explanationDiv.style.display = 'none';
+            
+            if (userAnswers.hasOwnProperty(index)) {
+                showFeedback(userAnswers[index]);
+            }
+
+            updateProgress();
+            updateNavButtons();
+            updateStarButton();
+        }
+        
+        function handleAnswerSelect(selectedOption) {
+            if (userAnswers.hasOwnProperty(currentQuestionIndex)) return;
+            userAnswers[currentQuestionIndex] = selectedOption;
+            showFeedback(selectedOption);
+        }
+
+        function showFeedback(selectedOption) {
+            const question = currentQuizSet[currentQuestionIndex];
+            const options = optionsList.querySelectorAll('.option-item');
+            
+            options.forEach(optionLi => {
+                optionLi.classList.add('answered');
+                
+                if (optionLi.textContent === question.correctAnswer) {
+                    optionLi.classList.add('correct');
+                } else if (optionLi.textContent === selectedOption) {
+                    optionLi.classList.add('incorrect', 'selected');
+                }
+            });
+
+            explanationDiv.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
+            explanationDiv.style.display = 'block';
+        }
+
+        function updateProgress() {
+            const progress = currentQuizSet.length > 0 ? ((currentQuestionIndex + 1) / currentQuizSet.length) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+            questionCounter.textContent = currentQuizSet.length > 0 ? `${currentQuestionIndex + 1} / ${currentQuizSet.length}` : '0 / 0';
+        }
+
+        function updateNavButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === currentQuizSet.length - 1;
+        }
+
+        function updateStarButton() {
+            if (currentQuizSet.length === 0) {
+                 starBtn.classList.remove('starred');
+                 starBtn.innerHTML = '☆';
+                 return;
+            }
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starBtn.classList.add('starred');
+                starBtn.innerHTML = '★'; // Filled star
+            } else {
+                starBtn.classList.remove('starred');
+                starBtn.innerHTML = '☆'; // Empty star
+            }
+        }
+        
+        function toggleStar() {
+            if (currentQuizSet.length === 0) return;
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starredQuestions.delete(currentQuestionObject);
+            } else {
+                starredQuestions.add(currentQuestionObject);
+            }
+            updateStarButton();
+        }
+
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            loadQuiz(categorySelect.value); // Initial load
+        });
+
+        categorySelect.addEventListener('change', (e) => loadQuiz(e.target.value));
+
+        scrambleBtn.addEventListener('click', () => {
+            if (currentQuizSet.length > 0) {
+                shuffleArray(currentQuizSet);
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        reviewStarredBtn.addEventListener('click', () => {
+            let starredOption = categorySelect.querySelector('option[value="Starred"]');
+            if (!starredOption) {
+                 starredOption = document.createElement('option');
+                 starredOption.value = 'Starred';
+                 starredOption.textContent = '★ Starred Questions';
+                 categorySelect.appendChild(starredOption);
+            }
+            categorySelect.value = 'Starred';
+            loadQuiz('Starred');
+        });
+        
+        starBtn.addEventListener('click', toggleStar);
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuizSet.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+    </script>
+</body>
+</html>
