@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Psychology: Biological Bases of Behavior Quiz</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --light-gray: #bdc3c7;
+            --white: #ffffff;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+            --star-color: #f1c40f;
+            --highlight-color: #f1c40f;
+            --vocab-link-color: #2980b9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        #controls {
+            padding: 15px 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #controls select, #controls button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            font-size: 1em;
+            cursor: pointer;
+            background-color: var(--white);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        
+        #controls button.view-toggle {
+            background-color: var(--light-gray);
+            color: var(--secondary-color);
+        }
+
+        #controls button.view-toggle.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #controls select {
+            flex-grow: 1;
+        }
+
+        #controls button:not(.view-toggle) {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #controls button:not(.view-toggle):hover {
+            background-color: #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        main {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .main-view {
+            display: none;
+        }
+        .main-view.active {
+            display: block;
+        }
+
+        #vocab-area { max-height: 65vh; overflow-y: auto; }
+        
+        #vocab-list dt { font-weight: bold; color: var(--secondary-color); font-size: 1.1em; margin-top: 15px; }
+        #vocab-list dd { margin-left: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        
+        .vocab-highlight { animation: highlight-fade 1.5s ease-out; }
+        
+        @keyframes highlight-fade {
+            0% { background-color: var(--highlight-color); }
+            100% { background-color: transparent; }
+        }
+        
+        #tables-area {
+            text-align: center;
+        }
+
+        #table-selector select {
+            font-size: 1.2em;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .table-container th, .table-container td {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .table-container th { 
+            background-color: var(--secondary-color);
+            color: var(--white);
+            position: sticky;
+            top: 0;
+        }
+
+        #progress-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: bold; }
+        #progress-bar-container { flex-grow: 1; height: 10px; background-color: var(--background-color); border-radius: 5px; overflow: hidden; margin: 0 15px; }
+        #progress-bar { width: 0%; height: 100%; background-color: var(--primary-color); transition: width 0.3s ease-in-out; }
+        #question-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        #question-text { font-size: 1.2em; font-weight: 500; flex-grow: 1; padding-right: 10px; }
+        .vocab-link { text-decoration: underline; color: var(--vocab-link-color); cursor: pointer; font-weight: 600; }
+        .vocab-link:hover { text-decoration: none; }
+        #star-btn { background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--light-gray); transition: color 0.2s, transform 0.2s; padding: 0; line-height: 1; }
+        #star-btn.starred { color: var(--star-color); }
+        #star-btn:hover { transform: scale(1.2); }
+        #options-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        .option-item { padding: 15px; border: 2px solid var(--light-gray); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .option-item:not(.answered):hover { border-color: var(--primary-color); background-color: #f0f8ff; }
+        .option-item.answered { cursor: default; }
+        .option-item.correct { background-color: #e6f9e6; border-color: var(--correct-color); color: #1e851e; font-weight: 500; }
+        .option-item.incorrect.selected { background-color: #fdeaea; border-color: var(--incorrect-color); color: #b92c2c; }
+        #explanation { margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-left: 5px solid var(--secondary-color); border-radius: 4px; display: none; }
+        #navigation { display: flex; justify-content: space-between; margin-top: 20px; }
+        #navigation button { padding: 10px 20px; border-radius: 6px; border: 1px solid var(--primary-color); background-color: var(--white); color: var(--primary-color); font-size: 1em; cursor: pointer; transition: background-color 0.2s, color 0.2s; min-width: 100px; }
+        #navigation button:hover:not(:disabled) { background-color: var(--primary-color); color: var(--white); }
+        #navigation button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            #app-container { border-radius: 0; box-shadow: none; min-height: 100vh; }
+            header h1 { font-size: 1.4em; }
+            #controls { flex-direction: column; align-items: stretch; }
+            main { padding: 15px; }
+            #question-text { font-size: 1.1em; }
+            .option-item { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1>AP Psychology: Biological Bases of Behavior</h1>
+        </header>
+
+        <div id="controls">
+            <button id="questions-view-btn" class="view-toggle active">Questions</button>
+            <button id="vocab-view-btn" class="view-toggle">Vocabulary</button>
+            <button id="tables-view-btn" class="view-toggle">Tables</button>
+            <select id="category-select"></select>
+            <button id="scramble-btn">Scramble Set</button>
+            <button id="review-starred-btn">Review Starred</button>
+        </div>
+
+        <main>
+            <div id="quiz-area" class="main-view active">
+                <div id="progress-container">
+                    <span id="question-counter"></span>
+                    <div id="progress-bar-container">
+                        <div id="progress-bar"></div>
+                    </div>
+                </div>
+                
+                <div id="question-header">
+                     <p id="question-text"></p>
+                     <button id="star-btn" title="Star this question for later review">☆</button>
+                </div>
+
+                <ul id="options-list"></ul>
+                <div id="explanation"></div>
+
+                <div id="navigation">
+                    <button id="prev-btn">Previous</button>
+                    <button id="next-btn">Next</button>
+                </div>
+            </div>
+            <div id="vocab-area" class="main-view">
+                <dl id="vocab-list"></dl>
+            </div>
+            <div id="tables-area" class="main-view">
+                <div id="table-selector">
+                    <select id="table-dropdown">
+                        <option value="">Select a Table...</option>
+                        <option value="brain">Brain Areas & Functions</option>
+                        <option value="drugs">Psychoactive Drugs</option>
+                    </select>
+                </div>
+                <div id="brain-table-container" class="table-container" style="display: none;">
+                    <table>
+                        <thead><tr><th>Structure</th><th>Location/System</th><th>Primary Function(s)</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="drugs-table-container" class="table-container" style="display: none;">
+                    <table>
+                        <thead><tr><th>Drug</th><th>Type</th><th>Effects</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    // --- DATA DATABASES ---
+
+    const vocabulary = {
+        "psychology": "the science of behavior and mental processes.",
+        "nature–nurture issue": "the longstanding controversy over the relative contributions that genes and experience make to the development of psychological traits and behaviors.",
+        "natural selection": "the principle that inherited traits enabling an organism to survive and reproduce in a particular environment will most likely be passed on to succeeding generations.",
+        "evolutionary psychology": "the study of the evolution of behavior and the mind, using principles of natural selection.",
+        "behavior genetics": "the study of the relative power and limits of genetic and environmental influences on behavior.",
+        "environment": "every nongenetic influence, from prenatal nutrition to our experiences of the people and things around us.",
+        "heredity": "the genetic transfer of characteristics from parents to offspring.",
+        "genes": "the biochemical units of heredity that make up the chromosomes.",
+        "chromosome": "threadlike structures made of DNA molecules that contain the genes.",
+        "DNA (deoxyribonucleic acid)": "a complex molecule containing the genetic information that makes up the chromosomes.",
+        "genome": "the complete instructions for making an organism, consisting of all the genetic material in that organism’s chromosomes.",
+        "identical (monozygotic) twins": "individuals who developed from a single fertilized egg that split in two, creating two genetically identical organisms.",
+        "fraternal (dizygotic) twins": "individuals who developed from separate fertilized eggs. They are genetically no closer than ordinary siblings, but they shared a prenatal environment.",
+        "interaction": "the interplay that occurs when the effect of one factor (such as environment) depends on another factor (such as heredity).",
+        "epigenetics": "the study of the molecular mechanisms by which environments can influence genetic expression (without a DNA change).",
+        "nervous system": "the body’s speedy, electrochemical communication network, consisting of all the nerve cells of the peripheral and central nervous systems.",
+        "central nervous system (CNS)": "the brain and spinal cord.",
+        "peripheral nervous system (PNS)": "the sensory and motor neurons that connect the central nervous system (CNS) to the rest of the body.",
+        "nerves": "bundled axons that form neural cables connecting the central nervous system with muscles, glands, and sensory organs.",
+        "sensory (afferent) neurons": "neurons that carry incoming information from the body’s tissues and sensory receptors to the brain and spinal cord.",
+        "motor (efferent) neurons": "neurons that carry outgoing information from the brain and spinal cord to the muscles and glands.",
+        "interneurons": "neurons within the brain and spinal cord; they communicate internally and process information between the sensory inputs and motor outputs.",
+        "somatic nervous system": "the division of the peripheral nervous system that controls the body’s skeletal muscles. Also called the skeletal nervous system.",
+        "autonomic nervous system (ANS)": "the part of the peripheral nervous system that controls the glands and the muscles of the internal organs (such as the heart). Its sympathetic division arouses; its parasympathetic division calms.",
+        "sympathetic nervous system": "the division of the autonomic nervous system that arouses the body, mobilizing its energy.",
+        "parasympathetic nervous system": "the division of the autonomic nervous system that calms the body, conserving its energy.",
+        "reflex": "a simple, automatic response to a sensory stimulus, such as the knee-jerk reflex.",
+        "neuron": "a nerve cell; the basic building block of the nervous system.",
+        "cell body": "the part of a neuron that contains the nucleus; the cell’s life-support center.",
+        "dendrites": "a neuron’s often bushy, branching extensions that receive and integrate messages, conducting impulses toward the cell body.",
+        "axon": "the segmented neuron extension that passes messages through its branches to other neurons or to muscles or glands.",
+        "myelin sheath": "a fatty tissue layer segmentally encasing the axons of some neurons; it enables vastly greater transmission speed as neural impulses hop from one node to the next.",
+        "glial cells (glia)": "cells in the nervous system that support, nourish, and protect neurons; they may also play a role in learning, thinking, and memory.",
+        "action potential": "a neural impulse; a brief electrical charge that travels down an axon.",
+        "threshold": "the level of stimulation required to trigger a neural impulse.",
+        "refractory period": "in neural processing, a brief resting pause that occurs after a neuron has fired; subsequent action potentials cannot occur until the axon returns to its resting state.",
+        "all-or-none response": "a neuron’s reaction of either firing (with a full-strength response) or not firing.",
+        "synapse": "the junction between the axon tip of the sending neuron and the dendrite or cell body of the receiving neuron. The tiny gap at this junction is called the synaptic gap or synaptic cleft.",
+        "neurotransmitters": "chemical messengers that cross the synaptic gap between neurons.",
+        "reuptake": "a neurotransmitter’s reabsorption by the sending neuron.",
+        "endorphins": "'morphine within'; natural, opioid-like neurotransmitters linked to pain control and to pleasure.",
+        "agonist": "a molecule that increases a neurotransmitter’s action.",
+        "antagonist": "a molecule that inhibits or blocks a neurotransmitter’s action.",
+        "endocrine system": "the body’s 'slow' chemical communication system; a set of glands and fat tissue that secrete hormones into the bloodstream.",
+        "hormones": "chemical messengers that are manufactured by the endocrine glands, travel through the bloodstream, and affect other tissues.",
+        "adrenal glands": "a pair of endocrine glands that sit just above the kidneys and secrete hormones (epinephrine and norepinephrine) that help arouse the body in times of stress.",
+        "pituitary gland": "the endocrine system’s most influential gland. Under the influence of the hypothalamus, the pituitary regulates growth and controls other endocrine glands.",
+        "psychoactive drug": "a chemical substance that alters the brain, causing changes in perceptions and moods.",
+        "substance use disorder": "a disorder characterized by continued substance use despite resulting life disruption.",
+        "tolerance": "the diminishing effect with regular use of the same dose of a drug, requiring the user to take larger and larger doses before experiencing the drug’s effect.",
+        "addiction": "an everyday term for compulsive substance use that continue despite harmful consequences.",
+        "withdrawal": "the discomfort and distress that follow discontinuing an addictive drug or behavior.",
+        "depressants": "drugs (such as alcohol, barbiturates, and opioids) that reduce neural activity and slow body functions.",
+        "stimulants": "drugs (such as caffeine, nicotine, and the more powerful cocaine, amphetamines, methamphetamine, and Ecstasy) that excite neural activity and speed up body functions.",
+        "hallucinogens": "psychedelic ('mind-manifesting') drugs, such as LSD, that distort perceptions and evoke sensory images in the absence of sensory input.",
+        "near-death experience": "an altered state of consciousness reported after a close brush with death (such as cardiac arrest); often similar to drug-induced hallucinations.",
+        "neuroplasticity": "the brain’s ability to change, especially during childhood, by reorganizing after damage or by building new pathways based on experience.",
+        "lesion": "tissue destruction. A brain lesion is a naturally or experimentally caused destruction of brain tissue.",
+        "EEG (electroencephalogram)": "an amplified recording of the waves of electrical activity sweeping across the brain’s surface. These waves are measured by electrodes placed on the scalp.",
+        "MEG (magnetoencephalography)": "a brain-imaging technique that measures magnetic fields from the brain’s natural electrical activity.",
+        "CT (computed tomography) scan": "a series of X-ray photographs taken from different angles and combined by computer into a composite representation of a slice of the brain’s structure.",
+        "PET (positron emission tomography) scan": "a technique for detecting brain activity that displays where a radioactive form of glucose goes while the brain performs a given task.",
+        "MRI (magnetic resonance imaging)": "a technique that uses magnetic fields and radio waves to produce computer-generated images of soft tissue. MRI scans show brain anatomy.",
+        "fMRI (functional MRI)": "a technique for revealing blood flow and, therefore, brain activity by comparing successive MRI scans. fMRI scans show brain function as well as structure.",
+        "biological psychology": "the scientific study of the links between biological (genetic, neural, hormonal) and psychological processes.",
+        "biopsychosocial approach": "an integrated approach that incorporates biological, psychological, and social-cultural levels of analysis.",
+        "levels of analysis": "the differing complementary views, from biological to psychological to social-cultural, for analyzing any given phenomenon.",
+        "hindbrain": "consists of the medulla, pons, and cerebellum; directs essential survival functions.",
+        "midbrain": "found atop the brainstem; connects the hindbrain with the forebrain, controls some motor movement, and transmits auditory and visual information.",
+        "forebrain": "consists of the cerebral cortex, thalamus, and hypothalamus; manages complex cognitive activities, sensory and associative functions, and voluntary motor activities.",
+        "brainstem": "the central core of the brain, beginning where the spinal cord swells as it enters the skull; the brainstem is responsible for automatic survival functions.",
+        "medulla": "the hindbrain structure that is the brainstem’s base; controls heartbeat and breathing.",
+        "thalamus": "the forebrain’s sensory control center, located on top of the brainstem; it directs messages to the sensory receiving areas in the cortex.",
+        "reticular formation": "a nerve network that travels through the brainstem into the thalamus; it filters information and plays an important role in controlling arousal.",
+        "cerebellum": "the hindbrain’s 'little brain' at the rear of the brainstem; functions include processing sensory input, coordinating movement output and balance, and enabling nonverbal learning and memory.",
+        "limbic system": "neural system located mostly in the forebrain that includes the amygdala, hypothalamus, hippocampus, thalamus, and pituitary gland; associated with emotions and drives.",
+        "amygdala": "two lima-bean–sized neural clusters in the limbic system; linked to emotion.",
+        "hypothalamus": "a limbic system neural structure lying below (hypo) the thalamus; it directs several maintenance activities (eating, drinking, body temperature), helps govern the endocrine system, and is linked to emotion and reward.",
+        "hippocampus": "a neural center in the limbic system that helps process explicit (conscious) memories — of facts and events — for storage.",
+        "cerebral cortex": "the intricate fabric of interconnected neural cells covering the forebrain’s cerebral hemispheres; the body’s ultimate control and information-processing center.",
+        "frontal lobes": "the portion of the cerebral cortex lying just behind the forehead; enables linguistic processing, muscle movements, higher-order thinking, and executive functioning.",
+        "parietal lobes": "the portion of the cerebral cortex lying at the top of the head and toward the rear; it receives sensory input for touch and body position.",
+        "occipital lobes": "the portion of the cerebral cortex lying at the back of the head; it includes areas that receive information from the visual fields.",
+        "temporal lobes": "the portion of the cerebral cortex lying roughly above the ears; it includes the auditory areas and enables language processing.",
+        "motor cortex": "a cerebral cortex area at the rear of the frontal lobes that controls voluntary movements.",
+        "somatosensory cortex": "a cerebral cortex area at the front of the parietal lobes that registers and processes body touch and movement sensations.",
+        "association areas": "areas of the cerebral cortex that are not involved in primary motor or sensory functions, but rather are involved in higher mental functions such as learning, remembering, thinking, and speaking.",
+        "neurogenesis": "the formation of new neurons.",
+        "corpus callosum": "the large band of neural fibers connecting the two brain hemispheres and carrying messages between them.",
+        "split brain": "a condition resulting from surgery that separates the brain’s two hemispheres by cutting the fibers (mainly those of the corpus callosum) connecting them.",
+        "consciousness": "our subjective awareness of ourselves and our environment.",
+        "cognitive neuroscience": "the interdisciplinary study of the brain activity linked with cognition (thinking, knowing, remembering, and communicating).",
+        "dual processing": "the principle that information is often simultaneously processed on separate conscious and unconscious tracks.",
+        "blindsight": "a condition in which a person can respond to a visual stimulus without consciously experiencing it.",
+        "parallel processing": "processing multiple aspects of a stimulus or problem simultaneously.",
+        "sequential processing": "processing one aspect of a stimulus or problem at a time; generally used to process new information or to solve difficult problems.",
+        "sleep": "a periodic, natural loss of consciousness — as distinct from unconsciousness resulting from a coma, general anesthesia, or hibernation.",
+        "circadian rhythm": "our biological clock; regular bodily rhythms (for example, of temperature and wakefulness) that occur on a 24-hour cycle.",
+        "REM sleep": "rapid eye movement sleep; a recurring sleep stage during which vivid dreams commonly occur. Also known as paradoxical sleep.",
+        "alpha waves": "the relatively slow brain waves of a relaxed, awake state.",
+        "NREM sleep": "non-rapid eye movement sleep; encompasses all sleep stages except for REM sleep.",
+        "hallucinations": "false sensory experiences, such as seeing something in the absence of an external visual stimulus.",
+        "hypnagogic sensations": "bizarre experiences, such as jerking or a feeling of falling or floating weightlessly, while transitioning to sleep.",
+        "delta waves": "the large, slow brain waves associated with deep sleep.",
+        "suprachiasmatic nucleus (SCN)": "a pair of cell clusters in the hypothalamus that controls circadian rhythm. In response to light, the SCN adjusts melatonin production.",
+        "insomnia": "recurring problems in falling or staying asleep.",
+        "narcolepsy": "a sleep disorder characterized by uncontrollable sleep attacks. The affected person may lapse directly into REM sleep, often at inopportune times.",
+        "sleep apnea": "a sleep disorder characterized by temporary cessations of breathing during sleep and repeated momentary awakenings.",
+        "dream": "a sequence of images, emotions, and thoughts passing through a sleeping person’s mind.",
+        "REM rebound": "the tendency for REM sleep to increase following REM sleep deprivation.",
+        "sensation": "the process by which our sensory receptors and nervous system receive and represent stimulus energies from our environment.",
+        "sensory receptors": "sensory nerve endings that respond to stimuli.",
+        "perception": "the process by which our brain organizes and interprets sensory information, enabling us to recognize objects and events as meaningful.",
+        "bottom-up processing": "information processing that begins with the sensory receptors and works up to the brain’s integration of sensory information.",
+        "top-down processing": "information processing guided by higher-level mental processes, as when we construct perceptions drawing on our experience and expectations.",
+        "transduction": "conversion of one form of energy into another. In sensation, the transforming of physical energy into neural impulses the brain can interpret.",
+        "psychophysics": "the study of relationships between the physical characteristics of stimuli, such as their intensity, and our psychological experience of them.",
+        "absolute threshold": "the minimum stimulus energy needed to detect a particular stimulus 50 percent of the time.",
+        "signal detection theory": "a theory predicting how and when we detect the presence of a faint stimulus (signal) amid background stimulation (noise).",
+        "subliminal": "below one’s absolute threshold for conscious awareness.",
+        "priming": "the activation, often unconsciously, of certain associations, thus predisposing one’s perception, memory, or response.",
+        "difference threshold": "the minimum difference between two stimuli required for detection 50 percent of the time. We experience the difference threshold as a just noticeable difference (jnd).",
+        "Weber’s law": "the principle that, to be perceived as different, two stimuli must differ by a constant minimum percentage (rather than a constant amount).",
+        "sensory adaptation": "diminished sensitivity as a consequence of constant stimulation."
+    };
+    
+    const brainAreas = [
+        { name: "Medulla", location_part_of: "Brainstem (Hindbrain)", function: "Controls heartbeat and breathing." },
+        { name: "Pons", location_part_of: "Brainstem (Hindbrain)", function: "Helps coordinate movements and control sleep." },
+        { name: "Reticular Formation", location_part_of: "Brainstem", function: "Filters incoming stimuli and controls arousal." },
+        { name: "Thalamus", location_part_of: "Forebrain", function: "Sensory control center; relays sensory messages (except smell)." },
+        { name: "Cerebellum", location_part_of: "Hindbrain", function: "Coordinates voluntary movement, balance, and nonverbal learning." },
+        { name: "Amygdala", location_part_of: "Limbic System", function: "Linked to emotions, especially aggression and fear." },
+        { name: "Hypothalamus", location_part_of: "Limbic System", function: "Directs maintenance activities (eating, drinking, temp); governs endocrine system." },
+        { name: "Hippocampus", location_part_of: "Limbic System", function: "Processes conscious, explicit memories for storage." },
+        { name: "Cerebral Cortex", location_part_of: "Forebrain", function: "Ultimate control and information-processing center." },
+        { name: "Frontal Lobes", location_part_of: "Cerebral Cortex", function: "Planning, judgment, muscle movements, and speaking." },
+        { name: "Parietal Lobes", location_part_of: "Cerebral Cortex", function: "Receives sensory input for touch and body position." },
+        { name: "Occipital Lobes", location_part_of: "Cerebral Cortex", function: "Receives and processes information from visual fields." },
+        { name: "Temporal Lobes", location_part_of: "Cerebral Cortex", function: "Includes auditory areas; language processing." },
+        { name: "Motor Cortex", location_part_of: "Frontal Lobes", function: "Controls voluntary movements." },
+        { name: "Somatosensory Cortex", location_part_of: "Parietal Lobes", function: "Registers body touch and movement sensations." },
+        { name: "Corpus Callosum", location_part_of: "Between Hemispheres", function: "Connects the two brain hemispheres." }
+    ];
+
+    const psychoactiveDrugs = [
+        { name: "Alcohol", type: "Depressant", effects: "Initial high, relaxation, disinhibition", negative_effects: "Depression, memory loss, organ damage" },
+        { name: "Heroin", type: "Depressant", effects: "Rush of euphoria, relief from pain", negative_effects: "Depressed physiology, agonizing withdrawal" },
+        { name: "Caffeine", type: "Stimulant", effects: "Increased alertness and wakefulness", negative_effects: "Anxiety, restlessness, insomnia" },
+        { name: "Nicotine", type: "Stimulant", effects: "Arousal and relaxation", negative_effects: "Heart disease, cancer" },
+        { name: "Cocaine", type: "Stimulant", effects: "Rush of euphoria, confidence, energy", negative_effects: "Cardiovascular stress, depressive crash" },
+        { name: "Methamphetamine", type: "Stimulant", effects: "Euphoria, alertness, energy", negative_effects: "Irritability, insomnia, hypertension" },
+        { name: "Ecstasy (MDMA)", type: "Stimulant; Hallucinogen", effects: "Emotional elevation, disinhibition", negative_effects: "Dehydration, depressed mood" },
+        { name: "LSD", type: "Hallucinogen", effects: "Visual 'trip'", negative_effects: "Risk of panic" },
+        { name: "Marijuana (THC)", type: "Hallucinogen", effects: "Enhanced sensation, relief of pain, relaxation", negative_effects: "Impaired learning and memory" }
+    ];
+
+    // --- Questions Database (100 Questions) ---
+    let allQuestions = [
+        // Module 1.1 Questions (Heredity & Environment) - 10 questions
+        { category: "Heredity & Environment", question: "A researcher studying the similarities between identical twins raised apart and fraternal twins raised apart is most likely exploring the influence of:", options: ["epigenetics", "heredity", "the environment", "natural selection"], correctAnswer: "heredity", explanation: "Comparing twins raised apart helps isolate the effects of genes (heredity) from the effects of the environment." },
+        { category: "Heredity & Environment", question: "Which of the following is the best example of a trait with high heritability?", options: ["A person's preference for rock music.", "A person's native language.", "A person's specific religious beliefs.", "A person's eye color."], correctAnswer: "A person's eye color.", explanation: "Eye color is almost entirely determined by genes, making it a trait with very high heritability. The other options are primarily influenced by environment and experience." },
+        { category: "Heredity & Environment", question: "Evolutionary psychologists would argue that the human tendency to fear heights is a(n):", options: ["learned phobia", "epigenetic mark", "adaptive trait", "random mutation"], correctAnswer: "adaptive trait", explanation: "An evolutionary perspective suggests that fear of heights is an adaptive trait that provided a survival advantage by keeping our ancestors away from dangerous cliffs." },
+        { category: "Heredity & Environment", question: "Which statement best describes the modern scientific view of the nature-nurture issue?", options: ["Nature is more important than nurture.", "Nurture is more important than nature.", "Nature and nurture are separate and distinct influences.", "Nature and nurture interact to shape psychological traits."], correctAnswer: "Nature and nurture interact to shape psychological traits.", explanation: "Contemporary science sees traits and behaviors as arising from the constant interplay between our genetic predispositions (nature) and our experiences (nurture)." },
+        { category: "Heredity & Environment", question: "Dr. Singh studies how prenatal nutrition can affect the expression of genes related to intelligence without changing the underlying DNA code. Her research is in the field of:", options: ["behavior genetics", "evolutionary psychology", "epigenetics", "neuroplasticity"], correctAnswer: "epigenetics", explanation: "Epigenetics is the specific study of molecular mechanisms by which environmental factors can trigger or block the expression of genes." },
+        { category: "Heredity & Environment", question: "The complete set of instructions for making an organism, consisting of all the genetic material in its chromosomes, is known as the:", options: ["gene", "chromosome", "genome", "DNA"], correctAnswer: "genome", explanation: "The genome is the entire genetic blueprint for an organism. Genes and chromosomes are components of the genome." },
+        { category: "Heredity & Environment", question: "A random error in gene replication is known as a:", options: ["gene", "chromosome", "mutation", "heritability"], correctAnswer: "mutation", explanation: "Mutations are the source of genetic diversity and the raw material for natural selection." },
+        { category: "Heredity & Environment", question: "The principle of natural selection states that:", options: ["the strongest organisms always survive.", "all organisms are genetically identical.", "traits that aid survival and reproduction are likely to be passed on.", "the environment has no impact on behavior."], correctAnswer: "traits that aid survival and reproduction are likely to be passed on.", explanation: "This is the core principle of natural selection; adaptive traits are selected for over generations." },
+        { category: "Heredity & Environment", question: "Fraternal twins are genetically:", options: ["identical.", "no more similar than ordinary siblings.", "less similar than ordinary siblings.", "100% different from each other."], correctAnswer: "no more similar than ordinary siblings.", explanation: "Fraternal (dizygotic) twins develop from two separate eggs, making them genetically as similar as any other pair of siblings." },
+        { category: "Heredity & Environment", question: "The interplay that occurs when the effect of one factor (like environment) depends on another (like heredity) is called:", options: ["heredity", "epigenetics", "interaction", "natural selection"], correctAnswer: "interaction", explanation: "This is the definition of interaction, a key concept in the nature-nurture issue. For example, a genetic predisposition for a disorder may only manifest in a stressful environment." },
+
+        // Module 1.2 Questions (Nervous System) - 10 questions
+        { category: "Nervous System", question: "When you touch a hot stove, your hand pulls away before you consciously feel the pain. This action is controlled by the:", options: ["brainstem", "somatic nervous system", "spinal cord reflex", "sympathetic nervous system"], correctAnswer: "spinal cord reflex", explanation: "The pain reflex is a simple neural circuit that runs through the spinal cord, allowing for an automatic, rapid response before the signal reaches the brain for conscious processing." },
+        { category: "Nervous System", question: "Which division of the nervous system is responsible for calming the body down after a stressful event?", options: ["sympathetic", "somatic", "central", "parasympathetic"], correctAnswer: "parasympathetic", explanation: "The parasympathetic nervous system is the 'rest-and-digest' system that calms the body and conserves energy after the 'fight-or-flight' sympathetic response." },
+        { category: "Nervous System", question: "Which type of neuron carries messages from the brain and spinal cord to the muscles and glands?", options: ["sensory (afferent) neurons", "motor (efferent) neurons", "interneurons", "glial cells"], correctAnswer: "motor (efferent) neurons", explanation: "Motor neurons carry outgoing (efferent) signals from the CNS to the body's periphery to produce actions." },
+        { category: "Nervous System", question: "Voluntarily raising your hand to ask a question is controlled by which nervous system?", options: ["autonomic", "somatic", "sympathetic", "parasympathetic"], correctAnswer: "somatic", explanation: "The somatic nervous system controls the voluntary movements of skeletal muscles." },
+        { category: "Nervous System", question: "The brain and spinal cord together form the:", options: ["peripheral nervous system", "autonomic nervous system", "central nervous system", "limbic system"], correctAnswer: "central nervous system", explanation: "The CNS is the body's decision-maker, consisting of the brain and spinal cord." },
+        { category: "Nervous System", question: "The vast majority of neurons in the body's information system are:", options: ["motor neurons", "sensory neurons", "interneurons", "glial cells"], correctAnswer: "interneurons", explanation: "There are billions and billions of interneurons within the brain and spinal cord, vastly outnumbering the sensory and motor neurons." },
+        { category: "Nervous System", question: "The two main divisions of the peripheral nervous system are the:", options: ["sympathetic and parasympathetic", "somatic and autonomic", "brain and spinal cord", "sensory and motor"], correctAnswer: "somatic and autonomic", explanation: "The PNS is divided into the somatic system (voluntary control) and the autonomic system (involuntary control)." },
+        { category: "Nervous System", question: "After a near-miss in traffic, your pounding heart and rapid breathing are the result of activation of your:", options: ["somatic nervous system", "parasympathetic nervous system", "sympathetic nervous system", "central nervous system"], correctAnswer: "sympathetic nervous system", explanation: "This is a classic 'fight-or-flight' response, orchestrated by the sympathetic nervous system to prepare your body for action." },
+        { category: "Nervous System", question: "Which of the following is NOT a function of the autonomic nervous system?", options: ["controlling heartbeat", "stimulating digestion", "raising a hand to answer a question", "dilating pupils"], correctAnswer: "raising a hand to answer a question", explanation: "Raising a hand is a voluntary action controlled by the somatic nervous system. The others are involuntary functions controlled by the ANS." },
+        { category: "Nervous System", question: "Sensory neurons are to ______ as motor neurons are to ______.", options: ["afferent; efferent", "efferent; afferent", "central; peripheral", "peripheral; central"], correctAnswer: "afferent; efferent", explanation: "Sensory neurons carry information *inward* (afferent), while motor neurons carry information *outward* (efferent)." },
+
+        // Module 1.3a Questions (Neuron & Firing) - 10 questions
+        { category: "The Neuron & Firing", question: "Which part of the neuron is a fatty tissue layer that helps speed up neural impulses?", options: ["dendrite", "axon", "myelin sheath", "cell body"], correctAnswer: "myelin sheath", explanation: "The myelin sheath acts as an insulator, allowing the action potential to 'hop' between nodes, which vastly increases its transmission speed." },
+        { category: "The Neuron & Firing", question: "A brief electrical charge that travels down an axon is called a(n):", options: ["threshold", "synapse", "action potential", "resting potential"], correctAnswer: "action potential", explanation: "The action potential is the neural impulse, the fundamental signal that neurons use to communicate." },
+        { category: "The Neuron & Firing", question: "A drug that mimics a neurotransmitter's effects by binding to its receptor site is a(n):", options: ["antagonist", "agonist", "endorphin", "hormone"], correctAnswer: "agonist", explanation: "Agonists increase a neurotransmitter's action, often by being similar enough in structure to bind to and activate its receptor site." },
+        { category: "The Neuron & Firing", question: "The brief resting pause after a neuron has fired is the:", options: ["threshold", "refractory period", "synapse", "all-or-none response"], correctAnswer: "refractory period", explanation: "During the refractory period, the neuron cannot fire again until it has returned to its resting state, preventing the signal from traveling backward." },
+        { category: "The Neuron & Firing", question: "The endocrine system transmits messages through chemical messengers called:", options: ["neurotransmitters", "ions", "hormones", "agonists"], correctAnswer: "hormones", explanation: "Hormones are the chemical messengers of the endocrine system, which travel through the bloodstream." },
+        { category: "The Neuron & Firing", question: "An undersupply of which neurotransmitter is linked to the tremors of Parkinson's disease?", options: ["serotonin", "dopamine", "acetylcholine (ACh)", "GABA"], correctAnswer: "dopamine", explanation: "Dopamine is crucial for movement, and the death of dopamine-producing neurons leads to the characteristic motor symptoms of Parkinson's disease." },
+        { category: "The Neuron & Firing", question: "The reabsorption of excess neurotransmitters by the sending neuron is termed:", options: ["action potential", "reuptake", "threshold", "refractory period"], correctAnswer: "reuptake", explanation: "Reuptake is a recycling process that clears the synapse, allowing it to be ready for the next signal." },
+        { category: "The Neuron & Firing", question: "The 'master gland' of the endocrine system is the:", options: ["adrenal gland", "thyroid gland", "pituitary gland", "pineal gland"], correctAnswer: "pituitary gland", explanation: "The pituitary gland, under the control of the hypothalamus, releases hormones that regulate the other glands in the endocrine system." },
+        { category: "The Neuron & Firing", question: "Which cells in the nervous system support, nourish, and protect neurons?", options: ["interneurons", "glial cells", "motor neurons", "sensory neurons"], correctAnswer: "glial cells", explanation: "Glial cells (or glia) are the 'worker bees' of the nervous system, providing essential support functions for the neurons." },
+        { category: "The Neuron & Firing", question: "When the level of excitatory signals a neuron receives exceeds the inhibitory signals by a certain amount, the neuron reaches its:", options: ["refractory period", "action potential", "threshold", "synapse"], correctAnswer: "threshold", explanation: "The threshold is the minimum level of stimulation required to trigger an action potential, based on the sum of incoming signals." },
+
+        // Module 1.3b Questions (Substance Use) - 10 questions
+        { category: "Substance Use & Drugs", question: "A person who experiences unpleasant physical reactions like headaches and irritability when they stop consuming caffeine is experiencing:", options: ["tolerance", "withdrawal", "addiction", "an agonist effect"], correctAnswer: "withdrawal", explanation: "Withdrawal is the discomfort and distress that follow discontinuing an addictive drug. For caffeine, this often includes headache and fatigue." },
+        { category: "Substance Use & Drugs", question: "Alcohol, barbiturates, and opioids are all classified as:", options: ["Stimulants", "Hallucinogens", "Depressants", "Antagonists"], correctAnswer: "Depressants", explanation: "These drugs are all depressants because they reduce neural activity and slow down body functions." },
+        { category: "Substance Use & Drugs", question: "Which type of drug excites neural activity and speeds up body functions?", options: ["Depressants", "Hallucinogens", "Opioids", "Stimulants"], correctAnswer: "Stimulants", explanation: "Stimulants, like caffeine, nicotine, and amphetamines, increase alertness, heart rate, and other bodily functions." },
+        { category: "Substance Use & Drugs", question: "LSD and marijuana are classified as:", options: ["stimulants", "depressants", "hallucinogens", "opioids"], correctAnswer: "hallucinogens", explanation: "These drugs are known for distorting perceptions and evoking sensory images in the absence of actual sensory input." },
+        { category: "Substance Use & Drugs", question: "A substance use disorder is diagnosed when drug use:", options: ["occurs more than once a week", "is illegal", "continues despite significant life disruption", "produces a euphoric feeling"], correctAnswer: "continues despite significant life disruption", explanation: "The key diagnostic criterion is the continued use of a substance despite negative consequences in work, social, or personal life." },
+        { category: "Substance Use & Drugs", question: "The diminishing effect of a drug with regular use of the same dose is called:", options: ["withdrawal", "tolerance", "addiction", "disorder"], correctAnswer: "tolerance", explanation: "Tolerance leads users to take larger doses to achieve the desired effect, a key component of substance use disorders." },
+        { category: "Substance Use & Drugs", question: "All of the following are stimulants EXCEPT:", options: ["nicotine", "cocaine", "alcohol", "caffeine"], correctAnswer: "alcohol", explanation: "Alcohol is a depressant. Nicotine, cocaine, and caffeine all excite neural activity and speed up body functions." },
+        { category: "Substance Use & Drugs", question: "Opiates produce their pleasurable effects by mimicking the brain's natural:", options: ["serotonin", "dopamine", "endorphins", "acetylcholine"], correctAnswer: "endorphins", explanation: "Opioid drugs are agonists for endorphins, the body's natural pain-killing neurotransmitters, leading to feelings of pleasure and pain relief." },
+        { category: "Substance Use & Drugs", question: "A person's expectation that a drug will make them feel a certain way can influence their experience of the drug. This is known as:", options: ["tolerance", "withdrawal", "an expectancy effect", "an antagonist effect"], correctAnswer: "an expectancy effect", explanation: "Psychological expectations play a significant role in the effects of psychoactive drugs, demonstrating a biopsychosocial influence." },
+        { category: "Substance Use & Drugs", question: "Which is a major negative effect of Ecstasy (MDMA) use?", options: ["slowed heart rate", "damage to serotonin-producing neurons", "increased appetite", "improved long-term memory"], correctAnswer: "damage to serotonin-producing neurons", explanation: "Repeated use of MDMA can deplete serotonin and damage the neurons that produce it, leading to a permanently depressed mood." },
+        
+        // Module 1.4 Questions (Brain) - 20 questions
+        { category: "The Brain", question: "Damage to which of the following puts a person’s life in the most danger because it may cause breathing to stop?", options: ["amygdala", "thalamus", "medulla", "hypothalamus"], correctAnswer: "medulla", explanation: "The medulla, at the base of the brainstem, controls the most vital automatic functions, including heartbeat and breathing." },
+        { category: "The Brain", question: "Stimulation of the amygdala is most likely to have which of the following effects?", options: ["happiness", "aggression", "hunger", "loss of balance"], correctAnswer: "aggression", explanation: "The amygdala is a core part of the limbic system and is strongly linked to the emotions of fear and aggression." },
+        { category: "The Brain", question: "Damage to which of the following brain structures would affect the processing of new explicit memories?", options: ["cerebral cortex", "medulla", "hippocampus", "hypothalamus"], correctAnswer: "hippocampus", explanation: "The hippocampus is the primary brain structure involved in converting short-term conscious memories into long-term storage." },
+        { category: "The Brain", question: "After Hester was late for the fifth time, she declared, “My occipital lobes must not be working optimally! I have a hard time planning my day.” Which part of her brain is actually responsible for planning?", options: ["frontal lobes", "temporal lobes", "parietal lobes", "somatosensory cortex"], correctAnswer: "frontal lobes", explanation: "The frontal lobes, especially the prefrontal cortex, are responsible for executive functions like planning, judgment, and foresight." },
+        { category: "The Brain", question: "Stimulation of which of the following would cause a person to involuntarily move their arm?", options: ["somatosensory cortex", "motor cortex", "glial cells", "visual cortex"], correctAnswer: "motor cortex", explanation: "The motor cortex, located at the rear of the frontal lobes, directly controls voluntary muscle movements." },
+        { category: "The Brain", question: "Which brain imaging technique tracks radioactive glucose to reveal brain activity?", options: ["MRI", "fMRI", "PET", "EEG"], correctAnswer: "PET", explanation: "A PET (positron emission tomography) scan measures metabolic activity by tracking the consumption of a radioactive glucose tracer in the brain." },
+        { category: "The Brain", question: "A patient can respond to visual stimuli (e.g., navigate a cluttered hallway) but has no conscious awareness of seeing anything. This condition is known as:", options: ["aphasia", "blindsight", "dual processing", "neurogenesis"], correctAnswer: "blindsight", explanation: "Blindsight is a dramatic example of dual processing, where the unconscious 'visual action track' is intact, but the conscious 'visual perception track' is damaged." },
+        { category: "The Brain", question: "The brain's ability to reorganize itself after damage, especially in young children, is called:", options: ["neurogenesis", "neuroplasticity", "lesioning", "lateralization"], correctAnswer: "neuroplasticity", explanation: "Neuroplasticity is the brain's capacity to change and adapt by forming new neural pathways, which is crucial for recovery from injury." },
+        { category: "The Brain", question: "In a split-brain patient, an image of a cat is flashed to the left hemisphere. The patient will be able to:", options: ["point to a cat with the left hand", "say the word 'cat'", "point to a cat with the right hand", "both say 'cat' and point with the right hand"], correctAnswer: "both say 'cat' and point with the right hand", explanation: "The left hemisphere controls both language (allowing the patient to say 'cat') and the right hand (allowing them to point with it)." },
+        { category: "The Brain", question: "The large band of neural fibers connecting the two brain hemispheres is the:", options: ["thalamus", "corpus callosum", "pons", "cerebral cortex"], correctAnswer: "corpus callosum", explanation: "The corpus callosum is the primary communication bridge between the left and right hemispheres." },
+        { category: "The Brain", question: "A patient with damage to their reticular formation would most likely experience issues with:", options: ["memory", "arousal and alertness", "vision", "hearing"], correctAnswer: "arousal and alertness", explanation: "The reticular formation filters incoming sensory information and is critical for maintaining consciousness and arousal. Severe damage can lead to a coma." },
+        { category: "The Brain", question: "The temporal lobes are primarily responsible for processing:", options: ["visual information", "auditory information", "touch and body position", "planning and judgment"], correctAnswer: "auditory information", explanation: "Located roughly above the ears, the temporal lobes contain the auditory cortex." },
+        { category: "The Brain", question: "Which brain imaging technique uses magnetic fields and radio waves to produce detailed images of the brain's soft tissue (anatomy)?", options: ["EEG", "CT", "PET", "MRI"], correctAnswer: "MRI", explanation: "Magnetic resonance imaging (MRI) provides high-resolution structural images of the brain, excellent for identifying tumors, damage, or anatomical differences." },
+        { category: "The Brain", question: "The brain's ability to process motion, form, depth, and color simultaneously is known as:", options: ["sequential processing", "parallel processing", "blindsight", "consciousness"], correctAnswer: "parallel processing", explanation: "Parallel processing is the brain's natural mode for handling sensory information, allowing for rapid and simultaneous analysis of multiple features." },
+        { category: "The Brain", question: "Which part of the limbic system directs maintenance activities like eating, drinking, and body temperature?", options: ["hippocampus", "amygdala", "thalamus", "hypothalamus"], correctAnswer: "hypothalamus", explanation: "The hypothalamus is a vital structure for maintaining homeostasis by regulating basic bodily needs and drives." },
+        { category: "The Brain", question: "The story of Phineas Gage highlights the role of the frontal lobes in:", options: ["memory formation", "visual perception", "personality and inhibition", "motor coordination"], correctAnswer: "personality and inhibition", explanation: "Damage to Gage's frontal lobes dramatically altered his personality, making him irritable and profane, demonstrating the lobes' role in executive control." },
+        { category: "The Brain", question: "Nerve cells in the occipital lobe's visual cortex that respond to specific edges, lines, and angles are called:", options: ["glial cells", "feature detectors", "interneurons", "bipolar cells"], correctAnswer: "feature detectors", explanation: "These specialized neurons begin the process of deconstructing and analyzing visual information." },
+        { category: "The Brain", question: "Which of the following would NOT be a function of the hypothalamus?", options: ["regulating body temperature", "controlling hunger and thirst", "relaying visual information to the cortex", "governing the endocrine system"], correctAnswer: "relaying visual information to the cortex", explanation: "Relaying sensory information is the primary job of the thalamus. The hypothalamus is focused on maintenance activities and endocrine control." },
+        { category: "The Brain", question: "A surgeon uses an fMRI to study brain activity. This technique works by detecting:", options: ["electrical waves on the scalp", "the brain's magnetic fields", "changes in blood flow", "radioactive glucose consumption"], correctAnswer: "changes in blood flow", explanation: "Functional MRI (fMRI) reveals brain function by tracking changes in oxygen-rich blood flow, assuming that more active brain areas require more blood." },
+        { category: "The Brain", question: "The principle that information is often simultaneously processed on conscious and unconscious tracks is called:", options: ["neuroplasticity", "dual processing", "lateralization", "neurogenesis"], correctAnswer: "dual processing", explanation: "Dual processing is the concept that we have two 'minds'—a conscious, deliberate high road and an unconscious, automatic low road—processing information at the same time." },
+
+        // Module 1.5 Questions (Sleep) - 10 questions
+        { category: "Sleep & Consciousness", question: "Which sleep disorder is characterized by temporary cessations of breathing during sleep?", options: ["narcolepsy", "insomnia", "sleep apnea", "night terrors"], correctAnswer: "sleep apnea", explanation: "Sleep apnea involves repeated episodes of stopping breathing, which leads to momentary awakenings and deprivation of deep sleep." },
+        { category: "Sleep & Consciousness", question: "A student who pulls an all-nighter to study for an exam is likely to remember less because sleep aids in:", options: ["neurogenesis", "memory consolidation", "sensory adaptation", "arousal"], correctAnswer: "memory consolidation", explanation: "Sleep, particularly NREM-3 and REM sleep, plays a crucial role in strengthening neural connections and transferring recent memories to long-term storage." },
+        { category: "Sleep & Consciousness", question: "The biological rhythm of our sleep cycle repeats approximately every:", options: ["30 minutes", "60 minutes", "90 minutes", "120 minutes"], correctAnswer: "90 minutes", explanation: "For younger adults, the cycle through the various sleep stages (N1, N2, N3, REM) takes about 90 minutes." },
+        { category: "Sleep & Consciousness", question: "Which of the following is most likely to occur during NREM-3 sleep?", options: ["a vivid, story-like dream", "sleep spindles", "alpha waves", "sleepwalking"], correctAnswer: "sleepwalking", explanation: "NREM-3 is the deepest stage of sleep. It's during this stage that sleepwalking, sleep talking, and night terrors are most likely to occur." },
+        { category: "Sleep & Consciousness", question: "Exposure to bright light causes the suprachiasmatic nucleus to:", options: ["increase production of melatonin", "decrease production of melatonin", "increase production of serotonin", "decrease production of serotonin"], correctAnswer: "decrease production of melatonin", explanation: "Light signals the SCN, which then instructs the pineal gland to suppress the production of the sleep-inducing hormone melatonin, promoting wakefulness." },
+        { category: "Sleep & Consciousness", "question": "The bizarre experiences of jerking or feeling like you're falling while transitioning to sleep are known as:", "options": ["sleep spindles", "delta waves", "hypnagogic sensations", "REM rebound"], "correctAnswer": "hypnagogic sensations", "explanation": "These are common and normal sensory experiences that occur as you drift into NREM-1 sleep." },
+        { category: "Sleep & Consciousness", "question": "Which dream theory proposes that dreams are the brain's attempt to make sense of random neural activation?", "options": ["Freud's wish-fulfillment", "information-processing", "cognitive development", "activation-synthesis"], "correctAnswer": "activation-synthesis", "explanation": "The activation-synthesis theory suggests that dreams are stories the brain creates to explain random neural static erupting from the brainstem during REM sleep." },
+        { category: "Sleep & Consciousness", "question": "Which of the following is NOT an effect of chronic sleep deprivation?", "options": ["suppressed immune system", "increased risk of obesity", "impaired concentration", "increased production of leptin"], "correctAnswer": "increased production of leptin", "explanation": "Sleep deprivation actually *decreases* leptin (the hunger-suppressing hormone) and *increases* ghrelin (the hunger-arousing hormone), leading to increased appetite and weight gain." },
+        { category: "Sleep & Consciousness", "question": "REM sleep is also known as paradoxical sleep because:", "options": ["it is the deepest stage of sleep", "the brain is active, but the body is paralyzed", "it only occurs in the first half of the night", "dreams during this stage are never remembered"], "correctAnswer": "the brain is active, but the body is paralyzed", "explanation": "It's a paradox because the brain's activity (EEG waves) resembles an awake state, but the body's major voluntary muscles are completely relaxed and essentially paralyzed." },
+        { category: "Sleep & Consciousness", "question": "An individual's subjective awareness of themselves and their environment is their:", "options": ["blindsight", "dual processing", "consciousness", "perception"], "correctAnswer": "consciousness", "explanation": "This is the modern definition of consciousness used by cognitive neuroscientists." },
+
+        // Module 1.6 Questions (Sensation & Perception) - 10 questions
+        { category: "Sensation & Perception", "question": "Which concept explains why you can no longer feel the watch on your wrist after wearing it for a few minutes?", "options": ["difference threshold", "absolute threshold", "sensory adaptation", "signal detection theory"], "correctAnswer": "sensory adaptation", "explanation": "Sensory adaptation is our diminished sensitivity to a constant, unchanging stimulus. Our nerve cells fire less frequently in response." },
+        { category: "Sensation & Perception", "question": "The minimum difference between two stimuli required for detection 50 percent of the time is called the:", "options": ["absolute threshold", "subliminal stimulus", "difference threshold", "priming"], "correctAnswer": "difference threshold", "explanation": "Also known as the just noticeable difference (jnd), this is our ability to detect a change in stimulus intensity." },
+        { category: "Sensation & Perception", "question": "As Jeff reads his textbook, his sensory receptors detect the lines and angles of the letters, which are then organized by his brain. This process of detection is _______, while interpreting the letters as words is ______.", "options": ["perception; sensation", "top-down; bottom-up", "sensation; perception", "transduction; adaptation"], "correctAnswer": "sensation; perception", "explanation": "Sensation is the bottom-up process of receiving sensory input, while perception is the top-down process of organizing and interpreting that input to make meaning." },
+        { category: "Sensation & Perception", "question": "The retina's central focal point, which contains the highest concentration of cones, is the:", "options": ["optic nerve", "blind spot", "fovea", "iris"], "correctAnswer": "fovea", "explanation": "The fovea is the area of central focus, providing the sharpest and most detailed color vision." },
+        { category: "Sensation & Perception", "question": "Which theory of color vision best explains the phenomenon of afterimages (e.g., seeing green after staring at red)?", "options": ["Young-Helmholtz trichromatic theory", "opponent-process theory", "signal detection theory", "feature detection theory"], "correctAnswer": "opponent-process theory", "explanation": "The opponent-process theory explains that color vision depends on opposing retinal processes (red-green, blue-yellow, white-black). Staring at one color fatigues its corresponding cells, so you see the opponent color in an afterimage." },
+        { category: "Sensation & Perception", "question": "The structure in the eye that changes shape to help focus images on the retina is the:", "options": ["cornea", "pupil", "iris", "lens"], "correctAnswer": "lens", "explanation": "The lens performs accommodation, changing its curvature to focus on near or far objects." },
+        { category: "Sensation & Perception", "question": "A short wavelength of light is most likely to be perceived as which color?", "options": ["Red", "Yellow", "Green", "Blue-violet"], "correctAnswer": "Blue-violet", "explanation": "Wavelength determines hue. Shorter wavelengths correspond to blue-violet colors, while longer wavelengths correspond to red colors." },
+        { category: "Sensation & Perception", "question": "The amount of energy in a light wave, which we perceive as brightness, is determined by its:", "options": ["wavelength", "frequency", "hue", "amplitude"], "correctAnswer": "amplitude", "explanation": "Amplitude, or the height of the light wave, determines its intensity, which we perceive as brightness." },
+        { category: "Sensation & Perception", "question": "Specialized nerve cells in the brain that respond to specific features like edges, angles, and movements are called:", "options": ["ganglion cells", "bipolar cells", "feature detectors", "sensory receptors"], "correctAnswer": "feature detectors", "explanation": "Located in the visual cortex, feature detectors deconstruct visual scenes into their component parts for the brain to reassemble." },
+        { category: "Sensation & Perception", "question": "The process of converting light energy into neural signals is an example of:", "options": ["perception", "sensation", "transduction", "sensory adaptation"], "correctAnswer": "transduction", "explanation": "Transduction is the fundamental process of converting one form of energy into another that our brain can use." }
+    ];
+    
+    // --- Add Vocabulary Questions ---
+    const vocabWords = Object.keys(vocabulary);
+    for (const word of vocabWords) {
+        const definition = vocabulary[word];
+        const correctOption = definition;
+        
+        let distractors = [];
+        let availableDistractors = vocabWords.filter(dw => dw !== word);
+        
+        while(distractors.length < 3) {
+            const randomWord = availableDistractors[Math.floor(Math.random() * availableDistractors.length)];
+            if (!distractors.includes(vocabulary[randomWord])) {
+                distractors.push(vocabulary[randomWord]);
+            }
+        }
+        
+        let options = [correctOption, ...distractors];
+        
+        allQuestions.push({
+            category: "Vital Vocabulary",
+            question: `Which of the following best defines '${word}'?`,
+            options: options,
+            correctAnswer: correctOption,
+            explanation: `The correct definition for '${word}' is: "${definition}"`
+        });
+    }
+
+        // --- DOM Elements ---
+        const questionsViewBtn = document.getElementById('questions-view-btn');
+        const vocabViewBtn = document.getElementById('vocab-view-btn');
+        const tablesViewBtn = document.getElementById('tables-view-btn');
+        const quizArea = document.getElementById('quiz-area');
+        const vocabArea = document.getElementById('vocab-area');
+        const tablesArea = document.getElementById('tables-area');
+        const vocabList = document.getElementById('vocab-list');
+        const brainAreasTableBody = document.querySelector('#brain-table-container tbody');
+        const drugsTableBody = document.querySelector('#drugs-table-container tbody');
+        const tableDropdown = document.getElementById('table-dropdown');
+        const brainTableContainer = document.getElementById('brain-table-container');
+        const drugsTableContainer = document.getElementById('drugs-table-container');
+        const categorySelect = document.getElementById('category-select');
+        const scrambleBtn = document.getElementById('scramble-btn');
+        const reviewStarredBtn = document.getElementById('review-starred-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const starBtn = document.getElementById('star-btn');
+        const optionsList = document.getElementById('options-list');
+        const explanationDiv = document.getElementById('explanation');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- State Management ---
+        let currentQuizSet = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; 
+        let starredQuestions = new Set(); 
+
+        // --- Functions ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function populateCategories() {
+            const categories = ['All Questions', 'Vital Vocabulary', ...new Set(allQuestions.filter(q => q.category !== 'Vital Vocabulary').map(q => q.category))];
+            categorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            const randomOption = document.createElement('option');
+            randomOption.value = 'Random20';
+            randomOption.textContent = 'Random Quiz (20 Questions)';
+            categorySelect.appendChild(randomOption);
+        }
+
+        function populateTables() {
+            brainAreasTableBody.innerHTML = brainAreas.map(area => `
+                <tr>
+                    <td>${area.name}</td>
+                    <td>${area.location_part_of}</td>
+                    <td>${area.function}</td>
+                </tr>
+            `).join('');
+
+            drugsTableBody.innerHTML = psychoactiveDrugs.map(drug => `
+                <tr>
+                    <td>${drug.name}</td>
+                    <td>${drug.type}</td>
+                    <td>${drug.effects}</td>
+                </tr>
+            `).join('');
+        }
+
+        function populateVocabList() {
+            const sortedVocab = Object.keys(vocabulary).sort((a, b) => a.localeCompare(b));
+            vocabList.innerHTML = '';
+            sortedVocab.forEach(term => {
+                const dt = document.createElement('dt');
+                dt.id = `vocab-${term.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+                dt.textContent = term;
+                const dd = document.createElement('dd');
+                dd.textContent = vocabulary[term];
+                vocabList.appendChild(dt);
+                vocabList.appendChild(dd);
+            });
+        }
+        
+        function switchToView(view) {
+            document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
+
+            if (view === 'vocab') {
+                vocabArea.classList.add('active');
+                vocabViewBtn.classList.add('active');
+            } else if (view === 'tables') {
+                tablesArea.classList.add('active');
+                tablesViewBtn.classList.add('active');
+            } else { // 'questions'
+                quizArea.classList.add('active');
+                questionsViewBtn.classList.add('active');
+            }
+        }
+
+        function highlightVocabTerm(term) {
+            switchToView('vocab');
+            const termId = `vocab-${term.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+            const termElement = document.getElementById(termId);
+            if (termElement) {
+                termElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                termElement.classList.add('vocab-highlight');
+                setTimeout(() => {
+                    termElement.classList.remove('vocab-highlight');
+                }, 1500);
+            }
+        }
+
+        function loadQuiz(category) {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            
+            if (category === 'All Questions') {
+                currentQuizSet = allQuestions.filter(q => q.category !== 'Vital Vocabulary');
+            } else if (category === 'Random20') {
+                const eligibleQuestions = allQuestions.filter(q => q.category !== 'Vital Vocabulary');
+                shuffleArray(eligibleQuestions);
+                currentQuizSet = eligibleQuestions.slice(0, 20);
+            } else if (category === 'Starred') {
+                 if (starredQuestions.size === 0) {
+                    alert("You haven't starred any questions yet!");
+                    categorySelect.value = 'All Questions';
+                    loadQuiz('All Questions');
+                    return;
+                }
+                currentQuizSet = [...starredQuestions];
+            } else {
+                currentQuizSet = allQuestions.filter(q => q.category === category);
+            }
+            
+            switchToView('questions');
+            if(currentQuizSet.length > 0) {
+                 displayQuestion(currentQuestionIndex);
+            } else {
+                questionText.textContent = "No questions in this set.";
+                optionsList.innerHTML = '';
+                explanationDiv.style.display = 'none';
+                updateProgress();
+                updateNavButtons();
+                updateStarButton();
+            }
+        }
+
+        function makeClickable(text) {
+            let processedText = text;
+            for (const term of Object.keys(vocabulary)) {
+                 const regex = new RegExp(`\\b(${term.replace(/[\(\)]/g, '\\$&')})\\b`, 'gi');
+                 processedText = processedText.replace(regex, `<span class="vocab-link" data-term="${term}">$1</span>`);
+            }
+            return processedText;
+        }
+
+        function displayQuestion(index) {
+            if (index < 0 || index >= currentQuizSet.length) return;
+
+            const question = currentQuizSet[index];
+            questionText.innerHTML = makeClickable(question.question);
+            optionsList.innerHTML = '';
+            
+            let questionOptions = [...question.options];
+            shuffleArray(questionOptions);
+
+            questionOptions.forEach(option => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                li.textContent = option; // Display as plain text initially
+                li.addEventListener('click', () => handleAnswerSelect(option));
+                optionsList.appendChild(li);
+            });
+            
+            attachVocabListenersToText(questionText);
+            explanationDiv.style.display = 'none';
+            if (userAnswers.hasOwnProperty(index)) {
+                showFeedback(userAnswers[index]);
+            }
+            updateProgress();
+            updateNavButtons();
+            updateStarButton();
+        }
+        
+        function handleAnswerSelect(selectedOption) {
+            if (userAnswers.hasOwnProperty(currentQuestionIndex)) return;
+            userAnswers[currentQuestionIndex] = selectedOption;
+            showFeedback(selectedOption);
+        }
+
+        function showFeedback(selectedOption) {
+            const question = currentQuizSet[currentQuestionIndex];
+            const options = optionsList.querySelectorAll('.option-item');
+            
+            options.forEach(optionLi => {
+                optionLi.classList.add('answered');
+                optionLi.innerHTML = makeClickable(optionLi.textContent); // Make vocab clickable AFTER answering
+                
+                if (optionLi.textContent === question.correctAnswer) {
+                    optionLi.classList.add('correct');
+                } else if (optionLi.textContent === selectedOption) {
+                    optionLi.classList.add('incorrect', 'selected');
+                }
+            });
+            
+            attachVocabListenersToAllOptions();
+
+            explanationDiv.innerHTML = `<strong>Explanation:</strong> ${makeClickable(question.explanation)}`;
+            explanationDiv.style.display = 'block';
+            attachVocabListenersToText(explanationDiv);
+        }
+
+        function attachVocabListenersToText(element) {
+             element.querySelectorAll('.vocab-link').forEach(link => {
+                const term = link.dataset.term;
+                const newLink = link.cloneNode(true);
+                link.parentNode.replaceChild(newLink, link);
+
+                newLink.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    highlightVocabTerm(term);
+                });
+            });
+        }
+        
+        function attachVocabListenersToAllOptions() {
+            optionsList.querySelectorAll('.vocab-link').forEach(link => {
+                const term = link.dataset.term;
+                const newLink = link.cloneNode(true);
+                link.parentNode.replaceChild(newLink, link);
+                
+                newLink.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    highlightVocabTerm(term);
+                });
+            });
+        }
+
+        function updateProgress() {
+            const progress = currentQuizSet.length > 0 ? ((currentQuestionIndex + 1) / currentQuizSet.length) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+            questionCounter.textContent = currentQuizSet.length > 0 ? `${currentQuestionIndex + 1} / ${currentQuizSet.length}` : '0 / 0';
+        }
+
+        function updateNavButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === currentQuizSet.length - 1;
+        }
+
+        function updateStarButton() {
+            if (currentQuizSet.length === 0) {
+                 starBtn.classList.remove('starred');
+                 starBtn.innerHTML = '☆';
+                 return;
+            }
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starBtn.classList.add('starred');
+                starBtn.innerHTML = '★';
+            } else {
+                starBtn.classList.remove('starred');
+                starBtn.innerHTML = '☆';
+            }
+        }
+        
+        function toggleStar() {
+            if (currentQuizSet.length === 0) return;
+            const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQuestionObject)) {
+                starredQuestions.delete(currentQuestionObject);
+            } else {
+                starredQuestions.add(currentQuestionObject);
+            }
+            updateStarButton();
+        }
+
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            populateVocabList();
+            populateTables();
+            loadQuiz(categorySelect.value); 
+        });
+        
+        questionsViewBtn.addEventListener('click', () => switchToView('questions'));
+        vocabViewBtn.addEventListener('click', () => switchToView('vocab'));
+        tablesViewBtn.addEventListener('click', () => switchToView('tables'));
+
+        tableDropdown.addEventListener('change', (e) => {
+            brainTableContainer.style.display = e.target.value === 'brain' ? 'block' : 'none';
+            drugsTableContainer.style.display = e.target.value === 'drugs' ? 'block' : 'none';
+        });
+
+        categorySelect.addEventListener('change', (e) => loadQuiz(e.target.value));
+
+        scrambleBtn.addEventListener('click', () => {
+            if (currentQuizSet.length > 0) {
+                shuffleArray(currentQuizSet);
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        reviewStarredBtn.addEventListener('click', () => {
+            let starredOption = categorySelect.querySelector('option[value="Starred"]');
+            if (!starredOption) {
+                 starredOption = document.createElement('option');
+                 starredOption.value = 'Starred';
+                 starredOption.textContent = '★ Starred Questions';
+                 categorySelect.appendChild(starredOption);
+            }
+            categorySelect.value = 'Starred';
+            loadQuiz('Starred');
+        });
+        
+        starBtn.addEventListener('click', toggleStar);
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuizSet.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+    </script>
+</body>
+</html>
