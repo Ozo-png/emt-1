@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Cardiovascular Emergencies Study Tool</title>
+    <style>
+        :root {
+            --primary-color: #005A9C; /* Professional Blue */
+            --secondary-color: #34495E; /* Dark Slate Gray */
+            --background-color: #F4F6F9; /* Light Gray Blue */
+            --surface-color: #FFFFFF;
+            --text-color: #333333;
+            --light-gray: #E0E0E0;
+            --correct-color: #2E7D32; /* Darker Green */
+            --incorrect-color: #C62828; /* Darker Red */
+            --star-color: #FFAB00; /* Amber */
+        }
+
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        #app-wrapper {
+            max-width: 1000px;
+            margin: 15px auto;
+            padding: 15px;
+        }
+
+        #app-container {
+            background: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header and View Toggling */
+        header {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.6em;
+        }
+
+        #view-toggle-container {
+            display: flex;
+            justify-content: center;
+            background-color: #e9ecef;
+            padding: 10px;
+        }
+
+        #view-toggle-container button {
+            background-color: transparent;
+            border: none;
+            color: var(--secondary-color);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        #view-toggle-container button.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        /* Controls Area */
+        #controls {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid var(--light-gray);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            #controls {
+                grid-template-columns: 2fr 1fr 1fr;
+            }
+        }
+
+        #controls select, #controls button {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+            font-size: 1em;
+            cursor: pointer;
+            background-color: var(--surface-color);
+            transition: background-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        #controls button {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border-color: var(--primary-color);
+        }
+        #controls button:hover {
+            background-color: #00457a;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Main Content Area (Quiz and Vocab) */
+        main {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        #quiz-container, #vocabulary-container {
+            display: none; /* Controlled by JS */
+        }
+        #quiz-container.active, #vocabulary-container.active {
+            display: block;
+        }
+
+        /* Quiz Specific Styles */
+        #progress-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        #progress-bar-container {
+            flex-grow: 1; height: 12px; background-color: var(--light-gray); border-radius: 6px; overflow: hidden; margin: 0 15px;
+        }
+        #progress-bar {
+            width: 0%; height: 100%; background-color: var(--primary-color); transition: width 0.3s ease-in-out;
+        }
+        #question-header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;
+        }
+        #question-text {
+            font-size: 1.25em; font-weight: 500; flex-grow: 1; padding-right: 15px;
+        }
+        #star-btn {
+            background: none; border: none; font-size: 2em; cursor: pointer; color: var(--light-gray); transition: color 0.2s, transform 0.2s; padding: 0; line-height: 1;
+        }
+        #star-btn.starred { color: var(--star-color); }
+        #star-btn:hover { transform: scale(1.2); }
+        
+        #options-list {
+            list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;
+        }
+        .option-item {
+            padding: 15px; border: 2px solid var(--light-gray); border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .option-item:not(.answered):hover { border-color: var(--primary-color); background-color: #e7f1ff; }
+        .option-item.answered { cursor: default; }
+        .option-item.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: var(--correct-color); font-weight: bold; }
+        .option-item.incorrect.selected { background-color: #ffebee; border-color: var(--incorrect-color); color: var(--incorrect-color); }
+        
+        #explanation {
+            margin-top: 25px; padding: 15px; background-color: #f1f3f5; border-left: 5px solid var(--secondary-color); border-radius: 4px; display: none;
+        }
+        
+        #navigation {
+            display: flex; justify-content: space-between; margin-top: 25px;
+        }
+        #navigation button {
+            padding: 12px 25px; border-radius: 8px; border: 1px solid var(--primary-color); background-color: var(--surface-color); color: var(--primary-color); font-size: 1em; font-weight: bold; cursor: pointer; transition: background-color 0.2s, color 0.2s;
+        }
+        #navigation button:hover:not(:disabled) { background-color: var(--primary-color); color: var(--surface-color); }
+        #navigation button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Vocabulary Section Styles */
+        #vocab-search-container { margin-bottom: 20px; }
+        #vocab-search {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+        }
+        #vocab-list {
+            list-style: none; padding: 0;
+        }
+        .vocab-list-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .vocab-list-item dt {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--primary-color);
+        }
+        .vocab-list-item dd {
+            margin-left: 0;
+            padding-top: 5px;
+        }
+        .vocab-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Vocabulary Term Highlighting and Modal */
+        .vocab-term.disabled { font-weight: bold; }
+        .vocab-term.active { font-weight: bold; color: #007bff; text-decoration: underline; cursor: pointer; }
+        
+        #vocab-modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; padding: 10px;
+        }
+        .modal-content {
+            background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;
+        }
+        .modal-content h2 { margin-top: 0; color: var(--primary-color); }
+
+    </style>
+</head>
+<body>
+
+<div id="app-wrapper">
+    <div id="app-container">
+        <header>
+            <h1>EMT: Cardiovascular Emergencies</h1>
+        </header>
+
+        <div id="view-toggle-container">
+            <button id="show-quiz-btn" class="active">Quiz</button>
+            <button id="show-vocab-btn">Vocabulary</button>
+        </div>
+
+        <main>
+            <div id="quiz-container" class="active">
+                <div id="controls">
+                    <select id="category-select"></select>
+                    <button id="scramble-btn">Scramble Set</button>
+                    <button id="review-starred-btn">Review Starred</button>
+                </div>
+                <div id="quiz-area" style="padding: 20px 0 0 0;">
+                    <div id="progress-container">
+                        <span id="question-counter"></span>
+                        <div id="progress-bar-container"><div id="progress-bar"></div></div>
+                    </div>
+                    <div id="question-header">
+                        <p id="question-text"></p>
+                        <button id="star-btn" title="Star this question for later review">☆</button>
+                    </div>
+                    <ul id="options-list"></ul>
+                    <div id="explanation"></div>
+                    <div id="navigation">
+                        <button id="prev-btn">Previous</button>
+                        <button id="next-btn">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vocabulary-container">
+                <div id="vocab-search-container">
+                    <input type="text" id="vocab-search" placeholder="Search for a term...">
+                </div>
+                <dl id="vocab-list"></dl>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="vocab-modal">
+    <div class="modal-content">
+        <h2 id="modal-term"></h2>
+        <p id="modal-definition"></p>
+    </div>
+</div>
+
+<script>
+    // --- Vocabulary Database ---
+    const vocabWords = {
+      "acute coronary syndrome (ACS)": "A group of symptoms caused by myocardial ischemia; includes angina and myocardial infarction.",
+      "acute myocardial infarction (AMI)": "A heart attack; death of heart muscle following obstruction of blood flow to it. “Acute” in this context means “new” or “happening right now.”",
+      "angina pectoris": "Transient (short-lived) chest discomfort caused by partial or temporary blockage of blood flow to the heart muscle; also called angina.",
+      "anterior": "The front surface of the body; the side facing you in the standard anatomic position.",
+      "aorta": "The main artery, which receives blood from the left ventricle and delivers it to all the other arteries that carry blood to the tissues of the body.",
+      "aortic aneurysm": "A weakness in the wall of the aorta that makes it susceptible to rupture.",
+      "aortic valve": "The one-way valve that lies between the left ventricle and the aorta and keeps blood from flowing back into the left ventricle after the left ventricle ejects its blood into the aorta; one of four heart valves.",
+      "artifact": "A tracing on an ECG that is the result of interference, such as patient movement, rather than the heart’s electrical activity.",
+      "asystole": "The complete absence of all heart electrical activity.",
+      "atherosclerosis": "A disorder in which cholesterol and calcium build up inside the walls of blood vessels, eventually leading to partial or complete blockage of blood flow.",
+      "atrium": "One of the two upper chambers of the heart.",
+      "automaticity": "The ability of cardiac muscle cells to contract without stimulation from the nervous system.",
+      "autonomic nervous system": "The part of the nervous system that controls the involuntary activities of the body such as the heart rate, blood pressure, and digestion of food.",
+      "bradycardia": "A slow heart rate, less than 60 beats/min.",
+      "cardiac arrest": "When the heart fails to generate effective and detectable blood flow; pulses are not palpable in cardiac arrest, even if muscular and electrical activity continues in the heart.",
+      "cardiac output": "A measure of the volume of blood circulated by the heart in 1 minute, calculated by multiplying the stroke volume by the heart rate.",
+      "cardiogenic shock": "A state in which not enough oxygen is delivered to the tissues of the body, caused by low output of blood from the heart. It can be a severe complication of a large acute myocardial infarction, as well as other conditions.",
+      "congestive heart failure (CHF)": "A disorder in which the heart loses part of its ability to effectively pump blood, usually as a result of damage to the heart muscle and usually resulting in a backup of fluid into the lungs.",
+      "coronary arteries": "The blood vessels that carry blood and nutrients to the heart muscle.",
+      "defibrillate": "To shock a fibrillating (chaotically shaking) heart with specialized electric current in an attempt to restore a normal, rhythmic beat.",
+      "dependent edema": "Swelling in the part of the body closest to the ground, caused by collection of fluid in the tissues; a possible sign of congestive heart failure.",
+      "dilation": "Widening of a tubular structure such as a coronary artery.",
+      "dissecting aneurysm": "A condition in which the inner layers of an artery, such as the aorta, become separated, allowing blood (at high pressures) to flow between the layers.",
+      "dysrhythmia": "An irregular or abnormal heart rhythm.",
+      "hypertensive emergency": "An emergency situation created by excessively high blood pressure, which can lead to serious complications such as stroke or aneurysm.",
+      "infarction": "Death of a body tissue, usually caused by interruption of its blood supply.",
+      "inferior": "Below a body part or nearer to the feet.",
+      "ischemia": "A lack of oxygen that deprives tissues of necessary nutrients, resulting from partial or complete blockage of blood flow; potentially reversible because permanent injury has not yet occurred.",
+      "lumen": "The inside diameter of an artery or other hollow structure.",
+      "myocardium": "The heart muscle.",
+      "occlusion": "A blockage, usually of a tubular structure such as a blood vessel.",
+      "parasympathetic nervous system": "The part of the autonomic nervous system that controls vegetative functions such as digestion of food and relaxation.",
+      "perfusion": "The circulation of oxygenated blood within an organ or tissue in adequate amounts to meet the cells’ current needs.",
+      "posterior": "The back surface of the body; the side away from you in the standard anatomic position.",
+      "return of spontaneous circulation (ROSC)": "The return of a pulse and effective blood flow to the body in a patient who previously was in cardiac arrest.",
+      "stroke volume": "The volume of blood ejected with each ventricular contraction.",
+      "superior": "Above a body part or nearer to the head.",
+      "sympathetic nervous system": "The part of the autonomic nervous system that controls active functions such as responding to fear (also known as the fight-or-flight system).",
+      "syncope": "A fainting spell or transient loss of consciousness.",
+      "tachycardia": "A rapid heart rate, more than 100 beats/min.",
+      "thromboembolism": "A blood clot that has formed within a blood vessel and is floating within the bloodstream.",
+      "ventricle": "One of the two lower chambers of the heart.",
+      "ventricular fibrillation": "Disorganized, ineffective quivering of the ventricles, resulting in no blood flow and a state of cardiac arrest.",
+      "ventricular tachycardia": "A rapid heart rhythm in which the electrical impulse begins in the ventricle (instead of the atria), which may result in inadequate blood flow and eventually deteriorate into cardiac arrest."
+    };
+
+    // --- Questions Database ---
+    let allQuestions = [
+        // Category: Anatomy and Physiology (Expanded)
+        { category: "Anatomy and Physiology", question: "Which chambers of the heart are responsible for pumping blood out to the lungs and the rest of the body?", options: ["Atria", "Ventricles", "Septum", "Aorta"], correctAnswer: "Ventricles", explanation: "The lower chambers, or ventricles, are the primary pumping chambers. The right ventricle pumps to the lungs, and the more muscular left ventricle pumps to the body." },
+        { category: "Anatomy and Physiology", question: "The natural pacemaker of the heart, where electrical impulses normally originate, is the:", options: ["Atrioventricular (AV) node", "Sinoatrial (SA) node", "Purkinje fibers", "Bundle of His"], correctAnswer: "Sinoatrial (SA) node", explanation: "The sinoatrial (SA) node, in the upper right atrium, is the heart's natural pacemaker." },
+        { category: "Anatomy and Physiology", question: "Which blood vessels are responsible for supplying the myocardium itself with oxygen-rich blood?", options: ["Pulmonary arteries", "Venae cavae", "Coronary arteries", "Carotid arteries"], correctAnswer: "Coronary arteries", explanation: "The coronary arteries are the first to branch off the aorta and they supply blood directly to the heart muscle (myocardium)." },
+        { category: "Anatomy and Physiology", question: "The term for the volume of blood ejected with each ventricular contraction is:", options: ["Cardiac output", "Heart rate", "Stroke volume", "Blood pressure"], correctAnswer: "Stroke volume", explanation: "Stroke volume is the specific amount of blood pumped out by the left ventricle in one contraction." },
+        { category: "Anatomy and Physiology", question: "The 'fight-or-flight' response is controlled by the:", options: ["Parasympathetic nervous system", "Sympathetic nervous system", "Central nervous system", "Somatic nervous system"], correctAnswer: "Sympathetic nervous system", explanation: "The sympathetic nervous system prepares the body for stress by increasing heart rate and contractility." },
+        { category: "Anatomy and Physiology", question: "Which two large veins bring deoxygenated blood back to the right atrium?", options: ["Pulmonary veins", "Superior and inferior venae cavae", "Jugular veins", "Femoral veins"], correctAnswer: "Superior and inferior venae cavae", explanation: "The superior and inferior venae cavae are the largest veins that return deoxygenated blood from the body to the heart." },
+        { category: "Anatomy and Physiology", question: "What is the primary function of the heart valves?", options: ["To generate electrical impulses", "To ensure blood flows in one direction", "To oxygenate the blood", "To filter impurities"], correctAnswer: "To ensure blood flows in one direction", explanation: "The four heart valves prevent the backflow of blood, ensuring efficient, unidirectional movement through the chambers." },
+        { category: "Anatomy and Physiology", question: "Cardiac output is calculated by which formula?", options: ["Heart Rate / Stroke Volume", "Stroke Volume + Heart Rate", "Heart Rate x Stroke Volume", "Systolic - Diastolic Pressure"], correctAnswer: "Heart Rate x Stroke Volume", explanation: "Cardiac output, the total volume of blood pumped per minute, is determined by multiplying the heart rate by the stroke volume." },
+        { category: "Anatomy and Physiology", question: "The special characteristic of cardiac muscle cells to contract spontaneously without a stimulus from a nerve source is called:", options: ["Conductivity", "Contractility", "Excitability", "Automaticity"], correctAnswer: "Automaticity", explanation: "Automaticity allows any cardiac muscle cell to initiate its own impulse, although it is normally overridden by the faster SA node." },
+        { category: "Anatomy and Physiology", question: "After an electrical impulse leaves the AV node, it travels through the:", options: ["SA node", "Atrial pathways", "Bundle of His and Purkinje fibers", "Vena cava"], correctAnswer: "Bundle of His and Purkinje fibers", explanation: "The impulse is delayed at the AV node, then travels down the bundle of His and through the Purkinje fibers to cause ventricular contraction." },
+        { category: "Anatomy and Physiology", question: "Which side of the heart is a high-pressure pump that sends blood to the entire body?", options: ["Right side", "Left side", "The atria only", "The ventricles only"], correctAnswer: "Left side", explanation: "The left ventricle is significantly more muscular than the right because it must generate enough pressure to pump blood throughout the systemic circulation." },
+        { category: "Anatomy and Physiology", question: "Pulses felt in the extremities, such as the radial pulse, are known as:", options: ["Central pulses", "Apical pulses", "Peripheral pulses", "Brachial pulses"], correctAnswer: "Peripheral pulses", explanation: "Peripheral pulses are those located away from the trunk of the body, in the limbs." },
+        { category: "Anatomy and Physiology", question: "Which valve prevents backflow of blood from the left ventricle into the left atrium?", options: ["Aortic valve", "Pulmonic valve", "Tricuspid valve", "Mitral valve"], correctAnswer: "Mitral valve", explanation: "The mitral valve (or bicuspid valve) is located between the left atrium and the left ventricle and closes during ventricular contraction to prevent backflow." },
+        { category: "Anatomy and Physiology", question: "The muscular wall that separates the left and right sides of the heart is the:", options: ["Myocardium", "Pericardium", "Endocardium", "Septum"], correctAnswer: "Septum", explanation: "The septum is the thick wall of muscle that divides the heart into left and right sides, preventing the mixing of oxygenated and deoxygenated blood." },
+        { category: "Anatomy and Physiology", question: "Systolic blood pressure represents the pressure in the arteries when the:", options: ["Ventricles are contracting", "Ventricles are relaxing", "Atria are contracting", "Heart is at rest"], correctAnswer: "Ventricles are contracting", explanation: "Systole is the period of ventricular contraction (pumping), and systolic pressure is the peak pressure generated during this phase." },
+        { category: "Anatomy and Physiology", question: "The only arteries in the body that carry deoxygenated blood are the:", options: ["Coronary arteries", "Aortas", "Pulmonary arteries", "Carotid arteries"], correctAnswer: "Pulmonary arteries", explanation: "The pulmonary arteries carry deoxygenated blood from the right ventricle to the lungs to pick up oxygen." },
+
+        // Category: Pathophysiology (Expanded)
+        { category: "Pathophysiology", question: "The underlying condition that causes a buildup of calcium and cholesterol in the arteries is:", options: ["Aortic aneurysm", "Atherosclerosis", "Cardiogenic shock", "Hypertensive emergency"], correctAnswer: "Atherosclerosis", explanation: "Atherosclerosis is the hardening and narrowing of arteries due to plaque buildup, the root cause of most coronary artery disease." },
+        { category: "Pathophysiology", question: "A patient experiencing chest pain because their heart's oxygen demand exceeds its supply is suffering from:", options: ["Infarction", "Ischemia", "Aneurysm", "Asystole"], correctAnswer: "Ischemia", explanation: "Ischemia is a state of decreased blood flow and oxygen. In the heart, this causes angina and can lead to infarction (tissue death)." },
+        { category: "Pathophysiology", question: "What is the key difference between angina pectoris and an AMI?", options: ["Angina always causes shortness of breath.", "In an AMI, a portion of the heart muscle dies.", "Angina is always relieved by rest.", "An AMI involves a temporary blockage."], correctAnswer: "In an AMI, a portion of the heart muscle dies.", explanation: "Angina is caused by temporary ischemia without permanent damage. An AMI involves infarction, which is the irreversible death of heart muscle." },
+        { category: "Pathophysiology", question: "Which of the following is an UNCONTROLLABLE risk factor for AMI?", options: ["Cigarette smoking", "High blood pressure", "Family history", "Lack of exercise"], correctAnswer: "Family history", explanation: "Family history (genetics) is a risk factor that cannot be changed, unlike lifestyle factors such as smoking or diet." },
+        { category: "Pathophysiology", question: "A disorganized, ineffective quivering of the ventricles is called:", options: ["Asystole", "Ventricular tachycardia", "Ventricular fibrillation", "Bradycardia"], correctAnswer: "Ventricular fibrillation", explanation: "Ventricular fibrillation (V-Fib) is a chaotic rhythm that prevents the heart from pumping blood and requires immediate defibrillation." },
+        { category: "Pathophysiology", question: "A patient develops pulmonary edema and swollen ankles several days after a heart attack. This is most likely:", options: ["Cardiogenic shock", "Congestive heart failure (CHF)", "Aortic aneurysm", "A second AMI"], correctAnswer: "Congestive heart failure (CHF)", explanation: "CHF occurs when the damaged heart can't pump effectively, causing fluid to back up in the lungs (pulmonary edema) and the body (dependent edema)." },
+        { category: "Pathophysiology", question: "Sudden, tearing chest pain radiating to the back with a significant difference in blood pressure between arms is highly suggestive of:", options: ["Angina pectoris", "Acute myocardial infarction", "Dissecting aneurysm", "Pulmonary embolism"], correctAnswer: "Dissecting aneurysm", explanation: "The classic presentation of a dissecting aortic aneurysm is abrupt, severe tearing pain and a blood pressure discrepancy between arms." },
+        { category: "Pathophysiology", question: "Cardiogenic shock is primarily caused by:", options: ["A massive allergic reaction", "Widespread infection", "Severe dehydration", "Inadequate pumping function of the heart"], correctAnswer: "Inadequate pumping function of the heart", explanation: "Cardiogenic shock results when the heart muscle is too damaged to pump enough blood to meet the body's needs." },
+        { category: "Pathophysiology", question: "Chest pain that occurs in the absence of a significant increase in oxygen demand is classified as:", options: ["Stable angina", "Unstable angina", "Variant angina", "Myocardial infarction"], correctAnswer: "Unstable angina", explanation: "Unstable angina is pain that occurs at rest or with minimal exertion. It is a sign of severe coronary artery disease and carries a high risk of progressing to an AMI." },
+        { category: "Pathophysiology", question: "What is the direct cause of death of heart muscle tissue during an AMI?", options: ["Electrical malfunction", "Valve failure", "Occlusion of a coronary artery", "Hypertensive crisis"], correctAnswer: "Occlusion of a coronary artery", explanation: "An AMI occurs when a blood clot completely blocks a coronary artery, cutting off blood supply to the myocardium downstream, leading to infarction." },
+        { category: "Pathophysiology", question: "The absence of all heart electrical activity, known as a 'flat line', is:", options: ["Ventricular fibrillation", "Asystole", "Pulseless electrical activity", "Sinus rhythm"], correctAnswer: "Asystole", explanation: "Asystole is the complete cessation of electrical activity in the heart. It is not a shockable rhythm." },
+        { category: "Pathophysiology", question: "A patient has an organized electrical rhythm on the monitor but no palpable pulse. This condition is called:", options: ["Ventricular fibrillation", "Asystole", "Pulseless electrical activity (PEA)", "Idioventricular rhythm"], correctAnswer: "Pulseless electrical activity (PEA)", explanation: "In PEA, the heart's electrical system is functioning, but the muscle does not contract or there is another reason for the lack of a pulse (e.g., severe hypovolemia)." },
+        { category: "Pathophysiology", question: "Why does left-sided heart failure often lead to right-sided heart failure?", options: ["The left ventricle enlarges and physically compresses the right ventricle.", "The electrical impulse from the SA node is blocked.", "Increased pressure in the pulmonary circulation strains the right ventricle.", "A clot from the left side of the heart travels to the right side."], correctAnswer: "Increased pressure in the pulmonary circulation strains the right ventricle.", explanation: "When the left ventricle fails, blood backs up into the lungs (pulmonary circulation). The right ventricle then has to pump against this high pressure, eventually causing it to weaken and fail." },
+        { category: "Pathophysiology", question: "The primary cause of a dissecting aortic aneurysm is:", options: ["Atherosclerosis", "Blunt force trauma", "Uncontrolled hypertension", "Congenital defect"], correctAnswer: "Uncontrolled hypertension", explanation: "Long-term high blood pressure places constant stress on the inner walls of the aorta, making it susceptible to tearing, which leads to a dissection." },
+        { category: "Pathophysiology", question: "After an AMI, the damaged heart muscle is replaced by non-contractile:", options: ["Myocardium", "Fatty tissue", "Scar tissue", "Epithelial tissue"], correctAnswer: "Scar tissue", explanation: "Dead myocardial tissue cannot regenerate. The body heals the area by forming fibrous scar tissue, which does not contract and can impair the heart's overall pumping ability." },
+
+        // Category: Assessment (Expanded)
+        { category: "Assessment", question: "A 59-year-old woman has chest pressure and cool, pale, clammy skin. This skin condition is known as:", options: ["Flushed", "Cyanotic", "Diaphoretic", "Jaundiced"], correctAnswer: "Diaphoretic", explanation: "Diaphoresis (cool, pale, sweaty skin) is a classic sign of cardiac compromise, resulting from the body's stress response." },
+        { category: "Assessment", question: "While assessing a patient with chest pain, you note their pulse is 118 beats/min and irregular. This suggests a possible:", options: ["Hypertensive emergency", "Normal pain response", "Dysrhythmia", "Stroke"], correctAnswer: "Dysrhythmia", explanation: "An irregular pulse in a cardiac patient is a red flag for a dysrhythmia, an abnormality in the heart's electrical conduction." },
+        { category: "Assessment", question: "Which of the following is NOT a common sign or symptom of an AMI?", options: ["Crushing chest pressure", "Pain radiating to the jaw", "Sudden weakness and nausea", "Headache and blurred vision"], correctAnswer: "Headache and blurred vision", explanation: "Headache can be a side effect of nitroglycerin, but it's not a primary symptom of AMI. The other options are classic signs." },
+        { category: "Assessment", question: "In the OPQRST mnemonic, what does 'Q' stand for?", options: ["Quantity", "Quality", "Quickness", "Quiet"], correctAnswer: "Quality", explanation: "'Q' stands for Quality, prompting the rescuer to ask the patient to describe the pain (e.g., 'sharp,' 'dull,' 'crushing')." },
+        { category: "Assessment", question: "You hear a bubbling sound on auscultation of a CHF patient's lungs. This sound is called:", options: ["Wheezing", "Stridor", "Rhonchi", "Crackles (rales)"], correctAnswer: "Crackles (rales)", explanation: "Crackles are caused by fluid in the alveoli (pulmonary edema), a common finding in congestive heart failure." },
+        { category: "Assessment", question: "A patient's only complaint is sudden fatigue and mild indigestion. This patient is a 72-year-old female with diabetes. You should have a high index of suspicion for:", options: ["A stroke", "A silent myocardial infarction", "Anxiety", "Gastroenteritis"], correctAnswer: "A silent myocardial infarction", explanation: "Elderly patients, women, and diabetics are known to present with atypical 'silent' MI symptoms, which may not include classic chest pain." },
+        { category: "Assessment", question: "What is the purpose of asking about 'pertinent negatives' during history taking?", options: ["To prove the patient is not sick", "To rule out other conditions", "To document associated symptoms that are absent", "To assess the patient's mental status"], correctAnswer: "To document associated symptoms that are absent", explanation: "A pertinent negative (e.g., 'patient denies shortness of breath') is the absence of a symptom that would be expected for a certain condition, which is clinically significant." },
+        { category: "Assessment", question: "What is your FIRST step when assessing a conscious 59-year-old woman presenting with chest pressure?", options: ["Administer oxygen", "Take a complete set of vital signs", "Form a general impression and assess ABCs", "Ask her if she takes nitroglycerin"], correctAnswer: "Form a general impression and assess ABCs", explanation: "The primary assessment (Airway, Breathing, Circulation) must always come first to identify and correct immediate life-threats." },
+        { category: "Assessment", question: "A patient with right-sided heart failure would most likely present with which finding?", options: ["Pink, frothy sputum", "Dependent edema", "Severe headache", "Facial droop"], correctAnswer: "Dependent edema", explanation: "Right-sided heart failure causes blood to back up in the systemic circulation, leading to fluid accumulation in the lower extremities (dependent edema) and JVD." },
+        { category: "Assessment", question: "When assessing circulation in a patient with a suspected cardiac emergency, you should check for all of the following EXCEPT:", options: ["Pulse rate and regularity", "Skin color and condition", "Capillary refill", "Pupil response to light"], correctAnswer: "Pupil response to light", explanation: "Pupil response is part of a neurological assessment. Pulse, skin condition, and capillary refill are the key components of a circulatory assessment." },
+        { category: "Assessment", question: "A 60-year-old male complains of 8/10 chest pain. His blood pressure is 92/60 mmHg. Which potential intervention is contraindicated?", options: ["Aspirin", "High-flow oxygen", "Rapid transport", "Nitroglycerin"], correctAnswer: "Nitroglycerin", explanation: "Nitroglycerin is a vasodilator and is contraindicated in patients with a systolic blood pressure less than 100 mmHg due to the risk of causing severe hypotension." },
+        { category: "Assessment", question: "In the SAMPLE history acronym, the 'M' stands for:", options: ["Mechanism of Injury", "Mental Status", "Medications", "Major Complaints"], correctAnswer: "Medications", explanation: "The 'M' in SAMPLE stands for Medications, which includes prescribed, over-the-counter, and recreational drugs the patient may be taking." },
+        { category: "Assessment", question: "A patient who fainted (syncope) while standing should be assessed for:", options: ["Blood glucose level", "Cardiac dysrhythmia", "Spinal injury from the fall", "All of the above"], correctAnswer: "All of the above", explanation: "Syncope can have many causes, including cardiac and metabolic issues. Importantly, any patient who faints is at risk for trauma from the fall and must be assessed for potential spinal or other injuries." },
+
+        // Category: Pharmacology and Interventions (Expanded)
+        { category: "Pharmacology and Interventions", question: "What is the primary mechanism of action for aspirin in a patient with a suspected AMI?", options: ["It dissolves the clot.", "It prevents platelets from aggregating.", "It lowers blood pressure.", "It relieves pain."], correctAnswer: "It prevents platelets from aggregating.", explanation: "Aspirin is an antiplatelet drug that makes platelets less sticky, helping to prevent the clot from getting larger." },
+        { category: "Pharmacology and Interventions", question: "What is a major contraindication for administering nitroglycerin?", options: ["Patient has a history of heart attacks.", "Systolic BP less than 100 mm Hg.", "Patient took aspirin today.", "Pulse rate > 100/min."], correctAnswer: "Systolic BP less than 100 mm Hg.", explanation: "Nitroglycerin is a vasodilator that lowers blood pressure. It's contraindicated in hypotensive patients." },
+        { category: "Pharmacology and Interventions", question: "Nitroglycerin is contraindicated if a patient has recently taken:", options: ["Antacids", "Antihistamines", "Erectile dysfunction drugs", "Beta-blockers"], correctAnswer: "Erectile dysfunction drugs", explanation: "Erectile dysfunction drugs (e.g., Viagra) are also potent vasodilators and can cause life-threatening hypotension if combined with nitroglycerin." },
+        { category: "Pharmacology and Interventions", question: "What is the primary therapeutic effect of nitroglycerin for angina?", options: ["Numbs the chest wall.", "Increases heart rate.", "Dilates the coronary arteries.", "Thins the blood."], correctAnswer: "Dilates the coronary arteries.", explanation: "Nitroglycerin causes vasodilation, which increases blood flow and oxygen supply to the heart muscle, relieving ischemic pain." },
+        { category: "Pharmacology and Interventions", question: "What should an EMT do immediately after assisting a patient with nitroglycerin?", options: ["Reassess blood pressure within 5 minutes.", "Administer a second dose.", "Ask the patient to stand up.", "Listen to lung sounds."], correctAnswer: "Reassess blood pressure within 5 minutes.", explanation: "It's critical to reassess the BP shortly after administration to monitor for hypotension, a common side effect." },
+        { category: "Pharmacology and Interventions", question: "The recommended dose of low-dose, chewable aspirin for a patient with chest pain is typically:", options: ["81 mg", "100 mg", "162 mg to 324 mg", "500 mg"], correctAnswer: "162 mg to 324 mg", explanation: "The standard dose is two to four 81-mg chewable aspirin tablets." },
+        { category: "Pharmacology and Interventions", question: "A conscious patient with pulmonary edema might benefit most from which intervention?", options: ["A nebulizer treatment", "A simple face mask", "A nasopharyngeal airway", "Continuous Positive Airway Pressure (CPAP)"], correctAnswer: "Continuous Positive Airway Pressure (CPAP)", explanation: "CPAP provides back-pressure that helps keep alveoli open and pushes fluid back into the capillaries, improving oxygenation in CHF." },
+        { category: "Pharmacology and Interventions", question: "Your patient has a nitroglycerin patch on their chest and goes into cardiac arrest. You should:", options: ["Leave the patch in place.", "Remove the patch with a gloved hand before applying AED pads.", "Place an AED pad directly over the patch.", "Do not use the AED on this patient."], correctAnswer: "Remove the patch with a gloved hand before applying AED pads.", explanation: "The patch contains medication and a metal backing that can block the shock and cause burns. It must be removed before defibrillation." },
+        { category: "Pharmacology and Interventions", question: "Why is chewable aspirin given for a suspected heart attack?", options: ["It tastes better.", "It allows for slower absorption.", "It allows for rapid absorption through the mouth's mucous membranes.", "It is less likely to cause an allergy."], correctAnswer: "It allows for rapid absorption through the mouth's mucous membranes.", explanation: "Chewing aspirin allows for faster absorption into the bloodstream compared to swallowing it whole, leading to a quicker antiplatelet effect." },
+        { category: "Pharmacology and Interventions", question: "A written protocol allowing you to give aspirin without a direct call is an example of:", options: ["Online medical control", "Offline medical control", "Physician preference", "Implied consent"], correctAnswer: "Offline medical control", explanation: "Offline medical direction (standing orders) consists of predetermined, written protocols that authorize treatments without a direct physician call." },
+        { category: "Pharmacology and Interventions", question: "A common, non-life-threatening side effect of nitroglycerin that you should warn your patient about is a:", options: ["Sudden rash", "Severe headache", "Feeling of hunger", "Numbness in the fingers"], correctAnswer: "Severe headache", explanation: "The vasodilation caused by nitroglycerin affects blood vessels throughout the body, including those in the head, frequently causing a severe headache." },
+        { category: "Pharmacology and Interventions", question: "A patient with difficulty breathing and an SpO2 of 88% on room air should receive:", options: ["Oxygen via nasal cannula at 2 L/min", "Oxygen via nonrebreathing mask at 15 L/min", "No oxygen unless they complain of shortness of breath", "Assisted ventilations with a BVM"], correctAnswer: "Oxygen via nonrebreathing mask at 15 L/min", explanation: "An SpO2 of 88% indicates significant hypoxia. High-flow oxygen via a nonrebreathing mask is indicated to rapidly increase their oxygen saturation." },
+
+        // Category: AED and Resuscitation (Expanded)
+        { category: "AED", question: "An AED is designed to treat which condition?", options: ["Asystole", "Bradycardia", "Ventricular fibrillation", "Any pulseless condition"], correctAnswer: "Ventricular fibrillation", explanation: "AEDs shock shockable rhythms, most commonly ventricular fibrillation (V-Fib) and pulseless ventricular tachycardia." },
+        { category: "AED", question: "What is the most critical step immediately after an AED delivers a shock?", options: ["Check for a pulse.", "Provide two rescue breaths.", "Immediately resume chest compressions.", "Re-analyze the rhythm."], correctAnswer: "Immediately resume chest compressions.", explanation: "To minimize interruptions in perfusion, high-quality chest compressions should be restarted immediately after a shock." },
+        { category: "AED", question: "Why is it critical to 'clear' the patient before delivering a shock?", options: ["To prevent patient movement.", "To ensure correct rhythm analysis.", "To prevent injury to rescuers.", "To allow family to see."], correctAnswer: "To prevent injury to rescuers.", explanation: "The electrical current can travel through anyone touching the patient, potentially causing injury or cardiac arrest in a rescuer." },
+        { category: "AED", question: "You arrive to find a patient in cardiac arrest with an implanted pacemaker. Where should you place the AED pad?", options: ["Directly over the pacemaker.", "Do not use the AED.", "At least 1 inch away from the pacemaker.", "On the patient's back."], correctAnswer: "At least 1 inch away from the pacemaker.", explanation: "Placing a pad directly over a device can block energy delivery and damage the device." },
+        { category: "AED", question: "The links in the chain of survival include all EXCEPT:", options: ["Early recognition and activation", "Immediate high-quality CPR", "Rapid defibrillation", "Waiting for paramedics"], correctAnswer: "Waiting for paramedics", explanation: "The chain emphasizes immediate bystander action, not waiting. The links are: Recognition/Activation, CPR, Defibrillation, Advanced Care, Post-arrest care, and Recovery." },
+        { category: "AED", question: "You are treating a patient in cardiac arrest in the rain. What should you do before applying pads?", options: ["Move the patient indoors first.", "Do not use the AED.", "Quickly wipe the patient's chest dry.", "Pour more water on the chest."], correctAnswer: "Quickly wipe the patient's chest dry.", explanation: "Water can conduct electricity across the skin instead of through the heart. You must wipe the chest dry." },
+        { category: "AED", question: "For a child in cardiac arrest, what is the preferred method of defibrillation?", options: ["Adult AED pads and standard dose.", "Pediatric pads and a dose-attenuating system.", "Defibrillation is not used on children.", "Perform CPR only until ALS arrives."], correctAnswer: "Pediatric pads and a dose-attenuating system.", explanation: "The ideal method is to use pediatric-sized pads and an energy reducer to deliver a lower, more appropriate shock to a child." },
+        { category: "AED", question: "After 2 minutes of CPR, the AED states 'No Shock Advised'. What is your next step?", options: ["Check for a pulse for no more than 10 seconds.", "Stop CPR and transport immediately.", "Deliver a shock anyway.", "Administer nitroglycerin."], correctAnswer: "Check for a pulse for no more than 10 seconds.", explanation: "If no shock is advised, the rhythm is unshockable. You must immediately check for a pulse to see if ROSC has occurred. If not, resume CPR." },
+        { category: "Cardiac Arrest and Resuscitation", question: "For high-quality chest compressions on an adult, you should:", options: ["Compress at a depth of 1 inch.", "Pause for 10 seconds between each compression.", "Allow for full chest recoil.", "Compress at 60 per minute."], correctAnswer: "Allow for full chest recoil.", explanation: "Allowing full recoil is critical as it lets the heart refill with blood. Depth should be 2-2.4 inches and rate 100-120/min." },
+        { category: "Cardiac Arrest and Resuscitation", question: "What does ROSC stand for?", options: ["Rhythm Of Spontaneous Circulation", "Return Of Spontaneous Circulation", "Rate Of Systemic Circulation", "Restart Of Sinus Conduction"], correctAnswer: "Return Of Spontaneous Circulation", explanation: "ROSC is the term used when a patient in cardiac arrest regains a palpable pulse." },
+        { category: "Cardiac Arrest and Resuscitation", question: "If you witness a patient's cardiac arrest, your immediate first action is to:", options: ["Provide two rescue breaths.", "Attach the AED.", "Begin chest compressions.", "Call for ALS assistance."], correctAnswer: "Begin chest compressions.", explanation: "In a witnessed arrest, the priority is immediate high-quality chest compressions to maintain perfusion while an AED is prepared." },
+        { category: "Cardiac Arrest and Resuscitation", question: "After achieving ROSC, your patient is breathing spontaneously at 6 breaths/min. You should:", options: ["Monitor and transport.", "Provide positive-pressure ventilations at 10-12 breaths/min.", "Place the patient in the recovery position.", "Apply a nonrebreathing mask."], correctAnswer: "Provide positive-pressure ventilations at 10-12 breaths/min.", explanation: "A respiratory rate of 6 is inadequate. The patient requires ventilatory support with a BVM to ensure adequate oxygenation post-arrest." },
+        { category: "Cardiac Arrest and Resuscitation", question: "What is the correct compression-to-ventilation ratio for single-rescuer adult CPR?", options: ["15:2", "30:2", "15:1", "30:1"], correctAnswer: "30:2", explanation: "The American Heart Association guidelines for single-rescuer adult CPR specify a ratio of 30 chest compressions to 2 rescue breaths." },
+        { category: "Cardiac Arrest and Resuscitation", question: "You are treating a patient in cardiac arrest found in a large puddle of water. Your first priority after ensuring scene safety is to:", options: ["Begin chest compressions in the water.", "Dry the chest and apply the AED.", "Move the patient out of the standing water.", "Call for additional resources."], correctAnswer: "Move the patient out of the standing water.", explanation: "For safety and effectiveness, the patient should be moved from standing water before defibrillation is attempted." },
+        { category: "Cardiac Arrest and Resuscitation", question: "While transporting a patient with a pulse, they suddenly become unresponsive and pulseless. You should tell the driver to:", options: ["Drive faster to the hospital.", "Pull over and stop the ambulance.", "Continue driving normally.", "Turn on the siren."], correctAnswer: "Pull over and stop the ambulance.", explanation: "An AED cannot accurately analyze a rhythm in a moving vehicle. For patient safety and effective treatment, the vehicle must be stopped to perform CPR and use the AED." },
+
+        // Category: Special Considerations (Expanded)
+        { category: "Special Considerations", question: "A patient with a Left Ventricular Assist Device (LVAD) is in cardiac arrest. You should anticipate:", options: ["A very strong carotid pulse.", "The absence of a palpable pulse.", "Extremely high blood pressure.", "A slow, regular heart rhythm."], correctAnswer: "The absence of a palpable pulse.", explanation: "Most LVADs provide continuous, non-pulsatile flow. The patient will likely not have a palpable pulse or measurable BP, even if the device is working." },
+        { category: "Special Considerations", question: "You are treating a patient with an external defibrillator vest. It warns it is about to shock. You should:", options: ["Remove the vest immediately.", "Stop CPR and avoid touching the patient.", "Turn off the monitor.", "Continue compressions during the shock."], correctAnswer: "Stop CPR and avoid touching the patient.", explanation: "An external defibrillator vest delivers a high-energy shock. Rescuers must not touch the patient during the shock." },
+        { category: "Special Considerations", question: "Which patient population is most likely to experience an AMI without the classic symptom of chest pain?", options: ["Young athletes", "Middle-aged males who smoke", "Pregnant females", "Elderly patients with diabetes"], correctAnswer: "Elderly patients with diabetes", explanation: "The elderly, women, and patients with diabetes are all known to frequently present with atypical MI symptoms, such as weakness, fatigue, or syncope, instead of chest pain." },
+        { category: "Special Considerations", question: "You are performing CPR on a patient with a long scar on their sternum from a past CABG. How does this affect your CPR?", options: ["CPR cannot be performed.", "Use less force during compressions.", "Shift hand placement to the left.", "It does not change the procedure for CPR or AED use."], correctAnswer: "It does not change the procedure for CPR or AED use.", explanation: "A healed sternotomy scar does not change the standard procedure for performing high-quality CPR or using an AED." },
+        { category: "Special Considerations", question: "What is the primary cause of cardiac arrest in infants and children?", options: ["Myocardial infarction", "Respiratory failure", "Congenital heart defects", "Toxic ingestion"], correctAnswer: "Respiratory failure", explanation: "Unlike adults, where the cause is often a primary cardiac event, cardiac arrest in children is most commonly a secondary event resulting from respiratory failure and hypoxia." },
+        { category: "Special Considerations", question: "A patient with a malfunctioning pacemaker may present with:", options: ["Tachycardia and anxiety", "Syncope and bradycardia", "Chest pain and hypertension", "Fever and a rash"], correctAnswer: "Syncope and bradycardia", explanation: "If a pacemaker fails, the heart may revert to a very slow intrinsic rhythm, leading to poor cardiac output, dizziness, weakness, and fainting (syncope)." },
+        { category: "Special Considerations", question: "When using an AED on an infant, if pediatric pads are unavailable and you must use adult pads, how should they be placed?", options: ["Do not use the AED.", "Place both pads side-by-side on the chest.", "Cut the adult pads in half to fit.", "Place one pad on the center of the chest and one on the back."], correctAnswer: "Place one pad on the center of the chest and one on the back.", explanation: "This anterior-posterior placement for infants and small children prevents the pads from touching each other, which would cause the shock to arc across the chest surface." },
+        { category: "Special Considerations", question: "You are treating a conscious patient with an LVAD who feels dizzy. What is the best course of action?", options: ["Attempt to turn the device off and on again.", "Transport the patient with all their equipment and contact medical control.", "Immediately begin chest compressions.", "Advise the patient it's a normal side effect."], correctAnswer: "Transport the patient with all their equipment and contact medical control.", explanation: "Do not manipulate the LVAD. Your role is to assess the patient, manage basic life support issues, transport them with all their specific supplies (batteries, controller), and follow medical direction." }
+    ];
+
+    // --- Add Vocabulary Questions ---
+    const allVocabWords = Object.keys(vocabWords);
+    for (const [word, definition] of Object.entries(vocabWords)) {
+        const correctOption = definition;
+        let distractors = [];
+        while (distractors.length < 3) {
+            const randomWord = allVocabWords[Math.floor(Math.random() * allVocabWords.length)];
+            if (randomWord !== word && !distractors.includes(vocabWords[randomWord])) {
+                distractors.push(vocabWords[randomWord]);
+            }
+        }
+        let options = [correctOption, ...distractors];
+        shuffleArray(options);
+        allQuestions.push({
+            category: "Vital Vocabulary",
+            question: `Which of the following best defines '${word}'?`,
+            options: options,
+            correctAnswer: correctOption,
+            explanation: `The correct definition for '<strong>${word}</strong>' is: "${definition}"`
+        });
+    }
+
+    // --- DOM Elements ---
+    const categorySelect = document.getElementById('category-select');
+    const scrambleBtn = document.getElementById('scramble-btn');
+    const reviewStarredBtn = document.getElementById('review-starred-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const questionCounter = document.getElementById('question-counter');
+    const questionText = document.getElementById('question-text');
+    const starBtn = document.getElementById('star-btn');
+    const optionsList = document.getElementById('options-list');
+    const explanationDiv = document.getElementById('explanation');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const vocabModal = document.getElementById('vocab-modal');
+    const modalTerm = document.getElementById('modal-term');
+    const modalDefinition = document.getElementById('modal-definition');
+    const showQuizBtn = document.getElementById('show-quiz-btn');
+    const showVocabBtn = document.getElementById('show-vocab-btn');
+    const quizContainer = document.getElementById('quiz-container');
+    const vocabContainer = document.getElementById('vocabulary-container');
+    const vocabList = document.getElementById('vocab-list');
+    const vocabSearch = document.getElementById('vocab-search');
+
+    // --- State Management ---
+    let currentQuizSet = [];
+    let currentQuestionIndex = 0;
+    let userAnswers = {};
+    let starredQuestions = new Set();
+    let vocabRegex;
+
+    // --- Functions ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function buildVocabRegex() {
+        const sortedWords = Object.keys(vocabWords).sort((a, b) => b.length - a.length);
+        const pattern = sortedWords.map(word => word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+        vocabRegex = new RegExp(`\\b(${pattern})\\b`, 'gi');
+    }
+
+    function processTextForVocab(text, isClickable = false) {
+        const className = isClickable ? 'vocab-term active' : 'vocab-term disabled';
+        return text.replace(vocabRegex, (match) => {
+            const originalKey = Object.keys(vocabWords).find(key => key.toLowerCase() === match.toLowerCase());
+            if (originalKey) {
+                const definition = vocabWords[originalKey].replace(/"/g, '&quot;');
+                return `<span class="${className}" data-term="${originalKey}" data-definition="${definition}">${match}</span>`;
+            }
+            return match;
+        });
+    }
+
+    function populateCategories() {
+        const categories = ['All Questions', ...new Set(allQuestions.filter(q => q.category !== 'Vital Vocabulary').map(q => q.category)), 'Vital Vocabulary'];
+        categorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        const randomOption = document.createElement('option');
+        randomOption.value = 'Random20';
+        randomOption.textContent = 'Random Quiz (20 Questions)';
+        categorySelect.appendChild(randomOption);
+    }
+
+    function loadQuiz(category) {
+        currentQuestionIndex = 0;
+        userAnswers = {};
+        if (category === 'All Questions') {
+            currentQuizSet = allQuestions.filter(q => q.category !== 'Vital Vocabulary');
+        } else if (category === 'Random20') {
+            const scenarioQuestions = allQuestions.filter(q => q.category !== 'Vital Vocabulary');
+            shuffleArray(scenarioQuestions);
+            currentQuizSet = scenarioQuestions.slice(0, 20);
+        } else if (category === 'Starred') {
+            if (starredQuestions.size === 0) {
+                alert("You haven't starred any questions yet!");
+                categorySelect.value = 'All Questions';
+                loadQuiz('All Questions');
+                return;
+            }
+            currentQuizSet = [...starredQuestions];
+        } else {
+            currentQuizSet = allQuestions.filter(q => q.category === category);
+        }
+        displayQuestion(currentQuestionIndex);
+    }
+    
+    function displayQuestion(index) {
+        if (!currentQuizSet || index < 0 || index >= currentQuizSet.length) return;
+        const question = currentQuizSet[index];
+        const isAnswered = userAnswers.hasOwnProperty(index);
+
+        questionText.innerHTML = processTextForVocab(question.question, isAnswered);
+        optionsList.innerHTML = '';
+        
+        let questionOptions = [...question.options];
+        // Only shuffle non-vocab questions to keep definitions consistent if needed
+        if (question.category !== "Vital Vocabulary") {
+            shuffleArray(questionOptions);
+        }
+
+        questionOptions.forEach(option => {
+            const li = document.createElement('li');
+            li.className = 'option-item';
+            li.innerHTML = processTextForVocab(option, isAnswered);
+            li.dataset.answer = option;
+            li.addEventListener('click', () => handleAnswerSelect(li.dataset.answer));
+            optionsList.appendChild(li);
+        });
+
+        explanationDiv.style.display = 'none';
+        
+        if (isAnswered) {
+            showFeedback(userAnswers[index]);
+        }
+
+        updateProgress();
+        updateNavButtons();
+        updateStarButton();
+    }
+
+    function handleAnswerSelect(selectedOption) {
+        if (userAnswers.hasOwnProperty(currentQuestionIndex)) return;
+        userAnswers[currentQuestionIndex] = selectedOption;
+        showFeedback(selectedOption);
+
+        // Activate vocab terms now that the question is answered
+        document.querySelectorAll('.vocab-term.disabled').forEach(term => {
+            term.classList.remove('disabled');
+            term.classList.add('active');
+        });
+    }
+
+    function showFeedback(selectedOption) {
+        const question = currentQuizSet[currentQuestionIndex];
+        optionsList.querySelectorAll('.option-item').forEach(li => {
+            li.classList.add('answered');
+            if (li.dataset.answer === question.correctAnswer) {
+                li.classList.add('correct');
+            } else if (li.dataset.answer === selectedOption) {
+                li.classList.add('incorrect', 'selected');
+            }
+            // Make terms in all options clickable after answering
+            li.innerHTML = processTextForVocab(li.dataset.answer, true);
+        });
+        explanationDiv.innerHTML = `<strong>Explanation:</strong> ${processTextForVocab(question.explanation, true)}`;
+        explanationDiv.style.display = 'block';
+    }
+
+    function updateProgress() {
+        const progress = currentQuizSet.length > 0 ? ((currentQuestionIndex + 1) / currentQuizSet.length) * 100 : 0;
+        progressBar.style.width = `${progress}%`;
+        questionCounter.textContent = currentQuizSet.length > 0 ? `${currentQuestionIndex + 1} / ${currentQuizSet.length}` : '0 / 0';
+    }
+
+    function updateNavButtons() {
+        prevBtn.disabled = currentQuestionIndex === 0;
+        nextBtn.disabled = currentQuestionIndex === currentQuizSet.length - 1;
+    }
+
+    function updateStarButton() {
+        if (!currentQuizSet || currentQuizSet.length === 0) {
+            starBtn.classList.remove('starred');
+            starBtn.innerHTML = '☆';
+            return;
+        }
+        const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+        starBtn.classList.toggle('starred', starredQuestions.has(currentQuestionObject));
+        starBtn.innerHTML = starredQuestions.has(currentQuestionObject) ? '★' : '☆';
+    }
+
+    function toggleStar() {
+        if (!currentQuizSet || currentQuizSet.length === 0) return;
+        const currentQuestionObject = currentQuizSet[currentQuestionIndex];
+        if (starredQuestions.has(currentQuestionObject)) {
+            starredQuestions.delete(currentQuestionObject);
+        } else {
+            starredQuestions.add(currentQuestionObject);
+        }
+        updateStarButton();
+    }
+
+    function populateVocabularyList() {
+        const sortedVocab = Object.entries(vocabWords).sort((a, b) => a[0].localeCompare(b[0]));
+        vocabList.innerHTML = sortedVocab.map(([term, definition]) => `
+            <div class="vocab-list-item" data-term="${term.toLowerCase()}">
+                <dt>${term}</dt>
+                <dd>${definition}</dd>
+            </div>
+        `).join('');
+    }
+
+    // --- Event Listeners and Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        buildVocabRegex();
+        populateCategories();
+        populateVocabularyList();
+        loadQuiz(categorySelect.value);
+
+        // View Toggling
+        showQuizBtn.addEventListener('click', () => {
+            quizContainer.classList.add('active');
+            vocabContainer.classList.remove('active');
+            showQuizBtn.classList.add('active');
+            showVocabBtn.classList.remove('active');
+        });
+        showVocabBtn.addEventListener('click', () => {
+            vocabContainer.classList.add('active');
+            quizContainer.classList.remove('active');
+            showVocabBtn.classList.add('active');
+            showQuizBtn.classList.remove('active');
+        });
+
+        // Quiz Listeners
+        categorySelect.addEventListener('change', (e) => loadQuiz(e.target.value));
+        scrambleBtn.addEventListener('click', () => {
+            if (currentQuizSet.length > 0) {
+                shuffleArray(currentQuizSet);
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+        reviewStarredBtn.addEventListener('click', () => {
+            let starredOption = categorySelect.querySelector('option[value="Starred"]');
+            if (!starredOption) {
+                starredOption = document.createElement('option');
+                starredOption.value = 'Starred';
+                starredOption.textContent = '★ Starred Questions';
+                categorySelect.appendChild(starredOption);
+            }
+            categorySelect.value = 'Starred';
+            loadQuiz('Starred');
+        });
+        starBtn.addEventListener('click', toggleStar);
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuizSet.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        // Vocabulary Search Listener
+        vocabSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.vocab-list-item').forEach(item => {
+                const term = item.dataset.term;
+                item.style.display = term.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+        
+        // Modal and Delegated Vocab Click Listener
+        document.body.addEventListener('click', function(event) {
+            if (event.target.matches('.vocab-term.active')) {
+                modalTerm.textContent = event.target.dataset.term;
+                modalDefinition.textContent = event.target.dataset.definition;
+                vocabModal.style.display = 'flex';
+            }
+        });
+        vocabModal.addEventListener('click', (event) => {
+            if (event.target === vocabModal) vocabModal.style.display = 'none';
+        });
+    });
+</script>
+
+</body>
+</html>
