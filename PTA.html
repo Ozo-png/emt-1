@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Interactive EMT Study Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --bg-color: #eef2f5;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--dark-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        #scenario-selector {
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .scenario-panel {
+            flex: 2;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tracker-panel {
+            flex: 1;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .scenario-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .scenario-description {
+            background-color: var(--light-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #ddd;
+        }
+
+        .question-container p {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .answers-grid button {
+            padding: 1rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .answers-grid button:hover {
+            background-color: #e9ecef;
+            border-color: var(--primary-color);
+        }
+
+        .feedback {
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .tracker-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .tracker-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tracker-section h3 {
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .vitals-grid p {
+            margin: 0;
+            padding: 0.25rem;
+        }
+
+        .actions-log {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .actions-log li {
+            padding: 0.5rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .actions-log li.correct { color: var(--success-color); }
+        .actions-log li.incorrect { color: var(--secondary-color); }
+        .actions-log li.critical { color: var(--danger-color); font-weight: 700;}
+
+        #score, #critical-fails-count {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        #score { color: var(--primary-color); }
+        #critical-fails-count { color: var(--danger-color); }
+
+        .final-score-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 2rem;
+        }
+        .final-score-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 700px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .modal-header h2 { margin: 0; }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .results-summary h3 {
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .header h1 { margin-bottom: 0.5rem; }
+            .modal-content { width: 95%; margin: 15% auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Interactive EMT Study Guide</h1>
+        <select id="scenario-selector" onchange="loadScenario(this.value)">
+            <option value="medical-assessment">Station 1: Patient Assessment - Medical</option>
+            <option value="trauma-assessment">Station 2: Patient Assessment - Trauma</option>
+            <option value="cardiac-arrest">Station 3: Cardiac Arrest Management/AED</option>
+        </select>
+    </div>
+
+    <div class="main-container">
+        <div class="scenario-panel" id="scenario-panel">
+            <h2 class="scenario-title" id="scenario-title"></h2>
+            <div class="scenario-description" id="scenario-description"></div>
+            <div class="question-container" id="question-container">
+                <p id="question-text"></p>
+                <div class="answers-grid" id="answers-grid"></div>
+            </div>
+            <div class="feedback" id="feedback-box" style="display: none;"></div>
+        </div>
+
+        <div class="tracker-panel">
+            <h2 class="tracker-title">Patient Tracker</h2>
+            <div class="tracker-section">
+                <h3>Vitals</h3>
+                <div class="vitals-grid">
+                    <p>BP: <span id="vitals-bp">--</span></p>
+                    <p>Pulse: <span id="vitals-hr">--</span></p>
+                    <p>Resp: <span id="vitals-rr">--</span></p>
+                    <p>SpO2: <span id="vitals-spo2">--</span></p>
+                </div>
+            </div>
+            <div class="tracker-section">
+                <h3>Score & Status</h3>
+                <p>Points: <span id="score">0</span></p>
+                <p>Critical Fails: <span id="critical-fails-count">0</span></p>
+            </div>
+            <div class="tracker-section">
+                <h3>Actions Log</h3>
+                <ul class="actions-log" id="actions-log"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close-button" onclick="closeModal()">&times;</span>
+                <h2>Scenario Results</h2>
+            </div>
+            <div class="results-summary" id="results-summary"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const scenarios = {
+            "medical-assessment": {
+                title: "Station 1: Patient Assessment - Medical",
+                description: "You are dispatched to a 58-year-old male complaining of chest pain. He is sitting in a chair upon your arrival.",
+                maxPoints: 33,
+                passingScore: 23,
+                stages: [
+                    {
+                        question: "You have arrived on scene. What is your immediate first step?",
+                        answers: [
+                            { text: "Take/verbalize BSI and scene safety", points: 2, correct: true, feedback: "Excellent. Scene safety and BSI are always the first priority." },
+                            { text: "Immediately check the patient's pulse", points: 0, correct: false, feedback: "Incorrect. You must ensure the scene is safe before patient contact." },
+                            { text: "Ask the patient what happened", points: 0, correct: false, feedback: "While important, assessing scene safety and taking BSI precautions comes first." },
+                            { text: "Apply oxygen", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You cannot perform any intervention without first ensuring scene safety and assessing the patient." },
+                            { text: "Request additional help", points: 0, correct: false, feedback: "You may need help, but you need to assess the situation first." },
+                        ]
+                    },
+                    {
+                        question: "The scene is safe and you are wearing appropriate PPE. You approach the patient. What is your next assessment?",
+                        answers: [
+                            { text: "Determine responsiveness/level of consciousness (AVPU)", points: 1, correct: true, feedback: "Correct. Establishing the patient's level of consciousness is a key part of the primary assessment." },
+                            { text: "Obtain baseline vital signs", points: 0, correct: false, feedback: "Vitals are important, but they come after the initial ABC assessment." },
+                            { text: "Assess for major bleeding", points: 0, correct: false, feedback: "Good thought, but in this case, the chief complaint is medical. First, determine LOC." },
+                            { text: "Perform a detailed secondary assessment", points: 0, correct: false, feedback: "You must complete the primary assessment first." },
+                            { text: "Help the patient lie down", points: 0, correct: false, feedback: "Find a position of comfort, but first, you need to assess their consciousness and ABCs." },
+                        ]
+                    },
+                    {
+                        question: "The patient is alert and oriented. He confirms his chief complaint is chest pain. What are your next priorities?",
+                        answers: [
+                            { text: "Assess Airway, Breathing, and Circulation (ABCs)", points: 3, correct: true, feedback: "Correct. Assessing the ABCs is critical to identify and manage any immediate life threats." },
+                            { text: "Ask SAMPLE history questions", points: 0, correct: false, feedback: "SAMPLE history is part of the secondary assessment. You must complete the primary first." },
+                            { text: "Administer Aspirin", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You cannot administer medication without completing your primary assessment and obtaining vitals/medical history first." },
+                            { text: "Check pupil response", points: 0, correct: false, feedback: "This is part of a neurological exam, done later if indicated. Focus on the ABCs." },
+                            { text: "Immediately transport", points: 0, correct: false, feedback: "Transport is likely, but you must complete your primary assessment to identify life threats first." },
+                        ]
+                    },
+                     {
+                        question: "The patient's airway is patent, he is breathing adequately, and has a strong radial pulse. His skin is pale, cool, and diaphoretic. What is your next action?",
+                        answers: [
+                            { text: "Administer high-concentration oxygen and obtain vital signs", points: 5, correct: true, feedback: "Excellent. Addressing potential hypoxia and getting baseline vitals are the next key steps.", vitalsUpdate: { bp: "152/94", hr: "104", rr: "20", spo2: "95%" } },
+                            { text: "Ask OPQRST questions about the pain", points: 0, correct: false, feedback: "This is important, but applying oxygen and getting vitals takes priority given his skin signs." },
+                            { text: "Complete a head-to-toe physical exam", points: 0, correct: false, feedback: "A focused exam is more appropriate after vitals and initial interventions." },
+                            { text: "Ignore the skin signs and continue with questions", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: Pale, cool, diaphoretic skin is a sign of shock (hypoperfusion). Ignoring this is dangerous." },
+                            { text: "Call medical control immediately", points: 0, correct: false, feedback: "You'll likely call them, but you need to gather more information like vital signs first." },
+                        ]
+                    }
+                ]
+            },
+            "trauma-assessment": {
+                title: "Station 2: Patient Assessment - Trauma",
+                description: "You are called to the scene of a single-vehicle MVC. You find a 24-year-old male driver who was unrestrained and appears to have struck the steering wheel.",
+                maxPoints: 52,
+                passingScore: 37,
+                stages: [
+                    {
+                        question: "You arrive on scene. The vehicle is stable and there are no hazards. What is your immediate priority?",
+                        answers: [
+                            { text: "Take/verbalize BSI and consider C-Spine stabilization", points: 2, correct: true, feedback: "Correct. BSI is always first, and with this MOI, C-spine must be considered immediately." },
+                            { text: "Check for a pulse", points: 0, correct: false, feedback: "Not yet. You need to approach safely and assess responsiveness first." },
+                            { text: "Determine the number of patients", points: 1, correct: false, feedback: "Important, but BSI and initial safety considerations come first. You gain a point, but there's a better answer." },
+                            { text: "Open the patient's airway", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You haven't assessed LOC or considered C-spine. Opening the airway improperly could cause further injury." },
+                            { text: "Request fire department for extrication", points: 0, correct: false, feedback: "This may be needed, but you must first assess the patient to determine if they are trapped or if extrication is required." },
+                        ]
+                    },
+                    {
+                        question: "You've taken manual C-spine control. The patient is groaning to painful stimuli. What do you assess next?",
+                        answers: [
+                             { text: "Assess the airway for patency", points: 2, correct: true, feedback: "Correct. 'V' on AVPU. Now check the airway. Gurgling sounds are heard." },
+                             { text: "Check circulation and control major bleeding", points: 0, correct: false, feedback: "Airway and Breathing come before Circulation unless there is exsanguinating hemorrhage." },
+                             { text: "Assess breathing rate and quality", points: 0, correct: false, feedback: "You must ensure the airway is patent before assessing breathing." },
+                             { text: "Apply a cervical collar", points: 0, correct: false, feedback: "You must complete the primary assessment before sizing and applying a collar." },
+                             { text: "Obtain vital signs", points: 0, correct: false, feedback: "Vitals are taken after the primary ABC assessment is complete." },
+                        ]
+                    },
+                    {
+                        question: "You hear gurgling sounds from the patient's airway. What is your immediate intervention?",
+                        answers: [
+                             { text: "Suction the airway", points: 2, correct: true, feedback: "Excellent. Gurgling indicates fluid. You must suction immediately to clear the airway." },
+                             { text: "Insert an oropharyngeal airway (OPA)", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You cannot place an adjunct in an airway that is obstructed by fluid. You must suction first." },
+                             { text: "Begin ventilations with a BVM", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: Ventilating a patient with a fluid-filled airway will force the fluid into the lungs, causing aspiration. Suction first." },
+                             { text: "Roll the patient onto their side", points: 0, correct: false, feedback: "Log rolling could be an option, but with potential C-spine injury and access to suction, suctioning is the preferred and faster method." },
+                             { text: "Continue the assessment", points: 0, correct: false, feedback: "Incorrect. A compromised airway is a life threat that must be managed immediately." },
+                        ]
+                    },
+                    {
+                        question: "The airway is clear. Breathing is rapid and shallow. Circulation check reveals a rapid, thready radial pulse and no major external bleeding. What is your next priority?",
+                        answers: [
+                             { text: "Initiate high-flow oxygen and begin a rapid trauma survey", points: 3, correct: true, feedback: "Correct. You've addressed the immediate life threat (airway). Now provide oxygen for the inadequate breathing and begin a rapid scan for other life-threatening injuries." },
+                             { text: "Re-suction the airway", points: 0, correct: false, feedback: "The airway is currently clear. Re-suction only if gurgling returns." },
+                             { text: "Perform a detailed head-to-toe exam", points: 0, correct: false, feedback: "A rapid trauma survey to find life threats is needed first, not a detailed exam." },
+                             { text: "Immobilize the patient to a long backboard", points: 0, correct: false, feedback: "Immobilization is necessary, but you must complete your primary assessment and rapid trauma survey first." },
+                             { text: "Obtain a SAMPLE history from bystanders", points: 0, correct: false, feedback: "This is a lower priority than managing the patient's immediate clinical needs." },
+                        ]
+                    }
+                ]
+            },
+            "cardiac-arrest": {
+                title: "Station 3: Cardiac Arrest Management/AED",
+                description: "You and your partner arrive to find an adult male collapsed on the floor. A bystander tells you, 'He just dropped!' There is an EMT assistant on scene with you.",
+                maxPoints: 15,
+                passingScore: 11,
+                stages: [
+                    {
+                        question: "The scene is safe and you are wearing PPE. What is your first action regarding the patient?",
+                        answers: [
+                             { text: "Check for responsiveness and breathing", points: 1, correct: true, feedback: "Correct. You must quickly determine if the patient is responsive and breathing normally." },
+                             { text: "Direct your assistant to start chest compressions", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You cannot start CPR without first confirming the patient is unresponsive, pulseless, and not breathing." },
+                             { text: "Immediately apply the AED pads", points: 0, correct: false, feedback: "This is premature. You must first assess the patient to confirm cardiac arrest." },
+                             { text: "Open the airway with a head-tilt, chin-lift", points: 0, correct: false, feedback: "First, check for responsiveness. If unresponsive, you will then check for pulse and breathing simultaneously." },
+                             { text: "Ask the bystander for a SAMPLE history", points: 0, correct: false, feedback: "This is not the priority. Your focus is the unresponsive patient." },
+                        ]
+                    },
+                    {
+                        question: "The patient is unresponsive and not breathing. You check for a carotid pulse for no more than 10 seconds and find none. What do you do next?",
+                        answers: [
+                             { text: "Direct your assistant to begin high-quality chest compressions and prepare the AED", points: 2, correct: true, feedback: "Perfect. Immediate CPR and preparation of the AED are the next critical steps." },
+                             { text: "Apply the AED pads yourself", points: 0, correct: false, feedback: "Incorrect. Compressions should not be delayed. Your partner should start compressions while you get the AED ready." },
+                             { text: "Deliver two rescue breaths", points: 0, correct: false, feedback: "Current guidelines emphasize starting with chest compressions immediately (C-A-B)." },
+                             { text: "Reconfirm unresponsiveness", points: 0, correct: false, feedback: "You have already confirmed this. Any delay to starting CPR is detrimental." },
+                             { text: "Insert an OPA", points: 0, correct: false, feedback: "Airway management will happen, but starting chest compressions is the absolute priority." },
+                        ]
+                    },
+                    {
+                        question: "Your assistant is performing CPR. The AED is ready. What is the correct procedure for applying and using the AED?",
+                        answers: [
+                             { text: "Turn on the AED, apply pads to the patient's bare chest, and stop CPR only when the AED prompts to analyze", points: 3, correct: true, feedback: "Excellent. You've minimized interruptions to chest compressions and are following the correct sequence for AED use." },
+                             { text: "Stop CPR, apply pads, then turn on the AED", points: 0, correct: false, feedback: "Incorrect. This sequence causes an unnecessary delay in compressions. The AED can be set up while CPR is in progress." },
+                             { text: "Apply the pads over the patient's clothing", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: AED pads must be applied to a bare, dry chest to be effective." },
+                             { text: "Analyze the rhythm while CPR is in progress", points: 0, correct: false, feedback: "This will result in an inaccurate reading. CPR must be paused for analysis." },
+                             { text: "Turn on the AED but wait two minutes before analyzing", points: 0, correct: false, feedback: "Incorrect. You should analyze the rhythm as soon as the AED is ready." },
+                        ]
+                    },
+                    {
+                        question: "The AED advises 'Shock Advised.' What is your most critical action?",
+                        answers: [
+                             { text: "Ensure everyone is clear of the patient, state 'CLEAR!', and deliver the shock", points: 2, correct: true, feedback: "Perfect. Ensuring the safety of the rescue team is paramount before delivering a shock." },
+                             { text: "Immediately press the shock button", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: You operated the AED unsafely. You must ensure everyone is clear before shocking the patient." },
+                             { text: "Check for a pulse before shocking", points: 0, correct: false, feedback: "Do not delay the shock. The AED has confirmed a shockable rhythm. No pulse check is needed here." },
+                             { text: "Continue CPR while the AED is charging", points: 0, correct: false, feedback: "Most modern AEDs charge quickly. Follow the prompt to clear the patient as soon as it begins charging." },
+                             { text: "Disarm the AED and continue CPR", points: 0, correct: false, feedback: "Incorrect. A shock is indicated and provides the best chance of survival." },
+                        ]
+                    },
+                    {
+                        question: "A shock has been delivered. What is your immediate next step?",
+                        answers: [
+                             { text: "Immediately resume high-quality chest compressions", points: 2, correct: true, feedback: "Excellent. Do not delay. Immediately resume CPR for 2 minutes, starting with chest compressions." },
+                             { text: "Check for a pulse", points: 0, correct: false, critical: true, feedback: "CRITICAL FAIL: Do not check for a pulse immediately after a shock. Resume CPR immediately to perfuse the heart muscle. Pulse checks are performed only when the AED prompts or if signs of life return." },
+                             { text: "Wait for the AED to re-analyze", points: 0, correct: false, feedback: "Incorrect. The AED will prompt for re-analysis after 2 minutes of CPR." },
+                             { text: "Administer high-flow oxygen", points: 1, correct: false, feedback: "Oxygen is important, but it should be applied by the second rescuer while compressions are ongoing. Resuming CPR is the most critical immediate action." },
+                             { text: "Prepare the patient for transport", points: 0, correct: false, feedback: "Transport will happen, but you must complete this cycle of CPR first." },
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let currentScenarioId = "medical-assessment";
+        let currentStage = 0;
+        let score = 0;
+        let criticalFails = 0;
+        let actionsLog = [];
+        let scenarioEnded = false;
+
+        // --- DOM ELEMENTS ---
+        const scenarioTitleEl = document.getElementById('scenario-title');
+        const scenarioDescEl = document.getElementById('scenario-description');
+        const questionTextEl = document.getElementById('question-text');
+        const answersGridEl = document.getElementById('answers-grid');
+        const feedbackBoxEl = document.getElementById('feedback-box');
+        const scoreEl = document.getElementById('score');
+        const criticalFailsEl = document.getElementById('critical-fails-count');
+        const actionsLogEl = document.getElementById('actions-log');
+        const modalEl = document.getElementById('results-modal');
+        const resultsSummaryEl = document.getElementById('results-summary');
+
+        // --- FUNCTIONS ---
+        function updateTracker() {
+            scoreEl.textContent = score;
+            criticalFailsEl.textContent = criticalFails;
+
+            actionsLogEl.innerHTML = '';
+            actionsLog.forEach(action => {
+                const li = document.createElement('li');
+                li.textContent = action.text;
+                li.className = action.type;
+                actionsLogEl.appendChild(li);
+            });
+            actionsLogEl.scrollTop = actionsLogEl.scrollHeight;
+        }
+
+        function updateVitals(vitals) {
+            if (!vitals) return;
+            document.getElementById('vitals-bp').textContent = vitals.bp || '--';
+            document.getElementById('vitals-hr').textContent = vitals.hr || '--';
+            document.getElementById('vitals-rr').textContent = vitals.rr || '--';
+            document.getElementById('vitals-spo2').textContent = vitals.spo2 || '--';
+        }
+
+        function handleAnswer(answer) {
+            if (scenarioEnded) return;
+
+            let logType = 'incorrect';
+            feedbackBoxEl.style.display = 'block';
+            feedbackBoxEl.textContent = answer.feedback;
+            
+            // Deduct points for incorrect, non-critical answers if desired
+            // score += answer.points; 
+
+            if (answer.critical) {
+                criticalFails++;
+                logType = 'critical';
+                feedbackBoxEl.className = 'feedback incorrect';
+                scenarioEnded = true;
+                showEndScenarioButton("Scenario Failed due to Critical Error");
+            } else if (answer.correct) {
+                score += answer.points;
+                logType = 'correct';
+                feedbackBoxEl.className = 'feedback correct';
+                
+                if(answer.vitalsUpdate) {
+                    updateVitals(answer.vitalsUpdate);
+                }
+
+                // Move to next stage after a short delay
+                setTimeout(() => {
+                    currentStage++;
+                    if (currentStage < scenarios[currentScenarioId].stages.length) {
+                        loadStage(currentStage);
+                    } else {
+                        scenarioEnded = true;
+                        showEndScenarioButton("Scenario Complete");
+                    }
+                }, 2500);
+            } else { // Incorrect but not critical
+                score += answer.points || 0; // Allows for partial credit if points are assigned
+                feedbackBoxEl.className = 'feedback incorrect';
+            }
+
+            actionsLog.push({ text: answer.text, type: logType });
+            updateTracker();
+        }
+
+        function showEndScenarioButton(message) {
+            questionTextEl.textContent = message;
+            answersGridEl.innerHTML = `<button class="final-score-btn" onclick="showResults()">Check Final Score</button>`;
+            feedbackBoxEl.style.display = 'none';
+        }
+
+        function loadStage(stageIndex) {
+            const scenario = scenarios[currentScenarioId];
+            if (!scenario || !scenario.stages[stageIndex]) return;
+
+            const stage = scenario.stages[stageIndex];
+            
+            questionTextEl.textContent = stage.question;
+            answersGridEl.innerHTML = '';
+            feedbackBoxEl.style.display = 'none';
+
+            // Shuffle answers
+            const shuffledAnswers = stage.answers.sort(() => Math.random() - 0.5);
+
+            shuffledAnswers.forEach(answer => {
+                const button = document.createElement('button');
+                button.textContent = answer.text;
+                button.onclick = () => handleAnswer(answer);
+                answersGridEl.appendChild(button);
+            });
+            
+            if (stage.vitalsUpdate) {
+                 updateVitals(stage.vitalsUpdate);
+            }
+        }
+
+        function loadScenario(scenarioId) {
+            currentScenarioId = scenarioId;
+            const scenario = scenarios[scenarioId];
+            
+            // Reset state
+            currentStage = 0;
+            score = 0;
+            criticalFails = 0;
+            actionsLog = [];
+            scenarioEnded = false;
+
+            scenarioTitleEl.textContent = scenario.title;
+            scenarioDescEl.textContent = scenario.description;
+            
+            if (scenario.stages.length === 0) {
+                 questionTextEl.textContent = "This scenario is currently under development. Please select another.";
+                 answersGridEl.innerHTML = '';
+            } else {
+                 loadStage(0);
+            }
+           
+            updateTracker();
+            updateVitals({ bp: "--", hr: "--", rr: "--", spo2: "--" });
+        }
+        
+        function showResults() {
+            const scenario = scenarios[currentScenarioId];
+            const maxPoints = scenario.maxPoints;
+            const passingScore = scenario.passingScore;
+            let resultHTML = `
+                <div class="modal-header">
+                    <span class="close-button" onclick="closeModal()">&times;</span>
+                    <h2>${scenario.title} - Results</h2>
+                </div>
+                <h3>Final Score: ${score} / ${maxPoints} (Passing: ${passingScore})</h3>
+                <h3>Critical Fails: ${criticalFails}</h3>
+            `;
+            
+            if (criticalFails > 0) {
+                resultHTML += `<p style="color: var(--danger-color); font-weight: bold;">You failed this scenario due to one or more critical errors.</p>`;
+            } else if (score >= passingScore) {
+                 resultHTML += `<p style="color: var(--success-color); font-weight: bold;">Congratulations, you passed this station!</p>`;
+            } else {
+                 resultHTML += `<p style="color: var(--danger-color); font-weight: bold;">You did not achieve the minimum passing score for this station.</p>`;
+            }
+
+            resultHTML += `<h3>Performance Summary:</h3>`;
+            const correctActions = actionsLog.filter(a => a.type === 'correct');
+            const incorrectActions = actionsLog.filter(a => a.type === 'incorrect');
+            const criticalActions = actionsLog.filter(a => a.type === 'critical');
+
+            resultHTML += `<h4>Correct Actions Performed (${correctActions.length}):</h4><ul>${correctActions.map(a => `<li>${a.text}</li>`).join('')}</ul>`;
+            if(incorrectActions.length > 0) {
+                 resultHTML += `<h4>Areas for Improvement (${incorrectActions.length}):</h4><ul>${incorrectActions.map(a => `<li>${a.text}</li>`).join('')}</ul>`;
+            }
+             if(criticalActions.length > 0) {
+                 resultHTML += `<h4>Critical Errors Made (${criticalActions.length}):</h4><ul>${criticalActions.map(a => `<li>${a.text}</li>`).join('')}</ul>`;
+            }
+
+            resultsSummaryEl.innerHTML = resultHTML;
+            modalEl.style.display = 'block';
+        }
+
+        function closeModal() {
+            modalEl.style.display = 'none';
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            loadScenario(document.getElementById('scenario-selector').value);
+        };
+        window.onclick = function(event) {
+            if (event.target == modalEl) {
+                closeModal();
+            }
+        }
+
+    </script>
+</body>
+</html>
