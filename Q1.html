@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#F2F2F7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>EMT Prep - 200 Questions</title>
+    <style>
+        :root {
+            --bg-body: #F2F2F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --accent-blue: #007AFF;
+            --success-green: #34C759;
+            --error-red: #FF3B30;
+            --separator: #C6C6C8;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--separator);
+            padding: 12px 16px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 { font-size: 17px; font-weight: 600; margin: 0; }
+        
+        .header-btn {
+            background: none; border: none;
+            color: var(--accent-blue);
+            font-size: 17px; font-weight: 400;
+            cursor: pointer;
+        }
+
+        /* --- Progress & Toolbar --- */
+        .toolbar {
+            padding: 10px 16px;
+            background: var(--bg-body);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: #D1D1D6;
+            border-radius: 3px;
+            margin-right: 12px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .counter { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 120px 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .section-tag {
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .question-text {
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 24px;
+        }
+
+        /* --- Vocab Highlighting Logic --- */
+        /* Default state: looks like normal text */
+        .vocab-term {
+            color: inherit;
+            text-decoration: none;
+            pointer-events: none; /* Not clickable until answered */
+            transition: color 0.3s;
+            border-bottom: 1px dotted transparent;
+        }
+
+        /* Active state: Blue and clickable (applied to parent container) */
+        .content-answered .vocab-term {
+            color: var(--accent-blue);
+            font-weight: 500;
+            cursor: pointer;
+            pointer-events: auto;
+            border-bottom-color: rgba(0,122,255,0.3);
+        }
+
+        /* --- Options --- */
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+
+        .option-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--separator);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 17px;
+            line-height: 1.3;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-btn:active { background: #E5E5EA; transform: scale(0.98); }
+
+        .option-btn.correct {
+            background: rgba(52, 199, 89, 0.15);
+            border-color: var(--success-green);
+            color: #005015;
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: rgba(255, 59, 48, 0.15);
+            border-color: var(--error-red);
+            color: #800000;
+        }
+
+        /* --- Explanation Box --- */
+        .explanation-box {
+            margin-top: 24px;
+            background: #F2F2F7;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            line-height: 1.5;
+            display: none;
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .explanation-box strong { display: block; margin-bottom: 6px; color: var(--text-primary); }
+
+        /* --- Footer Controls --- */
+        footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--separator);
+            padding: 16px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            z-index: 20;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-prev { background: #E5E5EA; color: var(--text-primary); }
+        .btn-next { background: var(--accent-blue); color: white; }
+        .btn-next:active { opacity: 0.8; }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+        }
+        
+        .modal-overlay.active { display: flex; animation: fadein 0.2s; }
+
+        .modal-sheet {
+            background: var(--bg-card);
+            width: 100%;
+            max-height: 80vh;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            padding: 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-overlay.active .modal-sheet { transform: translateY(0); }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title { font-size: 20px; font-weight: 700; }
+        .close-btn { 
+            background: #E5E5EA; border: none; 
+            width: 30px; height: 30px; border-radius: 50%; 
+            color: #8E8E93; font-weight: 700; cursor: pointer;
+        }
+
+        /* Vocab Specific Styles */
+        .vocab-definition { font-size: 17px; line-height: 1.5; color: var(--text-primary); }
+        .vocab-source { 
+            margin-top: 12px; font-size: 13px; 
+            color: var(--text-secondary); text-transform: uppercase; 
+        }
+
+        /* Filter Specific Styles */
+        .filter-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .filter-opt {
+            padding: 14px;
+            background: #F2F2F7;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex; justify-content: space-between;
+            cursor: pointer;
+        }
+        .filter-opt.selected { background: #E1F0FF; color: var(--accent-blue); font-weight: 600; }
+        .filter-opt.selected::after { content: '✓'; font-weight: 800; }
+
+        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="header-btn" onclick="openFilterModal()">Sections</button>
+    <h1>EMT Prep (200)</h1>
+    <button class="header-btn" onclick="scrambleQuestions()">Scramble</button>
+</header>
+
+<div class="toolbar">
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+    <div class="counter" id="counter">1/200</div>
+</div>
+
+<main id="quiz-container">
+    <!-- Question Card Injected Here -->
+</main>
+
+<footer>
+    <button class="nav-btn btn-prev" onclick="prevQ()">Back</button>
+    <button class="nav-btn btn-next" onclick="nextQ()">Next</button>
+</footer>
+
+<!-- Vocab Modal -->
+<div class="modal-overlay" id="vocab-modal" onclick="closeModal('vocab-modal')">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="vocab-title">Word</span>
+            <button class="close-btn" onclick="closeModal('vocab-modal')">✕</button>
+        </div>
+        <div class="vocab-definition" id="vocab-def">Definition goes here.</div>
+        <div class="vocab-source" id="vocab-src">Source: Text</div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal-overlay" id="filter-modal" onclick="closeModal('filter-modal')">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title">Select Sections</span>
+            <button class="header-btn" onclick="closeModal('filter-modal')">Done</button>
+        </div>
+        <div class="filter-list" id="filter-list">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. VOCABULARY DATABASE ---
+    const vocabDB = {
+        // Bleeding
+        "perfusion": "The circulation of blood within an organ or tissue in adequate amounts to meet the current needs of the cells.",
+        "hypovolemic shock": "A condition in which low blood volume, due to massive internal or external bleeding or extensive loss of body water, results in inadequate perfusion.",
+        "tourniquet": "The bleeding control method used when a wound continues to bleed despite the use of direct pressure; useful if a patient is bleeding severely from a partial or complete amputation.",
+        "epistaxis": "A nosebleed.",
+        "hematemesis": "Vomited blood.",
+        "melena": "Black, foul-smelling, tarry stool containing digested blood.",
+        "hemophilia": "A hereditary condition in which the patient lacks one or more of the blood's normal clotting factors.",
+        "vasoconstriction": "The narrowing of a blood vessel, such as with hypoperfusion or cold extremities.",
+        "contusion": "A bruise from an injury that causes bleeding beneath the skin without breaking the skin.",
+        "hematoma": "A mass of blood that has collected within damaged tissue beneath the skin or in a body cavity.",
+        "ecchymosis": "Bruising or discoloration associated with bleeding within or under the skin.",
+        
+        // Soft Tissue
+        "epidermis": "The tough, external layer of the skin that forms a watertight covering for the body.",
+        "dermis": "The inner layer of the skin, containing hair follicles, sweat glands, nerve endings, and blood vessels.",
+        "crush syndrome": "Significant metabolic derangement that develops when crushed extremities or body parts remain trapped for prolonged periods.",
+        "avulsion": "An injury in which soft tissue is torn completely loose or is hanging as a flap.",
+        "compartment syndrome": "Swelling in a confined space that produces dangerous pressure; may cut off blood flow or damage sensitive tissue.",
+        "partial-thickness burn": "Burn involving the epidermis and some portion of the dermis; skin is moist, mottled, and blisters are present.",
+        "full-thickness burn": "Burn extending through all skin layers; area is dry, leathery, white, dark brown, or charred.",
+        "rule of nines": "A system that assigns percentages to sections of the body, allowing calculation of the amount of skin surface involved in the burn area.",
+        "evisceration": "The displacement of organs outside the body.",
+        "occlusive dressing": "An airtight dressing that protects a wound from air and bacteria.",
+        "air embolism": "The presence of air in the veins, which can lead to cardiac arrest if it enters the heart.",
+
+        // Face/Neck
+        "cornea": "The transparent tissue layer in front of the pupil and iris of the eye.",
+        "conjunctiva": "The delicate membrane that lines the eyelids and covers the exposed surface of the eye.",
+        "retina": "The light-sensitive area of the eye where images are projected.",
+        "blow-out fracture": "A fracture of the orbit or of the bones that support the floor of the orbit.",
+        "hyphema": "Bleeding into the anterior chamber of the eye.",
+        "subcutaneous emphysema": "A characteristic crackling sensation felt on palpation of the skin, caused by the presence of air in soft tissues.",
+
+        // Head/Spine
+        "central nervous system": "Composed of the brain and the spinal cord.",
+        "cerebrospinal fluid": "Fluid produced in the brain that acts as a shock absorber; it is located in the subarachnoid space.",
+        "intracranial pressure": "The pressure within the cranial vault.",
+        "epidural hematoma": "An accumulation of blood between the skull and the dura mater.",
+        "subdural hematoma": "An accumulation of blood beneath the dura mater but outside the brain.",
+        "concussion": "A temporary loss or alteration of part or all of the brain's abilities to function without demonstrable physical damage.",
+        "retrograde amnesia": "The inability to remember events leading up to a head injury.",
+        "anterograde amnesia": "Inability to remember events after an injury.",
+        "cushing triad": "Signs of increased intracranial pressure: increased blood pressure, decreased heart rate, and irregular respirations.",
+        "battle sign": "Bruising behind an ear over the mastoid process that may indicate a skull fracture.",
+        "raccoon eyes": "Bruising under the eyes that may indicate a skull fracture.",
+        
+        // Chest
+        "pneumothorax": "An accumulation of air or gas in the pleural cavity.",
+        "open pneumothorax": "An open or penetrating chest wall wound through which air passes during inspiration and expiration; sucking chest wound.",
+        "tension pneumothorax": "An accumulation of air or gas in the pleural cavity that progressively increases pressure in the chest that interferes with cardiac function.",
+        "hemothorax": "A collection of blood in the pleural cavity.",
+        "cardiac tamponade": "Compression of the heart as the result of buildup of blood or other fluid in the pericardial sac.",
+        "flail chest": "A condition in which two or more adjacent ribs are fractured in two or more places, causing a segment of the chest wall to detach.",
+        "commotio cordis": "A blunt chest injury caused by a sudden, direct blow to the chest that occurs only during the critical portion of a person's heartbeat.",
+        "traumatic asphyxia": "A pattern of injuries seen after a severe force is applied to the chest, forcing blood from the great vessels back into the head and neck.",
+        
+        // Abdominal/GU
+        "peritoneum": "The membrane lining the abdominal cavity (parietal) and covering the abdominal organs (visceral).",
+        "guarding": "Involuntary muscle contractions of the abdominal wall to minimize the pain of abdominal movement; a sign of peritonitis.",
+        "retroperitoneum": "The potential space located posterior to the peritoneal cavity of the abdomen.",
+        "hematuria": "Blood in the urine.",
+        "kehr sign": "Referred pain to the left shoulder caused by blood in the peritoneal cavity (often from spleen injury).",
+        "hollow organs": "Structures through which materials pass, such as the stomach, small intestines, ureters, and bladder.",
+        "solid organs": "Solid masses of tissue where much of the chemical work of the body takes place (e.g., liver, spleen, pancreas, kidneys).",
+
+        // Orthopaedic
+        "skeletal muscle": "Also called striated or voluntary muscle; attaches to the bones and usually crosses at least one joint.",
+        "tendons": "Tough, ropelike structures that directly attach skeletal muscle tissue to bone.",
+        "fascia": "Fibrous tissue that covers all skeletal muscle and surrounds/supports neurovascular structures.",
+        "smooth muscle": "Involuntary muscle found in the walls of most tubular structures (e.g., GI tract, blood vessels).",
+        "fracture": "A break in the continuity of the bone.",
+        "open fracture": "Any break in a bone in which the overlying skin has been broken.",
+        "closed fracture": "Any break in a bone in which the overlying skin is not broken.",
+        "displaced fracture": "A fracture that produces actual deformity or distortion of the limb by shortening, rotating, or angulating it.",
+        "nondisplaced fracture": "A simple crack of the bone that may be difficult to distinguish from a sprain; hairline fracture.",
+        "crepitus": "A grating or grinding sensation or sound caused by fractured bone ends or joints rubbing together.",
+        "dislocation": "Disruption of a joint in which ligaments are damaged and the bone ends are no longer in contact.",
+        "sprain": "A joint injury involving damage to supporting ligaments, and sometimes partial or temporary dislocation of bone ends.",
+        "strain": "Stretching or tearing of a muscle; also called a muscle pull.",
+        "amputation": "An injury in which part of the body is completely severed.",
+        "splint": "A flexible or rigid device used to prevent motion in an injured bone or joint.",
+        "traction": "Longitudinal force applied to a structure.",
+        "point tenderness": "Tenderness that is sharply localized at the site of the injury, found by gently palpating along the bone with the tip of one finger.",
+        "sciatic nerve": "The major nerve to the lower extremities; controls much of muscle function in the leg and sensation in most of the leg and foot.",
+        "zone of injury": "The area of potentially damaged soft tissue, adjacent nerves, and blood vessels surrounding an injury to a bone or a joint."
+    };
+
+    // --- 2. QUESTION DATA (200 Questions) ---
+    // Approx distribution: Bleeding (25), Soft Tissue (25), Face/Neck (25), Head/Spine (30), Chest (25), Abdominal (35), Ortho (35)
+    const allQuestions = [
+        // --- SECTION: BLEEDING ---
+        { id: 1, section: "Bleeding", q: "<v>Perfusion</v> is best defined as:", a: ["The circulation of blood within an organ or tissue to meet current needs.", "The clotting of blood.", "The pumping action of the heart.", "Gas exchange in the lungs."], correct: 0, exp: "Perfusion is the circulation of blood within an organ or tissue in adequate amounts to meet the cells' current needs." },
+        { id: 2, section: "Bleeding", q: "A patient presents with restlessness and anxiety after a fall. These are early signs of:", a: ["<v>Hypovolemic shock</v>.", "Brain herniation.", "Spinal cord injury.", "Hypertension."], correct: 0, exp: "The first sign of hypovolemic shock is a change in mental status, such as anxiety, restlessness, or combativeness." },
+        { id: 3, section: "Bleeding", q: "You arrive at a scene where a patient has bright red blood spurting from a wrist wound. This indicates:", a: ["Arterial bleeding.", "Venous bleeding.", "Capillary bleeding.", "Internal bleeding."], correct: 0, exp: "Arterial bleeding is bright red (oxygen rich) and spurts in time with the pulse." },
+        { id: 4, section: "Bleeding", q: "When applying a <v>tourniquet</v>, you should place it:", a: ["Proximal to the injury.", "Directly over the joint.", "Distal to the injury.", "Over the wound."], correct: 0, exp: "Always place the tourniquet proximal to the injury (axillary or groin region)." },
+        { id: 5, section: "Bleeding", q: "A 10-year-old has <v>epistaxis</v>. You should:", a: ["Pinch the nostrils and have the patient lean forward.", "Pack the nose with gauze.", "Tilt the head back.", "Apply heat to the forehead."], correct: 0, exp: "Handle this effectively by pinching the nostrils together while the patient sits leaning forward." },
+        { id: 6, section: "Bleeding", q: "<v>Melena</v> is characterized by:", a: ["Black, tarry stool.", "Bright red vomit.", "Bloody urine.", "Coughing up blood."], correct: 0, exp: "Melena is black, foul-smelling, tarry stool that contains digested blood." },
+        { id: 7, section: "Bleeding", q: "The autonomic nervous system responds to blood loss by causing ___ and ___.", a: ["<v>Vasoconstriction</v>; tachycardia", "Vasodilation; bradycardia", "Vasoconstriction; bradycardia", "Vasodilation; tachycardia"], correct: 0, exp: "Norepinephrine constricts peripheral blood vessels (vasoconstriction) and heart rate increases." },
+        { id: 8, section: "Bleeding", q: "Direct pressure has failed to control a leg bleed. Your next step is to:", a: ["Apply a <v>tourniquet</v>.", "Apply a splint.", "Elevate the limb.", "Use a pressure point."], correct: 0, exp: "If direct pressure fails to immediately stop hemorrhage, apply a tourniquet above the level of the bleeding." },
+        { id: 9, section: "Bleeding", q: "A patient with <v>hemophilia</v> lacks:", a: ["Normal clotting factors.", "Platelets.", "Red blood cells.", "White blood cells."], correct: 0, exp: "Hemophilia is a hereditary condition in which the patient lacks one or more of the blood's normal clotting factors." },
+        { id: 10, section: "Bleeding", q: "A large lump with bluish discoloration on the thigh after a blunt impact is a:", a: ["<v>Hematoma</v>.", "Laceration.", "Abrasion.", "Puncture."], correct: 0, exp: "A hematoma is a mass of blood that has collected within damaged tissue, often associated with extensive damage." },
+        { id: 11, section: "Bleeding", q: "<v>Hematemesis</v> refers to:", a: ["Vomiting blood.", "Coughing blood.", "Blood in stool.", "Blood in urine."], correct: 0, exp: "Hematemesis is the vomiting of blood." },
+        { id: 12, section: "Bleeding", q: "Which vital sign change is a late sign of <v>hypovolemic shock</v>?", a: ["Hypotension.", "Tachycardia.", "Tachypnea.", "Anxiety."], correct: 0, exp: "Decreasing blood pressure (hypotension) is a late sign of shock." },
+        { id: 13, section: "Bleeding", q: "If a patient has a nosebleed and a suspected skull fracture, you should:", a: ["Loosely cover the nose with gauze.", "Pinch the nostrils tightly.", "Pack the nose.", "Tilt the head back."], correct: 0, exp: "Loosely cover the bleeding site with a sterile gauze pad to collect blood; do not stop the flow." },
+        { id: 14, section: "Bleeding", q: "Dark red blood oozing steadily from a wound is:", a: ["Capillary bleeding.", "Arterial bleeding.", "Venous bleeding.", "Internal bleeding."], correct: 0, exp: "Capillary bleeding is dark red and oozes from a wound steadily but slowly." },
+        { id: 15, section: "Bleeding", q: "Blood from the ___ is dark red and flows steadily.", a: ["Veins", "Arteries", "Capillaries", "Heart"], correct: 2, exp: "Venous bleeding is darker than arterial blood and flows steadily." },
+        { id: 16, section: "Bleeding", q: "In an adult, loss of ___ liter(s) of blood is considered serious.", a: ["1", "0.5", "0.2", "0.1"], correct: 0, exp: "The body cannot tolerate an acute blood loss of greater than 20% (approx 1 liter)." },
+        { id: 17, section: "Bleeding", q: "Which condition may result in bleeding from the ears?", a: ["Basilar skull fracture.", "Nasal fracture.", "Mandible fracture.", "Orbital fracture."], correct: 0, exp: "Bleeding from the nose or ears following a head injury may indicate a skull fracture." },
+        { id: 18, section: "Bleeding", q: "A patient taking blood thinners is at higher risk for:", a: ["Uncontrolled bleeding.", "Rapid clotting.", "Infection.", "Hypertension."], correct: 0, exp: "Bleeding is generally more profuse and difficult to control in patients who take blood thinners." },
+        { id: 19, section: "Bleeding", q: "Internal bleeding into a fractured femur can account for ___ of blood loss.", a: ["1 Liter (2 pints)", "500 mL", "250 mL", "100 mL"], correct: 0, exp: "A broken femur can easily result in the loss of 2 pints (approx 1 L) of blood." },
+        { id: 20, section: "Bleeding", q: "The color of blood in <v>melena</v> is typically:", a: ["Black and tarry.", "Bright red.", "Dark red.", "Coffee grounds."], correct: 0, exp: "Melena is black, foul-smelling, tarry stool." },
+        { id: 21, section: "Bleeding", q: "Hemoptysis is defined as:", a: ["Coughing up bright red blood.", "Vomiting dark blood.", "Blood in the urine.", "Nosebleed."], correct: 0, exp: "Hemoptysis is the coughing up of bright red blood." },
+        { id: 22, section: "Bleeding", q: "A pressure dressing is applied to:", a: ["Maintain direct pressure on a wound.", "Stop arterial flow entirely.", "Stabilize a fracture.", "Prevent infection only."], correct: 0, exp: "Create a pressure dressing to maintain the pressure by firmly wrapping a sterile, self-adhering roller bandage." },
+        { id: 23, section: "Bleeding", q: "In hypovolemic shock, the skin typically appears:", a: ["Pale, cool, and clammy.", "Flushed and hot.", "Cyanotic and dry.", "Jaundiced."], correct: 0, exp: "Skin signs of shock include cool, moist (clammy) skin that is pale or gray." },
+        { id: 24, section: "Bleeding", q: "A rigid abdomen in a trauma patient suggests:", a: ["Internal bleeding.", "Stomach virus.", "Spinal injury.", "Kidney stone."], correct: 0, exp: "Abdominal tenderness, guarding, rigidity, pain, and distention are frequent in internal bleeding." },
+        { id: 25, section: "Bleeding", q: "When using a hemostatic dressing, you should also:", a: ["Apply direct pressure.", "Apply a tourniquet.", "Elevate the limb.", "Apply ice."], correct: 0, exp: "Hemostatic dressings can be used together with wound packing and direct pressure." },
+
+        // --- SECTION: SOFT TISSUE ---
+        { id: 26, section: "Soft Tissue", q: "The outer layer of skin is the:", a: ["<v>Epidermis</v>.", "Dermis.", "Subcutaneous.", "Fascia."], correct: 0, exp: "The epidermis is the tough, external layer of the skin." },
+        { id: 27, section: "Soft Tissue", q: "An injury where a flap of skin is torn loose is a(n):", a: ["<v>Avulsion</v>.", "Abrasion.", "Laceration.", "Incision."], correct: 0, exp: "An avulsion separates layers of soft tissue so they become either completely detached or hang as a flap." },
+        { id: 28, section: "Soft Tissue", q: "A patient trapped for 6 hours with a crushed leg is at risk for:", a: ["<v>Crush syndrome</v>.", "Air embolism.", "Simple fracture.", "Hypothermia only."], correct: 0, exp: "When an area is trapped for longer than 4 hours... crush syndrome can develop." },
+        { id: 29, section: "Soft Tissue", q: "A burn with blisters and moist, mottled skin is:", a: ["<v>Partial-thickness</v>.", "Superficial.", "Full-thickness.", "Fourth-degree."], correct: 0, exp: "Partial-thickness (second-degree) burns involve the epidermis and some dermis; blisters are present." },
+        { id: 30, section: "Soft Tissue", q: "Using the <v>rule of nines</v>, an adult's entire leg represents:", a: ["18%.", "9%.", "13.5%.", "4.5%."], correct: 0, exp: "In the rule of nines for an adult, each entire leg represents 18%." },
+        { id: 31, section: "Soft Tissue", q: "First step for dry chemical burns:", a: ["Brush off chemical.", "Flush with water.", "Apply lotion.", "Bandage."], correct: 0, exp: "Always brush off dry chemicals before flushing with water." },
+        { id: 32, section: "Soft Tissue", q: "An abdominal <v>evisceration</v> requires:", a: ["Moist sterile gauze and occlusive dressing.", "Pushing organs in.", "Dry dressing.", "Ice packs."], correct: 0, exp: "Cover with sterile gauze moistened with saline and secure with an occlusive dressing." },
+        { id: 33, section: "Soft Tissue", q: "Soot around the mouth and singed nasal hairs suggest:", a: ["Inhalation injury.", "Carbon monoxide poisoning.", "Chemical burn.", "Flash burn."], correct: 0, exp: "Singed facial/nasal hair and soot around the mouth are signs of inhalation injury." },
+        { id: 34, section: "Soft Tissue", q: "Use an <v>occlusive dressing</v> for:", a: ["Sucking chest wounds.", "Leg lacerations.", "Arm burns.", "Closed fractures."], correct: 0, exp: "Occlusive dressings cover sucking chest wounds and neck injuries." },
+        { id: 35, section: "Soft Tissue", q: "A burn that is dry, leathery, and painless is:", a: ["<v>Full-thickness</v>.", "Partial-thickness.", "Superficial.", "Scald."], correct: 0, exp: "Full-thickness burns are dry, leathery, and may involve subcutaneous tissue; often painless due to nerve destruction." },
+        { id: 36, section: "Soft Tissue", q: "RICES stands for Rest, Ice, Compression, Elevation, and:", a: ["Splinting.", "Stabilization.", "Surgery.", "Suction."], correct: 0, exp: "Treat a closed soft-tissue injury by applying RICES: Rest, Ice, Compression, Elevation, Splinting." },
+        { id: 37, section: "Soft Tissue", q: "Electrical burns are dangerous because:", a: ["Deep tissue damage can be massive.", "They bleed profusely.", "They cause instant infection.", "They always cause fire."], correct: 0, exp: "External signs may be small, whereas damage to deeper tissue may be massive." },
+        { id: 38, section: "Soft Tissue", q: "Signs of <v>compartment syndrome</v> include:", a: ["Pain out of proportion to injury.", "Redness.", "Warmth.", "Bounding pulse."], correct: 0, exp: "Early signs include pain that is out of proportion to the injury." },
+        { id: 39, section: "Soft Tissue", q: "An open neck injury carries a risk of:", a: ["<v>Air embolism</v>.", "Crush syndrome.", "Compartment syndrome.", "Evisceration."], correct: 0, exp: "If veins of the neck are open, they may suck in air, causing an air embolism." },
+        { id: 40, section: "Soft Tissue", q: "The <v>dermis</v> houses:", a: ["Nerve endings and sweat glands.", "Fat cells.", "Dead cells.", "Muscle."], correct: 0, exp: "The dermis contains hair follicles, sweat glands, and nerve endings." },
+        { id: 41, section: "Soft Tissue", q: "A <v>hematoma</v> is:", a: ["A pool of blood within damaged tissue.", "A scrape.", "A cut.", "A burn."], correct: 0, exp: "A hematoma is a mass of blood that has collected within damaged tissue." },
+        { id: 42, section: "Soft Tissue", q: "The rule of palms states the patient's palm represents:", a: ["1% of TBSA.", "5% of TBSA.", "10% of TBSA.", "9% of TBSA."], correct: 0, exp: "Compare to the size of the patient's palm, which is roughly equal to 1% of TBSA." },
+        { id: 43, section: "Soft Tissue", q: "A burn encircling the chest can cause:", a: ["Restricted breathing.", "Heart failure.", "Liver damage.", "Spinal injury."], correct: 0, exp: "Circumferential burns of the chest can compromise breathing." },
+        { id: 44, section: "Soft Tissue", q: "With chemical burns to the eye, flush for:", a: ["20 minutes.", "5 minutes.", "10 minutes.", "1 hour."], correct: 0, exp: "Irrigate the eye continuously for 20 minutes." },
+        { id: 45, section: "Soft Tissue", q: "Never remove an impaled object unless:", a: ["It obstructs the airway (cheek) or interferes with CPR.", "It is in the leg.", "It is in the abdomen.", "It is a knife."], correct: 0, exp: "The only exceptions... are objects in the cheek or mouth that obstruct breathing and objects in the chest interfering with CPR." },
+        { id: 46, section: "Soft Tissue", q: "An abrasion affects the:", a: ["Epidermis.", "Dermis.", "Fat.", "Muscle."], correct: 0, exp: "An abrasion is a wound of the superficial layer of the skin (epidermis)." },
+        { id: 47, section: "Soft Tissue", q: "Which burn is red, painful, but has no blisters?", a: ["Superficial.", "Partial-thickness.", "Full-thickness.", "Fourth-degree."], correct: 0, exp: "Superficial (first-degree) burns involve only the epidermis; skin turns red but does not blister." },
+        { id: 48, section: "Soft Tissue", q: "A collection of blood under the skin is a(n):", a: ["<v>Hematoma</v>.", "Abrasion.", "Laceration.", "Avulsion."], correct: 0, exp: "A hematoma is a mass of blood that has collected within damaged tissue." },
+        { id: 49, section: "Soft Tissue", q: "Treatment for a closed soft-tissue injury includes:", a: ["Ice and elevation.", "Heat and massage.", "Tourniquet.", "Lance and drain."], correct: 0, exp: "Treat a closed soft-tissue injury by applying RICES (Ice, Elevation)." },
+        { id: 50, section: "Soft Tissue", q: "When bandaging, leave fingers/toes exposed to:", a: ["Assess circulation/sensation.", "Cool the limb.", "Prevent sweating.", "Apply more dressing."], correct: 0, exp: "Leave the patient's fingers exposed so that you can assess neurovascular function." },
+
+        // --- SECTION: FACE & NECK ---
+        { id: 51, section: "Face/Neck", q: "The <v>cornea</v> is the:", a: ["Transparent layer over the pupil/iris.", "White of the eye.", "Eyelid lining.", "Eye muscle."], correct: 0, exp: "On the front of the eye, the sclera is replaced by a clear, transparent membrane called the cornea." },
+        { id: 52, section: "Face/Neck", q: "<v>Subcutaneous emphysema</v> suggests:", a: ["Airway injury/leakage.", "Bleeding.", "Infection.", "Spinal injury."], correct: 0, exp: "Presence of air in soft tissues (subcutaneous emphysema) produces a crackling sensation." },
+        { id: 53, section: "Face/Neck", q: "A <v>blow-out fracture</v> occurs in the:", a: ["Orbit floor.", "Mandible.", "Nose.", "Cheek."], correct: 0, exp: "Blunt trauma can cause a fracture of the orbit, specifically the bones that form its floor." },
+        { id: 54, section: "Face/Neck", q: "<v>Hyphema</v> is blood in the:", a: ["Anterior chamber of the eye.", "Vitreous humor.", "Eyelid.", "Retina."], correct: 0, exp: "Hyphema is bleeding into the anterior chamber of the eye." },
+        { id: 55, section: "Face/Neck", q: "If an object is impaled in the cheek and blocks the airway:", a: ["Remove it.", "Stabilize it.", "Push it in.", "Cut it."], correct: 0, exp: "If you are unable to control bleeding and it is compromising the airway, remove the impaled object." },
+        { id: 56, section: "Face/Neck", q: "Unequal pupils are called:", a: ["<v>Anisocoria</v>.", "Hyphema.", "Diplopia.", "Cataracts."], correct: 0, exp: "Some people are born with pupils that are not equal (anisocoria)." },
+        { id: 57, section: "Face/Neck", q: "A patient sees flashing lights and a curtain over their vision. Suspect:", a: ["<v>Retinal detachment</v>.", "Conjunctivitis.", "Corneal abrasion.", "Blow-out fracture."], correct: 0, exp: "It produces flashing lights, specks, or floaters and a cloud or shade over the vision." },
+        { id: 58, section: "Face/Neck", q: "Bleeding from a neck injury carries a risk of:", a: ["<v>Air embolism</v>.", "Pneumothorax.", "Infection.", "Vomiting."], correct: 0, exp: "If a vein has been punctured, air may be sucked through it to the heart (air embolism)." },
+        { id: 59, section: "Face/Neck", q: "To treat a neck laceration, use:", a: ["Occlusive dressing.", "Regular gauze.", "Tourniquet.", "Band-aid."], correct: 0, exp: "Cover the wound with an occlusive dressing to prevent air embolism." },
+        { id: 60, section: "Face/Neck", q: "The <v>cricoid cartilage</v> is located:", a: ["Below the thyroid cartilage.", "Above the thyroid cartilage.", "In the nose.", "In the ear."], correct: 0, exp: "The cricoid cartilage is a firm ridge below the thyroid cartilage." },
+        { id: 61, section: "Face/Neck", q: "When flushing an eye, direct fluid:", a: ["Inner to outer corner.", "Outer to inner.", "Directly on cornea.", "Under lid only."], correct: 0, exp: "Always flush from the nose side (inner) toward the outside." },
+        { id: 62, section: "Face/Neck", q: "The <v>conjunctiva</v> lines the:", a: ["Eyelids and eye surface.", "Retina.", "Cornea.", "Lens."], correct: 0, exp: "The inner surface of the eyelids and exposed surface of the eye are covered by the conjunctiva." },
+        { id: 63, section: "Face/Neck", q: "Handle an avulsed tooth by the:", a: ["Crown.", "Root.", "Middle.", "Nerve."], correct: 0, exp: "Handle it by its crown and not by the root." },
+        { id: 64, section: "Face/Neck", q: "If a foreign object is impaled in the eye:", a: ["Stabilize and bandage both eyes.", "Remove it.", "Bandage only injured eye.", "Apply pressure."], correct: 0, exp: "Bandage the object in place. Cover the eye with a moist, sterile dressing, surround with eye shield." },
+        { id: 65, section: "Face/Neck", q: "<v>Epistaxis</v> is a:", a: ["Nosebleed.", "Ear bleed.", "Eye bleed.", "Mouth bleed."], correct: 0, exp: "Epistaxis, or nosebleed, is a common problem." },
+        { id: 66, section: "Face/Neck", q: "A patient unable to look up likely has a:", a: ["Blow-out fracture.", "Nasal fracture.", "Jaw fracture.", "Le Fort fracture."], correct: 0, exp: "Inability to look up suggests an orbital (blow-out) fracture entrapping muscles." },
+        { id: 67, section: "Face/Neck", q: "For a chemical burn to the eye, irrigate for:", a: ["20 minutes.", "5 minutes.", "10 minutes.", "30 seconds."], correct: 0, exp: "Irrigate the eye continuously for 20 minutes." },
+        { id: 68, section: "Face/Neck", q: "Which bone forms the lower jaw?", a: ["Mandible.", "Maxilla.", "Zygoma.", "Orbit."], correct: 0, exp: "The mandible forms the jaw and chin." },
+        { id: 69, section: "Face/Neck", q: "The 'Adam's apple' is the:", a: ["Thyroid cartilage.", "Cricoid cartilage.", "Trachea.", "Hyoid bone."], correct: 0, exp: "The prominence is the upper part of the larynx, formed by the thyroid cartilage." },
+        { id: 70, section: "Face/Neck", q: "The <v>globe</v> of the eye is kept in shape by:", a: ["Fluid pressure.", "Muscles.", "Bone.", "Air."], correct: 0, exp: "The eyeball, or globe, keeps its shape as a result of the pressure of the fluid contained within." },
+        { id: 71, section: "Face/Neck", q: "With a chemical burn, remove contact lenses:", a: ["Immediately.", "Never.", "Only if hard lenses.", "At the hospital."], correct: 0, exp: "Remove contact lenses immediately in the field for chemical burns." },
+        { id: 72, section: "Face/Neck", q: "CSF drainage from the ear indicates:", a: ["Basilar skull fracture.", "Ear infection.", "Nose bleed.", "Scalp wound."], correct: 0, exp: "Clear, watery CSF may leak from the ear... indicating a fracture at the base of the skull." },
+        { id: 73, section: "Face/Neck", q: "A fracture of the cheekbone involves the:", a: ["Zygoma.", "Mandible.", "Maxilla.", "Frontal bone."], correct: 0, exp: "The cheek bones are called the zygomas." },
+        { id: 74, section: "Face/Neck", q: "Prioritize _____ in face/neck injuries.", a: ["Airway.", "Bleeding.", "Spine.", "Pain."], correct: 0, exp: "Airway and breathing take priority over soft-tissue injuries." },
+        { id: 75, section: "Face/Neck", q: "Impaled object in the neck:", a: ["Do not remove.", "Remove immediately.", "Push in.", "Twist."], correct: 0, exp: "Do not remove an impaled object unless it interferes with the airway or CPR." },
+
+        // --- SECTION: HEAD & SPINE ---
+        { id: 76, section: "Head/Spine", q: "<v>Cushing triad</v> signifies:", a: ["Increased intracranial pressure.", "Shock.", "Hypoxia.", "Spinal injury."], correct: 0, exp: "Hypertension, bradycardia, and irregular respirations (Cushing triad) signify increased ICP." },
+        { id: 77, section: "Head/Spine", q: "An <v>epidural hematoma</v> is arterial bleeding between:", a: ["Skull and dura mater.", "Dura and arachnoid.", "Brain and pia.", "Skin and skull."], correct: 0, exp: "Accumulation of blood between the skull and dura mater." },
+        { id: 78, section: "Head/Spine", q: "A <v>subdural hematoma</v> involves:", a: ["Venous bleeding beneath the dura.", "Arterial bleeding above the dura.", "Bleeding inside the brain.", "Bleeding in the spine."], correct: 0, exp: "Accumulation of blood beneath the dura mater but outside the brain." },
+        { id: 79, section: "Head/Spine", q: "Raccoon eyes and Battle sign indicate:", a: ["<v>Basilar skull fracture</v>.", "Concussion.", "Facial contusion.", "Neck injury."], correct: 0, exp: "Signs include ecchymosis under eyes (raccoon eyes) or behind ear (Battle sign)." },
+        { id: 80, section: "Head/Spine", q: "A <v>concussion</v> typically involves:", a: ["Temporary dysfunction, no physical damage.", "Permanent damage.", "Brain bleeding.", "Skull fracture."], correct: 0, exp: "Temporary loss/alteration of function without demonstrable physical damage." },
+        { id: 81, section: "Head/Spine", q: "Decerebrate posturing involves:", a: ["Extension of extremities.", "Flexion of arms.", "Flaccidity.", "Curling up."], correct: 0, exp: "Decerebrate posturing involves extension of the extremities." },
+        { id: 82, section: "Head/Spine", q: "Decorticate posturing involves:", a: ["Flexion of arms towards chest.", "Extension of arms.", "Limp limbs.", "Head tilt."], correct: 0, exp: "Decorticate posturing involves arms flexed and drawn in toward the body." },
+        { id: 83, section: "Head/Spine", q: "<v>Retrograde amnesia</v> is forgetting:", a: ["Events before the injury.", "Events after the injury.", "Name.", "Address."], correct: 0, exp: "Inability to remember events leading up to the injury." },
+        { id: 84, section: "Head/Spine", q: "<v>Anterograde amnesia</v> is forgetting:", a: ["Events after the injury.", "Events before the injury.", "Childhood.", "School."], correct: 0, exp: "Inability to remember events after the injury." },
+        { id: 85, section: "Head/Spine", q: "The <v>Glasgow Coma Scale</v> range is:", a: ["3-15.", "0-10.", "1-10.", "0-15."], correct: 0, exp: "The lowest score is 3, highest is 15." },
+        { id: 86, section: "Head/Spine", q: "In a <v>coup-contrecoup injury</v>, the brain hits:", a: ["Front and back of skull.", "Side only.", "Top only.", "Does not hit skull."], correct: 0, exp: "Brain strikes front of skull, then slams into rear." },
+        { id: 87, section: "Head/Spine", q: "Remove a helmet if:", a: ["It obstructs the airway.", "It fits well.", "Spine is stable.", "Patient asks."], correct: 0, exp: "Remove if it makes assessing/managing airway problems difficult." },
+        { id: 88, section: "Head/Spine", q: "Hypoventilation in a head injury patient causes:", a: ["Cerebral edema.", "Decreased ICP.", "Better perfusion.", "Constriction."], correct: 0, exp: "Low oxygen/high CO2 aggravate cerebral edema." },
+        { id: 89, section: "Head/Spine", q: "Target ETCO2 for head injury with herniation is:", a: ["30-35 mm Hg.", "35-45 mm Hg.", "20-25 mm Hg.", "40-50 mm Hg."], correct: 0, exp: "Ensure ETCO2 between 30 and 35 mm Hg." },
+        { id: 90, section: "Head/Spine", q: "Spinal shock (neurogenic) causes:", a: ["Hypotension and bradycardia.", "Hypertension.", "Tachycardia.", "Pale skin."], correct: 0, exp: "Blood pressure may decrease and heart rate may fail to increase." },
+        { id: 91, section: "Head/Spine", q: "Distraction spinal injury is caused by:", a: ["Pulling (hanging).", "Compression.", "Rotation.", "Lateral bending."], correct: 0, exp: "When spine is pulled along its length (hyperextension)." },
+        { id: 92, section: "Head/Spine", q: "Axial loading is caused by:", a: ["Compression (falling on feet).", "Hanging.", "Twisting.", "Whiplash."], correct: 0, exp: "Load applied along vertical axis (e.g. falling from height)." },
+        { id: 93, section: "Head/Spine", q: "Primary brain injury occurs:", a: ["Instantly at impact.", "Hours later.", "Due to swelling.", "Due to hypoxia."], correct: 0, exp: "Injury to brain... that results instantaneously from impact." },
+        { id: 94, section: "Head/Spine", q: "Secondary brain injury is caused by:", a: ["Hypoxia/Hypotension.", "Direct impact.", "Skull fracture.", "Laceration."], correct: 0, exp: "Hypoxia and hypotension are common causes." },
+        { id: 95, section: "Head/Spine", q: "GCS Eye Opening score for pain only:", a: ["2.", "3.", "1.", "4."], correct: 0, exp: "Eye opening to pain is 2." },
+        { id: 96, section: "Head/Spine", q: "GCS Verbal score for confused:", a: ["4.", "5.", "3.", "2."], correct: 0, exp: "Confused conversation is 4." },
+        { id: 97, section: "Head/Spine", q: "GCS Motor score for obeying commands:", a: ["6.", "5.", "4.", "1."], correct: 0, exp: "Obeys commands is 6." },
+        { id: 98, section: "Head/Spine", q: "The toughest meningeal layer is:", a: ["Dura mater.", "Arachnoid.", "Pia mater.", "Cortex."], correct: 0, exp: "The outer layer, dura mater, is a tough, fibrous layer." },
+        { id: 99, section: "Head/Spine", q: "For a supine patient with spinal injury, use a:", a: ["Long backboard.", "Short board.", "KED.", "Chair."], correct: 0, exp: "A patient who is supine can be effectively immobilized on a long backboard." },
+        { id: 100, section: "Head/Spine", q: "If a patient vomits on a backboard:", a: ["Log roll board to side.", "Suction only.", "Sit them up.", "Do nothing."], correct: 0, exp: "Turn the entire backboard to the side to allow drainage." },
+        { id: 101, section: "Head/Spine", q: "The most reliable sign of head injury is:", a: ["Decreased level of consciousness.", "Headache.", "Vomiting.", "Pupils."], correct: 0, exp: "Decreased or altered LOC is the most reliable sign." },
+        { id: 102, section: "Head/Spine", q: "Hyperventilation is reserved for:", a: ["Signs of herniation.", "All head injuries.", "Concussions.", "Scalp bleeds."], correct: 0, exp: "Use only when signs of imminent brainstem herniation have been identified." },
+        { id: 103, section: "Head/Spine", q: "The spinal cord exits the skull through the:", a: ["Foramen magnum.", "Occiput.", "Vertebrae.", "Orbit."], correct: 0, exp: "Large opening at the base of the skull called the foramen magnum." },
+        { id: 104, section: "Head/Spine", q: "CSF is found in the:", a: ["Subarachnoid space.", "Epidural space.", "Subdural space.", "Skull."], correct: 0, exp: "Located in the subarachnoid space below the arachnoid." },
+        { id: 105, section: "Head/Spine", q: "Cervical collars provide:", a: ["Partial support.", "Complete immobilization.", "Airway support.", "Pain relief."], correct: 0, exp: "Rigid cervical collars provide preliminary, partial support." },
+
+        // --- SECTION: CHEST ---
+        { id: 106, section: "Chest", q: "A <v>tension pneumothorax</v> causes:", a: ["Shock and tracheal deviation.", "Hypertension.", "Slow heart rate.", "Normal breath sounds."], correct: 0, exp: "Compresses heart/vessels, causing shock; tracheal deviation is a late sign." },
+        { id: 107, section: "Chest", q: "<v>Cardiac tamponade</v> is fluid in the:", a: ["Pericardial sac.", "Pleural space.", "Lung.", "Mediastinum."], correct: 0, exp: "Compression of heart due to fluid in pericardial sac." },
+        { id: 108, section: "Chest", q: "Beck triad includes:", a: ["JVD, muffled heart sounds, narrowing pulse pressure.", "Hypertension, bradycardia.", "Flat veins, tachycardia.", "Wheezing."], correct: 0, exp: "Signs of cardiac tamponade." },
+        { id: 109, section: "Chest", q: "A <v>flail chest</v> occurs when:", a: ["2+ ribs fracture in 2+ places.", "1 rib breaks.", "Sternum breaks.", "Lung collapses."], correct: 0, exp: "Two or more adjacent ribs fractured in two or more places." },
+        { id: 110, section: "Chest", q: "Paradoxical motion is:", a: ["Chest segment moves opposite to rest.", "Normal breathing.", "Rapid breathing.", "Slow breathing."], correct: 0, exp: "Moves in during inhalation, out during exhalation." },
+        { id: 111, section: "Chest", q: "Treat <v>open pneumothorax</v> with:", a: ["Occlusive dressing.", "Gauze.", "Tourniquet.", "Splint."], correct: 0, exp: "Seal with occlusive dressing to prevent air entry." },
+        { id: 112, section: "Chest", q: "<v>Traumatic asphyxia</v> presents with:", a: ["Blue face/neck, JVD, scleral hemorrhage.", "Pale face.", "Low BP only.", "Leg pain."], correct: 0, exp: "Caused by sudden chest compression." },
+        { id: 113, section: "Chest", q: "<v>Commotio cordis</v> causes:", a: ["VFib cardiac arrest.", "Tamponade.", "Bleeding.", "Pneumothorax."], correct: 0, exp: "Direct blow during critical heart phase causes VFib." },
+        { id: 114, section: "Chest", q: "A <v>hemothorax</v> is:", a: ["Blood in pleural space.", "Air in chest.", "Fluid in heart.", "Lung bruise."], correct: 0, exp: "Collection of blood in the pleural space." },
+        { id: 115, section: "Chest", q: "<v>Simple pneumothorax</v>:", a: ["No major physiology changes.", "Shock.", "Open wound.", "Heart failure."], correct: 0, exp: "Usually from blunt trauma, no major cardiac change." },
+        { id: 116, section: "Chest", q: "Ventilation is:", a: ["Moving air in/out.", "Oxygen delivery.", "Cellular exchange.", "Heart pumping."], correct: 0, exp: "Body's ability to move air in and out of chest." },
+        { id: 117, section: "Chest", q: "During inhalation, the diaphragm:", a: ["Contracts (moves down).", "Relaxes (moves up).", "Stops.", "Expands."], correct: 0, exp: "Contracts and flattens." },
+        { id: 118, section: "Chest", q: "The pleura covering the lung is:", a: ["Visceral pleura.", "Parietal pleura.", "Peritoneum.", "Pericardium."], correct: 0, exp: "Visceral pleura covers the lung." },
+        { id: 119, section: "Chest", q: "Occlusive dressing usually taped on:", a: ["3 sides.", "4 sides.", "1 side.", "Not taped."], correct: 0, exp: "Allows air to escape (flutter valve)." },
+        { id: 120, section: "Chest", q: "Spontaneous pneumothorax often occurs in:", a: ["Tall, thin men.", "Short women.", "Children.", "Elderly."], correct: 0, exp: "Weak area on lung ruptures." },
+        { id: 121, section: "Chest", q: "Pulmonary contusion is:", a: ["Bruised lung.", "Collapsed lung.", "Bleeding chest.", "Broken rib."], correct: 0, exp: "Injury/bruising of lung tissue." },
+        { id: 122, section: "Chest", q: "Treat flail chest with:", a: ["PPV (BVM).", "Sandbag.", "Tape.", "Prone position."], correct: 0, exp: "Positive pressure ventilation is important." },
+        { id: 123, section: "Chest", q: "Subcutaneous emphysema indicates:", a: ["Air in soft tissues.", "Bone fracture.", "Muscle tear.", "Infection."], correct: 0, exp: "Crackling sensation on palpation." },
+        { id: 124, section: "Chest", q: "Hemoptysis is:", a: ["Coughing blood.", "Vomiting blood.", "Urinating blood.", "Nosebleed."], correct: 0, exp: "Indicates lung injury." },
+        { id: 125, section: "Chest", q: "Signs of shock plus no breath sounds suggests:", a: ["Hemothorax.", "Simple pneumo.", "Rib fracture.", "Infection."], correct: 0, exp: "Massive bleeding into chest compresses lung." },
+        { id: 126, section: "Chest", q: "Aortic dissection pain is often:", a: ["Tearing, to the back.", "Dull, crushing.", "Sharp, pleuritic.", " throbbing."], correct: 0, exp: "Tearing pain radiating to back." },
+        { id: 127, section: "Chest", q: "Pleuritic chest pain worsens with:", a: ["Breathing.", "Rest.", "Eating.", "Walking."], correct: 0, exp: "Sharp pain with each breath." },
+        { id: 128, section: "Chest", q: "Immediate death from chest trauma often involves:", a: ["Aorta rupture.", "Rib fracture.", "Clavicle break.", "Simple pneumo."], correct: 0, exp: "Traumatic rupture of aorta." },
+        { id: 129, section: "Chest", q: "Impaled object in chest:", a: ["Stabilize.", "Remove.", "Push in.", "Ignore."], correct: 0, exp: "Do not remove unless CPR interference." },
+        { id: 130, section: "Chest", q: "Tachypnea is:", a: ["Rapid breathing.", "Slow breathing.", "No breathing.", "Deep breathing."], correct: 0, exp: "Rapid respirations." },
+
+        // --- SECTION: ABDOMINAL/GU ---
+        { id: 131, section: "Abdominal/GU", q: "<v>Hollow organs</v> include:", a: ["Stomach, bowel, bladder.", "Liver, spleen.", "Kidneys.", "Pancreas."], correct: 0, exp: "Spill contents causing peritonitis." },
+        { id: 132, section: "Abdominal/GU", q: "<v>Solid organs</v> include:", a: ["Liver, spleen, kidneys.", "Stomach.", "Intestines.", "Bladder."], correct: 0, exp: "Bleed profusely when injured." },
+        { id: 133, section: "Abdominal/GU", q: "Solid organ injury causes:", a: ["Hemorrhage.", "Peritonitis.", "Air embolism.", "Infection."], correct: 0, exp: "Severe unseen hemorrhage." },
+        { id: 134, section: "Abdominal/GU", q: "Hollow organ rupture causes:", a: ["Peritonitis.", "Massive bleeding.", "Instant death.", "Clotting."], correct: 0, exp: "Spills toxic contents, inflammation." },
+        { id: 135, section: "Abdominal/GU", q: "<v>Kehr sign</v> suggests:", a: ["Spleen injury.", "Liver injury.", "Kidney injury.", "Stomach injury."], correct: 0, exp: "Referred pain to left shoulder." },
+        { id: 136, section: "Abdominal/GU", q: "Liver injury refers pain to:", a: ["Right shoulder.", "Left shoulder.", "Back.", "Leg."], correct: 0, exp: "Common finding." },
+        { id: 137, section: "Abdominal/GU", q: "<v>Hematuria</v> suggests injury to:", a: ["Kidney.", "Liver.", "Spleen.", "Lung."], correct: 0, exp: "Blood in urine indicates renal/bladder injury." },
+        { id: 138, section: "Abdominal/GU", q: "Treat <v>evisceration</v> with:", a: ["Moist sterile gauze.", "Dry gauze.", "Pushing in.", "Ice."], correct: 0, exp: "Keep moist and warm, occlusive dressing." },
+        { id: 139, section: "Abdominal/GU", q: "The <v>retroperitoneum</v> holds the:", a: ["Kidneys/Pancreas.", "Stomach.", "Liver.", "Spleen."], correct: 0, exp: "Located behind peritoneum." },
+        { id: 140, section: "Abdominal/GU", q: "<v>Guarding</v> is:", a: ["Muscle stiffening.", "Vomiting.", "Crying.", "Running away."], correct: 0, exp: "Stiffening of rectus abdominis muscles." },
+        { id: 141, section: "Abdominal/GU", q: "Seat belt injury causes:", a: ["Squeeze against spine.", "Head injury.", "Leg fracture.", "Arm break."], correct: 0, exp: "Compresses abdominal organs." },
+        { id: 142, section: "Abdominal/GU", q: "Sexual assault patients:", a: ["Do not wash.", "Wash immediately.", "Discard clothes.", "Use bathroom."], correct: 0, exp: "Preserve evidence." },
+        { id: 143, section: "Abdominal/GU", q: "Periumbilical bruising is:", a: ["Cullen sign.", "Grey Turner.", "Kehr.", "Battle."], correct: 0, exp: "Indicates internal bleeding." },
+        { id: 144, section: "Abdominal/GU", q: "Flank bruising is:", a: ["Grey Turner sign.", "Cullen.", "Kehr.", "Battle."], correct: 0, exp: "Suggests kidney/retroperitoneal bleeding." },
+        { id: 145, section: "Abdominal/GU", q: "Genitalia injuries:", a: ["Bleed profusely.", "Rarely bleed.", "Are always fatal.", "Need tourniquet."], correct: 0, exp: "Rich blood supply, painful." },
+        { id: 146, section: "Abdominal/GU", q: "Pregnant uterus (3rd trimester) blocks:", a: ["Vena cava.", "Aorta.", "Carotid.", "Femoral."], correct: 0, exp: "Supine hypotensive syndrome." },
+        { id: 147, section: "Abdominal/GU", q: "Impaled object care:", a: ["Stabilize.", "Remove.", "Cut.", "Push."], correct: 0, exp: "Stabilize with bandage." },
+        { id: 148, section: "Abdominal/GU", q: "Diaphragm rupture leads to:", a: ["Bowel in chest.", "Air in abdomen.", "Blood in leg.", "Heart stop."], correct: 0, exp: "Herniation of bowel into thorax." },
+        { id: 149, section: "Abdominal/GU", q: "Bladder rupture is likely with:", a: ["Pelvic fracture.", "Rib fracture.", "Femur fracture.", "Arm fracture."], correct: 0, exp: "Bone fragments perforate bladder." },
+        { id: 150, section: "Abdominal/GU", q: "Kidney injury often from:", a: ["Flank blow.", "Chest blow.", "Head blow.", "Leg blow."], correct: 0, exp: "Direct blow to flank." },
+
+        // --- SECTION: ORTHOPAEDIC ---
+        { id: 151, section: "Orthopaedic", q: "<v>Skeletal muscle</v> is:", a: ["Voluntary.", "Involuntary.", "Cardiac.", "Smooth."], correct: 0, exp: "Under direct voluntary control." },
+        { id: 152, section: "Orthopaedic", q: "<v>Smooth muscle</v> is:", a: ["Involuntary (organ walls).", "Voluntary.", "Bone muscle.", "Cardiac."], correct: 0, exp: "Found in GI tract, vessels." },
+        { id: 153, section: "Orthopaedic", q: "A <v>tendon</v> connects:", a: ["Muscle to bone.", "Bone to bone.", "Muscle to muscle.", "Bone to skin."], correct: 0, exp: "Ropelike structure attaching muscle to bone." },
+        { id: 154, section: "Orthopaedic", q: "A <v>ligament</v> connects:", a: ["Bone to bone.", "Muscle to bone.", "Muscle to muscle.", "Skin to bone."], correct: 0, exp: "Supports the joint." },
+        { id: 155, section: "Orthopaedic", q: "A <v>fracture</v> is:", a: ["Broken bone.", "Dislocation.", "Sprain.", "Strain."], correct: 0, exp: "Break in continuity of bone." },
+        { id: 156, section: "Orthopaedic", q: "<v>Open fracture</v> means:", a: ["Skin is broken.", "Bone is bent.", "Skin is intact.", "Bone is crushed."], correct: 0, exp: "External wound communicates with fracture." },
+        { id: 157, section: "Orthopaedic", q: "<v>Greenstick fracture</v> occurs in:", a: ["Children.", "Elderly.", "Adults.", "Athletes."], correct: 0, exp: "Incomplete fracture, passes partway through." },
+        { id: 158, section: "Orthopaedic", q: "<v>Dislocation</v> is:", a: ["Bone ends separated.", "Broken bone.", "Stretched muscle.", "Torn tendon."], correct: 0, exp: "Disruption of a joint." },
+        { id: 159, section: "Orthopaedic", q: "<v>Sprain</v> involves:", a: ["Ligament damage.", "Muscle damage.", "Bone break.", "Skin cut."], correct: 0, exp: "Twisting/stretching of joint ligaments." },
+        { id: 160, section: "Orthopaedic", q: "<v>Strain</v> is:", a: ["Muscle pull.", "Ligament tear.", "Bone break.", "Joint separation."], correct: 0, exp: "Stretching or tearing of muscle/tendon." },
+        { id: 161, section: "Orthopaedic", q: "Most reliable sign of fracture:", a: ["<v>Point tenderness</v>.", "Bruising.", "Swelling.", "Pain."], correct: 0, exp: "Tenderness localized at site of injury." },
+        { id: 162, section: "Orthopaedic", q: "Before splinting, assess:", a: ["Pulse, Motor, Sensory.", "BP.", "Pupils.", "Lung sounds."], correct: 0, exp: "Check distal neurovascular function." },
+        { id: 163, section: "Orthopaedic", q: "Realignment is needed if:", a: ["Limb is pulseless/cyanotic.", "Limb is painful.", "Limb is swollen.", "Limb is bruised."], correct: 0, exp: "Attempt to restore circulation." },
+        { id: 164, section: "Orthopaedic", q: "Hip fracture patient leg position:", a: ["External rotation, shortening.", "Internal rotation.", "Straight.", "Lengthened."], correct: 0, exp: "Classic sign of proximal femur fracture." },
+        { id: 165, section: "Orthopaedic", q: "Hip dislocation (posterior) position:", a: ["Internal rotation, flexed.", "External rotation.", "Straight.", "Lengthened."], correct: 0, exp: "Hip joint flexed, thigh rotated inward." },
+        { id: 166, section: "Orthopaedic", q: "<v>Compartment syndrome</v> sign:", a: ["Pain out of proportion.", "Bruising.", "Bleeding.", "Warmth."], correct: 0, exp: "Pressure build-up cuts off flow." },
+        { id: 167, section: "Orthopaedic", q: "<v>Traction splint</v> used for:", a: ["Midshaft femur fracture.", "Hip fracture.", "Knee injury.", "Ankle fracture."], correct: 0, exp: "Stabilizes femoral shaft fractures." },
+        { id: 168, section: "Orthopaedic", q: "Do not use traction splint if:", a: ["Knee/hip/pelvis injury.", "Femur closed.", "Painful.", "Swollen."], correct: 0, exp: "Contraindicated for joint/pelvis injuries." },
+        { id: 169, section: "Orthopaedic", q: "Pelvic fracture risk:", a: ["Severe hemorrhage.", "Nerve damage.", "Infection.", "Air embolism."], correct: 0, exp: "Can lose liters of blood." },
+        { id: 170, section: "Orthopaedic", q: "<v>Pelvic binder</v> is used to:", a: ["Reduce hemorrhage/stabilize.", "Stop pain.", "Fix leg.", "Elevate."], correct: 0, exp: "Splints bony pelvis, reduces bleeding." },
+        { id: 171, section: "Orthopaedic", q: "Amputated part care:", a: ["Wrap sterile, bag, keep cool.", "Put in water.", "Put on ice directly.", "Freeze."], correct: 0, exp: "Do not freeze or soak." },
+        { id: 172, section: "Orthopaedic", q: "Splinting prevents:", a: ["Further damage/pain.", "Healing.", "Infection.", "Swelling."], correct: 0, exp: "Prevents movement of bone ends." },
+        { id: 173, section: "Orthopaedic", q: "Colles fracture affects:", a: ["Distal radius (wrist).", "Femur.", "Humerus.", "Ankle."], correct: 0, exp: "Silver fork deformity." },
+        { id: 174, section: "Orthopaedic", q: "Clavicle fracture patient holds arm:", a: ["Across chest.", "Down.", "Up.", "Behind."], correct: 0, exp: "Supports weight of arm." },
+        { id: 175, section: "Orthopaedic", q: "Dislocated shoulder is usually:", a: ["Anterior.", "Posterior.", "Inferior.", "Superior."], correct: 0, exp: "Humeral head displaces anteriorly." },
+        { id: 176, section: "Orthopaedic", q: "Splint joint injuries:", a: ["In position found (unless pulseless).", "Straight.", "Bent.", "Traction."], correct: 0, exp: "Stabilize bones above and below." },
+        { id: 177, section: "Orthopaedic", q: "Splint shaft injuries:", a: ["Joints above and below.", "Bone only.", "Tight.", "Loose."], correct: 0, exp: "Must immobilize adjacent joints." },
+        { id: 178, section: "Orthopaedic", q: "The <v>sciatic nerve</v> is at risk in:", a: ["Hip dislocation.", "Femur fracture.", "Knee injury.", "Ankle sprain."], correct: 0, exp: "Located behind hip joint." },
+        { id: 179, section: "Orthopaedic", q: "Use a sling and swathe for:", a: ["Shoulder/Clavicle injury.", "Leg.", "Hip.", "Neck."], correct: 0, exp: "Supports arm weight." },
+        { id: 180, section: "Orthopaedic", q: "<v>Crepitus</v> is:", a: ["Grating sensation.", "Pain.", "Swelling.", "Redness."], correct: 0, exp: "Bone ends rubbing together." },
+        { id: 181, section: "Orthopaedic", q: "The patella is the:", a: ["Kneecap.", "Elbow.", "Heel.", "Hip."], correct: 0, exp: "Bone in the knee tendon." },
+        { id: 182, section: "Orthopaedic", q: "Calcaneus is the:", a: ["Heel bone.", "Toe.", "Ankle.", "Shin."], correct: 0, exp: "Fractured in falls from height." },
+        { id: 183, section: "Orthopaedic", q: "6 Ps include:", a: ["Pain, Pallor, Paresthesia, Pulselessness, Paralysis, Pressure.", "Pain, Pulse, Pink.", "Pressure, Push, Pull.", "Pale, Pain, Position."], correct: 0, exp: "Musculoskeletal assessment guide." },
+        { id: 184, section: "Orthopaedic", q: "General splinting rule:", a: ["When in doubt, splint.", "Never splint.", "Splint only breaks.", "Splint later."], correct: 0, exp: "Prevents further damage." },
+        { id: 185, section: "Orthopaedic", q: "Vacuum splint becomes rigid when:", a: ["Air is drawn out.", "Air is pumped in.", "Heated.", "Cooled."], correct: 0, exp: "Molds to deformity." },
+
+        // --- MIXED/REMAINING (Filling to 200) ---
+        { id: 186, section: "Bleeding", q: "Loss of ___ blood volume is fatal.", a: ["50%", "20%", "10%", "30%"], correct: 0, exp: "Approximately half blood volume." },
+        { id: 187, section: "Bleeding", q: "Coagulation is:", a: ["Clot formation.", "Bleeding.", "Flow.", "Pressure."], correct: 0, exp: "Process of stopping bleeding." },
+        { id: 188, section: "Bleeding", q: "Venous blood is:", a: ["Dark red.", "Bright red.", "Blue.", "Clear."], correct: 0, exp: "Oxygen poor." },
+        { id: 189, section: "Soft Tissue", q: "Incision is:", a: ["Sharp, smooth cut.", "Jagged.", "Bruise.", "Tear."], correct: 0, exp: "Surgical-like cut." },
+        { id: 190, section: "Soft Tissue", q: "Laceration is:", a: ["Jagged cut.", "Smooth cut.", "Burn.", "Hole."], correct: 0, exp: "Tearing of tissue." },
+        { id: 191, section: "Face/Neck", q: "Pinna is:", a: ["External ear.", "Inner ear.", "Nose part.", "Eye part."], correct: 0, exp: "Visible part of ear." },
+        { id: 192, section: "Face/Neck", q: "Tragus is:", a: ["Small bulge anterior to ear canal.", "Earlobe.", "Top of ear.", "Behind ear."], correct: 0, exp: "Fleshy bulge." },
+        { id: 193, section: "Face/Neck", q: "Sternocleidomastoid is:", a: ["Neck muscle.", "Chest muscle.", "Face bone.", "Spine bone."], correct: 0, exp: "Lateral neck muscle." },
+        { id: 194, section: "Head/Spine", q: "Cerebrum controls:", a: ["Voluntary motion/thought.", "Coordination.", "Vital signs.", "Reflexes."], correct: 0, exp: "Largest part of brain." },
+        { id: 195, section: "Head/Spine", q: "Cerebellum controls:", a: ["Balance/coordination.", "Thought.", "Breathing.", "Vision."], correct: 0, exp: "Muscle coordination." },
+        { id: 196, section: "Head/Spine", q: "Brainstem controls:", a: ["Life functions (cardiac/resp).", "Memory.", "Movement.", "Speech."], correct: 0, exp: "Most primitive part." },
+        { id: 197, section: "Chest", q: "Mediastinum contains:", a: ["Heart, great vessels, esophagus, trachea.", "Lungs.", "Stomach.", "Intestines."], correct: 0, exp: "Central chest cavity." },
+        { id: 198, section: "Chest", q: "Pleura is:", a: ["Membrane covering lungs/chest wall.", "Heart sac.", "Abdomen lining.", "Bone cover."], correct: 0, exp: "Visceral/Parietal layers." },
+        { id: 199, section: "Abdominal/GU", q: "Fallopian tubes are:", a: ["Internal female genitalia.", "Male genitalia.", "Urinary tract.", "Digestive."], correct: 0, exp: "Connect ovaries to uterus." },
+        { id: 200, section: "Orthopaedic", q: "Bone marrow produces:", a: ["Blood cells.", "Calcium.", "Muscle.", "Skin."], correct: 0, exp: "Red/white cells and platelets." }
+    ];
+
+    // --- STATE MANAGEMENT ---
+    let activeQuestions = [...allQuestions];
+    let currentIndex = 0;
+    let selectedSections = new Set(allQuestions.map(q => q.section));
+    let allSections = [...new Set(allQuestions.map(q => q.section))];
+
+    // --- LOGIC ---
+    function init() {
+        renderSections();
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        if(activeQuestions.length === 0) {
+            document.getElementById('quiz-container').innerHTML = `<div class="card"><div class="question-text">No questions selected. Please adjust filters.</div></div>`;
+            return;
+        }
+
+        const q = activeQuestions[currentIndex];
+        
+        // Process Vocab Links in Question
+        let processedQ = processVocab(q.q);
+
+        // Process Vocab Links in Options
+        let processedOptions = q.a.map(opt => processVocab(opt));
+
+        let html = `
+            <div class="card" id="card-${q.id}">
+                <span class="section-tag">${q.section}</span>
+                <div class="question-text">${processedQ}</div>
+                <div class="options-grid">
+                    ${processedOptions.map((opt, idx) => `
+                        <button class="option-btn" onclick="handleAnswer(this, ${idx}, ${q.correct}, '${q.exp.replace(/'/g, "\\'")}')">
+                            ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="explanation-box" id="exp-${q.id}">
+                    <strong>Explanation:</strong> ${q.exp}
+                </div>
+            </div>
+        `;
+
+        document.getElementById('quiz-container').innerHTML = html;
+        document.getElementById('counter').textContent = `${currentIndex + 1}/${activeQuestions.length}`;
+        
+        let progress = ((currentIndex + 1) / activeQuestions.length) * 100;
+        document.getElementById('progress').style.width = `${progress}%`;
+        
+        document.querySelector('main').scrollTop = 0;
+    }
+
+    // Helper to wrap vocab words
+    function processVocab(text) {
+        // Regex to find <v>word</v> tags and replace with span
+        return text.replace(/<v>(.*?)<\/v>/g, (match, p1) => {
+            // clean punctuation for lookup
+            let cleanTerm = p1.toLowerCase().replace(/[^\w\s]/gi, '');
+            // Find closest key in vocabDB
+            let key = Object.keys(vocabDB).find(k => k.toLowerCase() === cleanTerm) || cleanTerm;
+            return `<span class="vocab-term" onclick="openVocab('${key}')">${p1}</span>`;
+        });
+    }
+
+    function handleAnswer(btn, selectedIdx, correctIdx, expText) {
+        const parent = document.getElementById(`card-${activeQuestions[currentIndex].id}`);
+        const btns = parent.querySelectorAll('.option-btn');
+        const expBox = parent.querySelector('.explanation-box');
+
+        // Prevent multiple clicks
+        if(parent.classList.contains('content-answered')) return;
+
+        parent.classList.add('content-answered'); // Enables vocab clicks
+
+        if (selectedIdx === correctIdx) {
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            btns[correctIdx].classList.add('correct');
+        }
+
+        expBox.style.display = 'block';
+        // Auto scroll to explanation
+        setTimeout(() => {
+            expBox.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }, 100);
+    }
+
+    function nextQ() {
+        if(currentIndex < activeQuestions.length - 1) {
+            currentIndex++;
+            renderQuestion();
+        }
+    }
+
+    function prevQ() {
+        if(currentIndex > 0) {
+            currentIndex--;
+            renderQuestion();
+        }
+    }
+
+    function scrambleQuestions() {
+        for (let i = activeQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [activeQuestions[i], activeQuestions[j]] = [activeQuestions[j], activeQuestions[i]];
+        }
+        currentIndex = 0;
+        renderQuestion();
+    }
+
+    // --- MODALS ---
+    function openVocab(term) {
+        const def = vocabDB[term.toLowerCase()] || "Definition not found for this specific phrasing.";
+        document.getElementById('vocab-title').textContent = term;
+        document.getElementById('vocab-def').textContent = def;
+        document.getElementById('vocab-modal').classList.add('active');
+    }
+
+    function openFilterModal() {
+        document.getElementById('filter-modal').classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        if(id === 'filter-modal') applyFilters();
+    }
+
+    // --- FILTER LOGIC ---
+    function renderSections() {
+        const container = document.getElementById('filter-list');
+        container.innerHTML = allSections.map(sec => `
+            <div class="filter-opt ${selectedSections.has(sec) ? 'selected' : ''}" onclick="toggleSection(this, '${sec}')">
+                ${sec}
+            </div>
+        `).join('');
+    }
+
+    function toggleSection(el, sec) {
+        if(selectedSections.has(sec)) {
+            if(selectedSections.size > 1) selectedSections.delete(sec); // Prevent empty
+        } else {
+            selectedSections.add(sec);
+        }
+        el.classList.toggle('selected', selectedSections.has(sec));
+    }
+
+    function applyFilters() {
+        activeQuestions = allQuestions.filter(q => selectedSections.has(q.section));
+        currentIndex = 0;
+        renderQuestion();
+    }
+
+    // Initialize
+    init();
+
+</script>
+</body>
+</html>
