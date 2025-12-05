@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT Trauma Quiz</title>
+    <style>
+        :root {
+            --primary-color: #005a9c;
+            --secondary-color: #333f48;
+            --background-color: #f4f6f9;
+            --text-color: #34495e;
+            --light-gray: #bdc3c7;
+            --white: #ffffff;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+            --star-color: #f1c40f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--primary-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        #controls {
+            padding: 15px 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #controls select, #controls button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            font-size: 1em;
+            cursor: pointer;
+            background-color: var(--white);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        #controls select {
+            flex-grow: 1;
+        }
+
+        #controls button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #controls button:hover {
+            background-color: #004a80;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #quiz-area {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #progress-bar-container {
+            flex-grow: 1;
+            height: 10px;
+            background-color: var(--background-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease-in-out;
+        }
+
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        #question-text {
+            font-size: 1.3em;
+            font-weight: 500;
+            flex-grow: 1;
+            padding-right: 15px;
+            margin: 0;
+        }
+        
+        #star-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--light-gray);
+            transition: color 0.2s, transform 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        #star-btn.starred {
+            color: var(--star-color);
+        }
+        #star-btn:hover {
+            transform: scale(1.1);
+        }
+
+        #options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            padding: 15px;
+            border: 2px solid #eef0f2;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1em;
+        }
+        .option-item:not(.answered):hover {
+            border-color: var(--primary-color);
+            background-color: #f0f8ff;
+        }
+
+        .option-item.answered {
+            cursor: default;
+        }
+
+        .option-item.correct {
+            background-color: #e6f9e6;
+            border-color: var(--correct-color);
+            color: #1e851e;
+            font-weight: 600;
+        }
+        
+        .option-item.incorrect {
+            background-color: #fdeaea;
+            border-color: var(--incorrect-color);
+            color: #b92c2c;
+            opacity: 0.7;
+        }
+        
+        .option-item.incorrect.selected {
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        #explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 4px;
+            display: none;
+            line-height: 1.6;
+        }
+        
+        .vocab-term {
+            color: #005a9c;
+            border-bottom: 1px dashed #005a9c;
+            cursor: help;
+            font-weight: 500;
+        }
+        
+        #vocab-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 85%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .modal-content p {
+            font-size: 1.1em;
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        #navigation button {
+            padding: 12px 25px;
+            border-radius: 6px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--white);
+            color: var(--primary-color);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            min-width: 120px;
+        }
+
+        #navigation button:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        #navigation button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: var(--light-gray);
+            color: var(--light-gray);
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+            #app-container {
+                border-radius: 0;
+                box-shadow: none;
+                min-height: 100vh;
+            }
+            header h1 {
+                font-size: 1.4em;
+            }
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #quiz-area {
+                padding: 15px;
+            }
+            #question-text {
+                font-size: 1.15em;
+            }
+            .option-item {
+                padding: 12px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1>EMT Trauma Quiz</h1>
+        </header>
+
+        <div id="controls">
+            <select id="category-select">
+                <option value="All">All Chapters</option>
+            </select>
+            <button id="scramble-btn">Scramble Questions</button>
+            <button id="review-starred-btn">Review Starred</button>
+        </div>
+
+        <main id="quiz-area">
+            <div id="progress-container">
+                <span id="question-counter">0 / 0</span>
+                <div id="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <span id="score-display">Score: 0%</span>
+            </div>
+            
+            <div id="question-header">
+                 <p id="question-text">Loading questions...</p>
+                 <button id="star-btn" title="Star this question for later review">☆</button>
+            </div>
+
+            <ul id="options-list"></ul>
+            <div id="explanation"></div>
+
+            <div id="navigation">
+                <button id="prev-btn">Previous</button>
+                <button id="next-btn">Next</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="vocab-modal">
+        <div class="modal-content">
+            <h2 id="modal-term"></h2>
+            <p id="modal-definition"></p>
+            <button onclick="document.getElementById('vocab-modal').style.display='none'" style="margin-top:15px; padding:8px 20px; cursor:pointer; background:var(--secondary-color); color:white; border:none; border-radius:4px;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Vocabulary Database (extracted from Chapters 25-33) ---
+        const vocabWords = {
+            "abrasion": "Loss or damage of the superficial layer of skin as a result of a body part rubbing or scraping across a rough or hard surface.",
+            "air embolism": "The presence of air in the veins, which can lead to cardiac arrest if it enters the heart.",
+            "ambient temperature": "The temperature of the surrounding environment.",
+            "amputation": "An injury in which part of the body is completely severed.",
+            "antivenin": "A serum that counteracts the effect of venom from an animal or insect.",
+            "arterial air embolism": "Air bubbles in the arterial blood vessels.",
+            "avulsion": "An injury in which soft tissue is torn completely loose or is hanging as a flap.",
+            "axial loading injuries": "Injuries in which load is applied along the vertical or longitudinal axis of the spine.",
+            "Battle sign": "Bruising behind an ear over the mastoid process that may indicate a skull fracture.",
+            "bends": "A common name for decompression sickness.",
+            "blast injuries": "Injuries resulting from explosions; classified as primary, secondary, tertiary, and quaternary.",
+            "blow-out fracture": "A fracture of the orbit or of the bones that support the floor of the orbit.",
+            "blunt trauma": "An impact on the body by objects that cause injury without penetrating soft tissues or internal organs and cavities.",
+            "breath-holding syncope": "Loss of consciousness caused by a decreased breathing stimulus.",
+            "calcaneus": "The heel bone.",
+            "cardiac tamponade": "Compression of the heart as the result of buildup of blood or other fluid in the pericardial sac.",
+            "cavitation": "A phenomenon in which speed causes a bullet to generate pressure waves, which cause damage distant from the bullet's path.",
+            "closed abdominal injury": "An injury in which there is soft-tissue damage inside the body but the skin remains intact.",
+            "closed fracture": "Any break in a bone in which the overlying skin is not broken.",
+            "compartment syndrome": "Swelling in a confined space that produces dangerous pressure; may cut off blood flow or damage sensitive tissue.",
+            "commotio cordis": "A blunt chest injury caused by a sudden, direct blow to the chest that occurs only during the critical portion of a person's heartbeat.",
+            "concussion": "A temporary loss or alteration of part or all of the brain's abilities to function without actual physical damage to the brain.",
+            "conduction": "The loss of heat by direct contact (e.g., when a body part comes into contact with a colder object).",
+            "conjunctiva": "The delicate membrane that lines the eyelids and covers the exposed surface of the eye.",
+            "contusion": "A bruise from an injury that causes bleeding beneath the skin without breaking the skin.",
+            "convection": "The loss of body heat caused by air movement (e.g., a breeze blowing across the body).",
+            "cornea": "The transparent tissue layer in front of the pupil and iris of the eye.",
+            "coup-contrecoup injury": "A brain injury that occurs when force is applied to the head and energy transmission causes injury on the opposite side of original impact.",
+            "crepitus": "A grating or grinding sensation caused by fractured bone ends or joints rubbing together.",
+            "crush syndrome": "Significant metabolic derangement that develops when crushed extremities or body parts remain trapped for prolonged periods.",
+            "Cushing triad": "Increased blood pressure, decreased heart rate, and irregular respirations; signs of increased intracranial pressure.",
+            "decompression sickness": "A painful condition seen in divers who ascend too quickly, in which gas forms bubbles in blood vessels and other tissues.",
+            "deep frostbite": "A type of frostbite in which the skin and the tissues beneath it are frozen.",
+            "dermis": "The inner layer of the skin, containing hair follicles, sweat glands, nerve endings, and blood vessels.",
+            "dislocation": "Disruption of a joint in which ligaments are damaged and the bone ends are no longer in contact.",
+            "diving reflex": "The slowing of the heart rate caused by submersion in cold water.",
+            "drowning": "The process of experiencing respiratory impairment from submersion or immersion in liquid.",
+            "ecchymosis": "Bruising or discoloration associated with bleeding within or under the skin.",
+            "epidural hematoma": "An accumulation of blood between the skull and the dura mater.",
+            "epistaxis": "A nosebleed.",
+            "evaporation": "The conversion of water or another fluid from a liquid to a gas.",
+            "evisceration": "The displacement of organs outside of the body.",
+            "excited delirium": "A serious behavioral condition in which a person exhibits agitated behavior combined with disorientation, hallucinations, or delusions.",
+            "flail chest": "A condition in which two or more adjacent ribs are fractured in two or more places or in association with a fracture of the sternum.",
+            "full-thickness burns": "Burns that affect all skin layers and may affect the subcutaneous layers, muscle, bone, and internal organs.",
+            "Glasgow Coma Scale": "An evaluation tool used to determine level of consciousness.",
+            "guarding": "Involuntary muscle contractions of the abdominal wall to minimize the pain of abdominal movement; a sign of peritonitis.",
+            "hematemesis": "Vomited blood.",
+            "hematoma": "A mass of blood that has collected within damaged tissue beneath the skin or in a body cavity.",
+            "hematuria": "Blood in the urine.",
+            "hemophilia": "A hereditary condition in which the patient lacks one or more of the blood's normal clotting factors.",
+            "hemoptysis": "The coughing up of blood.",
+            "hemothorax": "A collection of blood in the pleural cavity.",
+            "hollow organs": "Structures through which materials pass, such as the stomach, small intestines, large intestines, ureters, and urinary bladder.",
+            "hyperthermia": "A condition in which the body core temperature rises to 101°F (38.3°C) or more.",
+            "hyphema": "Bleeding into the anterior chamber of the eye.",
+            "hypoperfusion": "A condition in which the circulatory system fails to provide sufficient circulation to maintain normal cellular functions; also called shock.",
+            "hypothermia": "A condition in which the body core temperature falls below 95°F (35°C).",
+            "hypovolemic shock": "Shock caused by fluid or blood loss.",
+            "index of suspicion": "Awareness that unseen life-threatening injuries may exist when determining the mechanism of injury.",
+            "intracerebral hematoma": "Bleeding within the brain tissue itself.",
+            "intracranial pressure": "The pressure within the cranial vault.",
+            "kinetic energy": "The energy of a moving object.",
+            "laceration": "A deep, jagged cut in the skin.",
+            "melena": "Black, foul-smelling, tarry stool containing digested blood.",
+            "meninges": "Three distinct layers of tissue that surround and protect the brain and the spinal cord.",
+            "multisystem trauma": "Trauma that affects more than one body system.",
+            "myocardial contusion": "Bruising of the heart muscle.",
+            "occlusive dressing": "An airtight dressing that protects a wound from air and bacteria.",
+            "open fracture": "Any break in a bone in which the overlying skin has been broken.",
+            "paradoxical motion": "The motion of the portion of the chest wall that is detached in a flail chest; opposite of normal chest wall motion.",
+            "partial-thickness burns": "Burns that affect the epidermis and some portion of the dermis but not the subcutaneous tissue.",
+            "penetrating trauma": "Injury caused by objects, such as knives and bullets, that pierce the surface of the body.",
+            "perfusion": "The circulation of blood within an organ or tissue in adequate amounts to meet the current needs of the cells.",
+            "pericardial tamponade": "Compression of the heart as the result of buildup of blood or other fluid in the pericardial sac.",
+            "peritoneum": "The membrane lining the abdominal cavity (parietal peritoneum) and covering the abdominal organs (visceral peritoneum).",
+            "pneumothorax": "An accumulation of air or gas in the pleural cavity.",
+            "position of function": "A hand position in which the wrist is slightly dorsiflexed and all finger joints are moderately flexed.",
+            "potential energy": "The product of mass, gravity, and height, which is converted into kinetic energy and results in injury.",
+            "projectile": "Any object propelled by force, such as a bullet by a weapon.",
+            "pulmonary blast injuries": "Pulmonary trauma resulting from short-range exposure to the detonation of explosives.",
+            "pulmonary contusion": "Injury or bruising of lung tissue that results in hemorrhage.",
+            "raccoon eyes": "Bruising under the eyes that may indicate a skull fracture.",
+            "radiation": "The transfer of heat to colder objects in the environment by radiant energy.",
+            "retrograde amnesia": "The inability to remember events leading up to a head injury.",
+            "retroperitoneal space": "The space between the abdominal cavity and the posterior abdominal wall.",
+            "rule of nines": "A system that assigns percentages to sections of the body, allowing calculation of the amount of skin surface involved in the burn area.",
+            "scald burn": "A burn caused by hot liquids.",
+            "sciatic nerve": "The major nerve to the lower extremities; controls much of muscle function in the leg and sensation.",
+            "shock": "A condition in which the circulatory system fails to provide sufficient circulation to maintain normal cellular functions.",
+            "solid organs": "Solid masses of tissue where much of the chemical work of the body takes place (e.g., liver, spleen, pancreas, kidneys).",
+            "sprain": "A joint injury involving damage to supporting ligaments, and sometimes partial or temporary dislocation of bone ends.",
+            "strain": "Stretching or tearing of a muscle; also called a muscle pull.",
+            "subarachnoid hemorrhage": "Bleeding into the subarachnoid space, where the cerebrospinal fluid circulates.",
+            "subcutaneous emphysema": "A characteristic crackling sensation felt on palpation of the skin, caused by the presence of air in soft tissues.",
+            "subdural hematoma": "An accumulation of blood beneath the dura mater but outside the brain.",
+            "superficial burns": "Burns that affect only the epidermis, characterized by skin that is red but not blistered.",
+            "tension pneumothorax": "An accumulation of air or gas in the pleural cavity that progressively increases pressure in the chest that interferes with cardiac function.",
+            "thermal burn": "A burn caused by heat.",
+            "tourniquet": "The bleeding control method used when a wound continues to bleed despite the use of direct pressure.",
+            "traction": "Longitudinal force applied to a structure.",
+            "traumatic asphyxia": "A pattern of injuries seen after a severe force is applied to the chest, forcing blood from the great vessels back into the head and neck.",
+            "turgor": "The ability of the skin to resist deformation.",
+            "tympanic membrane": "The eardrum.",
+            "venules": "Very small, thin-walled blood vessels.",
+            "work": "The measure of force over distance."
+        };
+
+        // --- 100 Questions Database ---
+        const allQuestions = [
+            // Ch 25: Trauma Overview
+            { category: "Trauma Overview", question: "Which of the following is NOT one of the three collisions in a typical motor vehicle crash?", options: ["Collision of the car against an object", "Collision of the passenger against the interior", "Collision of the passenger's internal organs against solid structures", "Collision of the vehicle against the ground after a rollover"], correctAnswer: "Collision of the vehicle against the ground after a rollover", explanation: "The three impacts are: 1) Car against object, 2) Passenger against car interior, 3) Internal organs against solid body structures." },
+            { category: "Trauma Overview", question: "According to the formula for kinetic energy (KE = ½ mass × velocity²), doubling the speed of a vehicle will:", options: ["Double the kinetic energy", "Quadruple the kinetic energy", "Triple the kinetic energy", "Have no effect on kinetic energy"], correctAnswer: "Quadruple the kinetic energy", explanation: "Because velocity is squared, doubling the speed increases the energy available to cause injury by a factor of four." },
+            { category: "Trauma Overview", question: "Which type of blast injury is caused by the pressure wave generated by the explosion?", options: ["Primary", "Secondary", "Tertiary", "Quaternary"], correctAnswer: "Primary", explanation: "Primary blast injuries are due entirely to the blast itself (pressure wave), affecting hollow organs like ears and lungs." },
+            { category: "Trauma Overview", question: "A fall from more than _____ feet is considered significant for an adult.", options: ["10", "15", "20", "30"], correctAnswer: "20", explanation: "A fall of more than 20 feet (6 m) is considered a significant mechanism of injury for an adult." },
+            { category: "Trauma Overview", question: "Cavitation is a phenomenon primarily associated with:", options: ["Low-velocity penetrating trauma", "Medium- and high-velocity penetrating trauma", "Blunt force trauma", "Blast injuries"], correctAnswer: "Medium- and high-velocity penetrating trauma", explanation: "Cavitation results from rapid changes in tissue and fluid pressure that occur with the passage of a projectile, creating temporary or permanent tracks." },
+            { category: "Trauma Overview", question: "The 'Platinum 10' refers to:", options: ["The maximum transport time to a hospital", "The maximum time spent on scene for a critical trauma patient", "The amount of IV fluid to bolus", "The number of minutes to perform CPR"], correctAnswer: "The maximum time spent on scene for a critical trauma patient", explanation: "On-scene time for critically injured patients should be limited to 10 minutes or less to maximize survival chances." },
+            { category: "Trauma Overview", question: "In a rear-end collision, the most common injury pattern involves the:", options: ["Lumbar spine", "Thoracic spine", "Cervical spine", "Femur"], correctAnswer: "Cervical spine", explanation: "Whiplash injuries to the cervical spine are common as the head is whipped back relative to the torso." },
+            { category: "Trauma Overview", question: "A Level I Trauma Center is characterized by:", options: ["24-hour in-house general surgeons and total care capability", "On-call surgeons and stabilization capabilities", "Basic emergency department facilities", "Remote location service"], correctAnswer: "24-hour in-house general surgeons and total care capability", explanation: "Level I centers provide total care for every aspect of injury from prevention through rehabilitation." },
+
+            // Ch 26: Bleeding
+            { category: "Bleeding", question: "Hypovolemic shock is a condition caused by:", options: ["Infection", "Low blood volume", "Heart failure", "Spinal cord injury"], correctAnswer: "Low blood volume", explanation: "Hypovolemic shock results from inadequate perfusion due to low blood volume (fluid or blood loss)." },
+            { category: "Bleeding", question: "Arterial bleeding is characterized by:", options: ["Dark red, oozing blood", "Dark red, flowing blood", "Bright red, spurting blood", "Bright red, oozing blood"], correctAnswer: "Bright red, spurting blood", explanation: "Arterial blood is oxygen-rich (bright red) and spurts in time with the pulse due to high pressure." },
+            { category: "Bleeding", question: "The first step in controlling significant external bleeding is:", options: ["Tourniquet application", "Elevation", "Direct pressure", "Pressure points"], correctAnswer: "Direct pressure", explanation: "Direct pressure is the most common and immediate way to control external bleeding." },
+            { category: "Bleeding", question: "If direct pressure fails to control bleeding from an extremity, the next step is to:", options: ["Apply a second dressing", "Elevate the limb", "Apply a tourniquet", "Apply a splint"], correctAnswer: "Apply a tourniquet", explanation: "If direct pressure is ineffective for life-threatening extremity hemorrhage, a tourniquet should be applied immediately." },
+            { category: "Bleeding", question: "Which of the following is a late sign of hypovolemic shock?", options: ["Tachycardia", "Anxiety", "Hypotension", "Tachypnea"], correctAnswer: "Hypotension", explanation: "Hypotension (low blood pressure) is a late sign of shock, indicating decompensation." },
+            { category: "Bleeding", question: "Bleeding from the nose is technically called:", options: ["Hemoptysis", "Hematemesis", "Epistaxis", "Melena"], correctAnswer: "Epistaxis", explanation: "Epistaxis is the medical term for a nosebleed." },
+            { category: "Bleeding", question: "Melena is defined as:", options: ["Vomiting bright red blood", "Coughing up blood", "Black, tarry stools", "Blood in the urine"], correctAnswer: "Black, tarry stools", explanation: "Melena describes black, foul-smelling, tarry stool containing digested blood." },
+            { category: "Bleeding", question: "The body cannot tolerate an acute blood loss of greater than _____ of total blood volume.", options: ["10%", "20%", "30%", "40%"], correctAnswer: "20%", explanation: "Loss of more than 20% (approx 2 pints in adults) causes significant vital sign changes." },
+            
+            // Ch 27: Soft-Tissue Injuries
+            { category: "Soft-Tissue Injuries", question: "A burn that involves the epidermis and some portion of the dermis, characterized by blisters, is a:", options: ["Superficial burn", "Partial-thickness burn", "Full-thickness burn", "Fourth-degree burn"], correctAnswer: "Partial-thickness burn", explanation: "Partial-thickness (second-degree) burns involve the epidermis and dermis, causing moist skin and blisters." },
+            { category: "Soft-Tissue Injuries", question: "Using the Rule of Nines for an adult, an entire leg is calculated as:", options: ["9%", "13.5%", "18%", "27%"], correctAnswer: "18%", explanation: "In an adult, each entire leg counts as 18% of the total body surface area." },
+            { category: "Soft-Tissue Injuries", question: "An abdominal evisceration should be treated by:", options: ["Pushing organs back in", "Covering with dry sterile gauze", "Covering with moist sterile gauze and an occlusive dressing", "Leaving it open to air"], correctAnswer: "Covering with moist sterile gauze and an occlusive dressing", explanation: "Organs should be kept moist and warm; never attempt to replace them." },
+            { category: "Soft-Tissue Injuries", question: "An injury in which a flap of skin is peeled back is called an:", options: ["Abrasion", "Incision", "Avulsion", "Laceration"], correctAnswer: "Avulsion", explanation: "An avulsion separates layers of soft tissue so they become completely detached or hang as a flap." },
+            { category: "Soft-Tissue Injuries", question: "The immediate treatment for a chemical burn to the eyes is:", options: ["Covering with dry gauze", "Neutralizing with vinegar", "Flushing with water for 20 minutes", "Applying eye drops"], correctAnswer: "Flushing with water for 20 minutes", explanation: "Immediate and continuous irrigation with water or saline is critical for chemical burns." },
+            { category: "Soft-Tissue Injuries", question: "Crush syndrome can occur when an area of the body is trapped for longer than:", options: ["30 minutes", "1 hour", "2 hours", "4 hours"], correctAnswer: "4 hours", explanation: "When trapped for >4 hours, muscle cells die and release harmful substances causing crush syndrome upon release." },
+            { category: "Soft-Tissue Injuries", question: "A hematoma differs from a contusion in that it:", options: ["Involves a larger amount of blood collecting within tissue", "Is smaller", "Is less painful", "Does not cause discoloration"], correctAnswer: "Involves a larger amount of blood collecting within tissue", explanation: "A hematoma is a mass of blood that has collected within damaged tissue or a body cavity." },
+            { category: "Soft-Tissue Injuries", question: "Which is NOT a function of the skin?", options: ["Temperature regulation", "Protection from pathogens", "Gas exchange", "Sensation"], correctAnswer: "Gas exchange", explanation: "The skin protects, regulates temperature, and senses, but gas exchange is a respiratory function." },
+            { category: "Soft-Tissue Injuries", question: "What is the primary concern with a circumferential burn to the chest?", options: ["Infection", "Pain", "Restriction of breathing", "Scarring"], correctAnswer: "Restriction of breathing", explanation: "The leathery skin of a full-thickness burn can prevent the chest from expanding." },
+            { category: "Soft-Tissue Injuries", question: "When treating a patient with an impaled object in the leg, you should:", options: ["Remove it immediately", "Stabilize it in place with bulky dressings", "Cut it short", "Wiggle it to check depth"], correctAnswer: "Stabilize it in place with bulky dressings", explanation: "Impaled objects should only be removed if they obstruct the airway or interfere with CPR." },
+
+            // Ch 28: Face and Neck Injuries
+            { category: "Face and Neck", question: "A patient has a tooth knocked out (avulsed). You should transport the tooth in:", options: ["Dry gauze", "Tap water", "Sterile saline or milk", "Alcohol"], correctAnswer: "Sterile saline or milk", explanation: "To preserve the tooth for reimplantation, keep it moist in saline or milk; do not let it dry out." },
+            { category: "Face and Neck", question: "The primary risk associated with an open injury to the neck is:", options: ["Infection", "Air embolism", "Spinal injury", "Vocal cord damage"], correctAnswer: "Air embolism", explanation: "Open veins in the neck can suck in air, causing an air embolism which can lead to cardiac arrest." },
+            { category: "Face and Neck", question: "To prevent an air embolism from a neck wound, you should apply:", options: ["A dry sterile dressing", "A pressure bandage", "An occlusive dressing", "A tourniquet"], correctAnswer: "An occlusive dressing", explanation: "An occlusive (airtight) dressing seals the wound to prevent air from entering the vein." },
+            { category: "Face and Neck", question: "Subcutaneous emphysema in the neck suggests:", options: ["Muscle strain", "Air leaking from the airway/trachea", "External bleeding", "Skull fracture"], correctAnswer: "Air leaking from the airway/trachea", explanation: "Air trapped under the skin causes a crackling sensation (subcutaneous emphysema), indicating airway rupture." },
+            { category: "Face and Neck", question: "If a patient has a chemical burn to the eye and is wearing contact lenses, you should:", options: ["Leave them in", "Remove them immediately", "Wait for a physician", "Cover the eye"], correctAnswer: "Remove them immediately", explanation: "Lenses can trap chemicals against the cornea; they must be removed to irrigate effectively." },
+            { category: "Face and Neck", question: "A fracture of the orbital floor is often called a:", options: ["Le Fort fracture", "Basilar fracture", "Blow-out fracture", "Nasal fracture"], correctAnswer: "Blow-out fracture", explanation: "A blow-out fracture occurs when blunt trauma forces the globe backward, fracturing the thin floor of the orbit." },
+            { category: "Face and Neck", question: "Bleeding from the nose following a head injury may be a sign of:", options: ["Nasal polyp", "Skull fracture", "Hypertension", "Sinus infection"], correctAnswer: "Skull fracture", explanation: "Do not pack the nose if a skull fracture is suspected (CSF drainage potential); use a loose gauze pad." },
+            { category: "Face and Neck", question: "When irrigating an eye, the fluid should flow:", options: ["From the outside corner to the inside corner", "From the inside corner to the outside corner", "Directly onto the cornea", "It does not matter"], correctAnswer: "From the inside corner to the outside corner", explanation: "This prevents flushing contaminants into the unaffected eye." },
+            { category: "Face and Neck", question: "Hyphema is defined as:", options: ["Bleeding into the anterior chamber of the eye", "Detachment of the retina", "Scratch on the cornea", "Object impaled in the globe"], correctAnswer: "Bleeding into the anterior chamber of the eye", explanation: "Hyphema is visible blood pooling in the front of the eye, often from blunt trauma." },
+            
+            // Ch 29: Head and Spine
+            { category: "Head and Spine", question: "Which of the following is NOT a component of the Glasgow Coma Scale?", options: ["Eye opening", "Verbal response", "Motor response", "Pupil reaction"], correctAnswer: "Pupil reaction", explanation: "GCS measures Eye (4), Verbal (5), and Motor (6) responses. Pupils are assessed separately." },
+            { category: "Head and Spine", question: "Cushing triad, a sign of increased intracranial pressure, consists of:", options: ["Hypertension, bradycardia, irregular respirations", "Hypotension, tachycardia, tachypnea", "Hypertension, tachycardia, Cheyne-Stokes", "Hypotension, bradycardia, irregular respirations"], correctAnswer: "Hypertension, bradycardia, irregular respirations", explanation: "This triad indicates significant ICP and brainstem compression." },
+            { category: "Head and Spine", question: "An epidural hematoma is usually caused by bleeding from the:", options: ["Middle meningeal artery", "Bridging veins", "Carotid artery", "Cerebral cortex"], correctAnswer: "Middle meningeal artery", explanation: "It is an arterial bleed between the skull and dura, often leading to rapid decline after a lucid interval." },
+            { category: "Head and Spine", question: "A subdural hematoma involves bleeding:", options: ["Between the skull and dura", "Beneath the dura mater", "Within the brain tissue", "Into the spinal cord"], correctAnswer: "Beneath the dura mater", explanation: "Subdural hematomas are usually venous bleeds beneath the dura, often slower to develop." },
+            { category: "Head and Spine", question: "The most reliable sign of a head injury is:", options: ["Pupil size", "Heart rate", "Decreased level of consciousness", "Vomiting"], correctAnswer: "Decreased level of consciousness", explanation: "Altered mental status is the single most important observation in assessing brain injury severity." },
+            { category: "Head and Spine", question: "During a motorcycle crash, a helmet should generally be removed if:", options: ["It is tight fitting", "The patient is awake", "It interferes with airway management", "The visor is broken"], correctAnswer: "It interferes with airway management", explanation: "Helmets should be left on unless they prevent airway access or proper spinal immobilization." },
+            { category: "Head and Spine", question: "Battle sign (bruising behind the ear) is an indication of:", options: ["Orbital fracture", "Basilar skull fracture", "Mandible fracture", "Nasal fracture"], correctAnswer: "Basilar skull fracture", explanation: "Battle sign and Raccoon eyes are classic signs of a fracture at the base of the skull." },
+            { category: "Head and Spine", question: "Decorticate posturing is characterized by:", options: ["Flexion of the arms and extension of the legs", "Extension of the arms and legs", "Flaccid paralysis", "Curling into a ball"], correctAnswer: "Flexion of the arms and extension of the legs", explanation: "Decorticate (flexion) posturing indicates severe brain injury; Decerebrate (extension) is worse." },
+            { category: "Head and Spine", question: "Distraction of the spine is a mechanism often associated with:", options: ["Diving", "Hanging", "Car crashes", "Falls"], correctAnswer: "Hanging", explanation: "Hanging pulls on the spine (distraction), stretching or tearing the cord." },
+            { category: "Head and Spine", question: "When securing a patient to a long backboard, you should secure the _____ last.", options: ["Torso", "Legs", "Head", "Pelvis"], correctAnswer: "Head", explanation: "Secure the torso/body first so that if the patient slides, the neck is not pulled; head is secured last." },
+
+            // Ch 30: Chest Injuries
+            { category: "Chest Injuries", question: "Paradoxical motion of the chest wall is a sign of:", options: ["Tension pneumothorax", "Flail chest", "Cardiac tamponade", "Hemothorax"], correctAnswer: "Flail chest", explanation: "Flail chest occurs when ribs are broken in multiple places, causing a segment to move opposite to the rest of the chest." },
+            { category: "Chest Injuries", question: "An open pneumothorax (sucking chest wound) should be treated with:", options: ["A standard gauze pad", "An occlusive dressing", "A tourniquet", "Packing the wound"], correctAnswer: "An occlusive dressing", explanation: "An occlusive dressing (vented chest seal) prevents air from being sucked into the chest cavity." },
+            { category: "Chest Injuries", question: "Beck's Triad consists of:", options: ["JVD, muffled heart sounds, narrowing pulse pressure", "Hypertension, bradycardia, irregular breathing", "JVD, tracheal deviation, absent breath sounds", "Hypotension, tachycardia, flat neck veins"], correctAnswer: "JVD, muffled heart sounds, narrowing pulse pressure", explanation: "These are signs of cardiac tamponade." },
+            { category: "Chest Injuries", question: "Commotio cordis is a sudden cardiac arrest caused by:", options: ["A penetrating injury to the heart", "A blunt blow to the chest during a critical phase of the heartbeat", "Massive bleeding", "A crushed aorta"], correctAnswer: "A blunt blow to the chest during a critical phase of the heartbeat", explanation: "It triggers ventricular fibrillation if the impact occurs on the T-wave." },
+            { category: "Chest Injuries", question: "Traumatic asphyxia is characterized by:", options: ["Distended neck veins, cyanosis in face/neck, hemorrhage in sclera", "Pale skin and hypotension", "Collapsed lung and trachea deviation", "Slow pulse and high blood pressure"], correctAnswer: "Distended neck veins, cyanosis in face/neck, hemorrhage in sclera", explanation: "Caused by a sudden severe compression of the chest." },
+            { category: "Chest Injuries", question: "A tension pneumothorax differs from a simple pneumothorax by the presence of:", options: ["Pain", "Dyspnea", "Hypotension/Shock", "Rib fractures"], correctAnswer: "Hypotension/Shock", explanation: "Tension pneumothorax compresses the heart and great vessels, causing obstructive shock." },
+            { category: "Chest Injuries", question: "Hemoptysis is:", options: ["Vomiting blood", "Coughing up blood", "Blood in the urine", "Nosebleed"], correctAnswer: "Coughing up blood", explanation: "Hemoptysis usually indicates injury to the lungs or air passages." },
+            { category: "Chest Injuries", question: "The accumulation of air in the pleural space is called:", options: ["Hemothorax", "Pneumothorax", "Tamponade", "Contusion"], correctAnswer: "Pneumothorax", explanation: "Pneumo- refers to air." },
+            { category: "Chest Injuries", question: "Which of the following is NOT part of the 'Deadly Dozen' chest injuries?", options: ["Airway obstruction", "Flail chest", "Clavicle fracture", "Cardiac tamponade"], correctAnswer: "Clavicle fracture", explanation: "While painful, a clavicle fracture alone is rarely immediately life-threatening." },
+            
+            // Ch 31: Abdominal/Genitourinary
+            { category: "Abdominal/GU", question: "Pain referred to the left shoulder (Kehr's sign) often indicates injury to the:", options: ["Liver", "Spleen", "Appendix", "Kidney"], correctAnswer: "Spleen", explanation: "Blood irritating the diaphragm from a spleen injury refers pain to the left shoulder." },
+            { category: "Abdominal/GU", question: "Hollow organs include the:", options: ["Liver and Spleen", "Kidneys and Pancreas", "Stomach and Intestines", "Ovaries and Testes"], correctAnswer: "Stomach and Intestines", explanation: "Hollow organs contain material that can leak and cause peritonitis." },
+            { category: "Abdominal/GU", question: "Solid organs include the:", options: ["Stomach and Bladder", "Liver, Spleen, and Kidneys", "Ureters and Intestines", "Gallbladder and Urethra"], correctAnswer: "Liver, Spleen, and Kidneys", explanation: "Solid organs are vascular and bleed heavily when injured." },
+            { category: "Abdominal/GU", question: "The presence of blood in the urine is called:", options: ["Hematemesis", "Hemoptysis", "Hematuria", "Melena"], correctAnswer: "Hematuria", explanation: "Hematuria indicates injury to the kidney or urinary tract." },
+            { category: "Abdominal/GU", question: "Which organ is most likely to be injured by a seatbelt worn too high?", options: ["Heart", "Lung", "Bladder", "Brain"], correctAnswer: "Bladder", explanation: "Compression of the lower abdomen can rupture the bladder, especially if full." },
+            { category: "Abdominal/GU", question: "In the third trimester of pregnancy, the uterus may obstruct the vena cava, causing:", options: ["Supine hypotensive syndrome", "Hypertension", "Eclampsia", "Placenta previa"], correctAnswer: "Supine hypotensive syndrome", explanation: "Transport pregnant patients on their left side to prevent this." },
+            { category: "Abdominal/GU", question: "Treatment for an avulsion of the penis involves:", options: ["Applying a tourniquet", "Applying a dry sterile dressing", "Applying a moist sterile dressing", "Packing with ice"], correctAnswer: "Applying a moist sterile dressing", explanation: "Preserve the tissue with a moist sterile dressing; do not apply a tourniquet unless bleeding is life-threatening." },
+            { category: "Abdominal/GU", question: "Signs of peritonitis include:", options: ["Soft abdomen", "Abdominal rigidity and guarding", "Slow pulse", "Polyuria"], correctAnswer: "Abdominal rigidity and guarding", explanation: "Irritation of the peritoneum causes muscles to spasm (guarding/rigidity)." },
+            
+            // Ch 32: Orthopaedic
+            { category: "Orthopaedic", question: "A fracture in which the bone is broken into more than two fragments is called:", options: ["Greenstick", "Transverse", "Comminuted", "Oblique"], correctAnswer: "Comminuted", explanation: "Comminuted means crushed or splintered into multiple pieces." },
+            { category: "Orthopaedic", question: "The most serious complication of a posterior knee dislocation is:", options: ["Nerve damage", "Popliteal artery injury", "Patella fracture", "Ligament tear"], correctAnswer: "Popliteal artery injury", explanation: "Injury to the popliteal artery can lead to loss of the leg." },
+            { category: "Orthopaedic", question: "Compartment syndrome is characterized by:", options: ["Pain out of proportion to injury", "Immediate bruising", "Crepitus", "Visible bleeding"], correctAnswer: "Pain out of proportion to injury", explanation: "Pain that is severe and unrelieved by medication is a hallmark sign." },
+            { category: "Orthopaedic", question: "A disruption of a joint in which bone ends are no longer in contact is a:", options: ["Strain", "Sprain", "Dislocation", "Fracture"], correctAnswer: "Dislocation", explanation: "Ligaments are torn and bones separate." },
+            { category: "Orthopaedic", question: "Which is NOT one of the 6 Ps of musculoskeletal assessment?", options: ["Pain", "Pallor", "Pulselessness", "Position"], correctAnswer: "Position", explanation: "The 6 Ps are Pain, Paralysis, Paresthesia, Pulselessness, Pallor, Pressure." },
+            { category: "Orthopaedic", question: "A traction splint is indicated for:", options: ["Hip fracture", "Midshaft femur fracture", "Tibia fracture", "Ankle dislocation"], correctAnswer: "Midshaft femur fracture", explanation: "Traction splints stabilize femur fractures; contraindicated for hips or knees." },
+            { category: "Orthopaedic", question: "A 'Hip Fracture' most often occurs at the:", options: ["Acetabulum", "Femoral head", "Femoral neck", "Iliac crest"], correctAnswer: "Femoral neck", explanation: "Fractures of the proximal femur (neck) are commonly called hip fractures." },
+            { category: "Orthopaedic", question: "Strains involve injury to:", options: ["Bone", "Ligaments", "Muscles/Tendons", "Joints"], correctAnswer: "Muscles/Tendons", explanation: "Strains affect muscles; Sprains affect ligaments." },
+            { category: "Orthopaedic", question: "Splinting a limb in the position of deformity is indicated when:", options: ["There is a pulse", "There is no pulse", "Resistance is met or pain increases significantly", "Always"], correctAnswer: "Resistance is met or pain increases significantly", explanation: "Do not force alignment if it causes severe pain or resistance." },
+            
+            // Ch 33: Environmental
+            { category: "Environmental", question: "Hypothermia is diagnosed when core body temperature falls below:", options: ["98°F", "95°F", "90°F", "85°F"], correctAnswer: "95°F", explanation: "95°F (35°C) is the clinical threshold for hypothermia." },
+            { category: "Environmental", question: "Rough handling of a hypothermic patient may cause:", options: ["Seizures", "Ventricular fibrillation", "Stroke", "Vomiting"], correctAnswer: "Ventricular fibrillation", explanation: "A cold heart is irritable and prone to lethal dysrhythmias." },
+            { category: "Environmental", question: "The most serious heat emergency is:", options: ["Heat cramps", "Heat exhaustion", "Heatstroke", "Heat syncope"], correctAnswer: "Heatstroke", explanation: "Heatstroke involves failure of thermoregulation and can be fatal." },
+            { category: "Environmental", question: "Hot, dry skin is a classic sign of:", options: ["Heat cramps", "Heat exhaustion", "Heatstroke", "Hypothermia"], correctAnswer: "Heatstroke", explanation: "Absence of sweating indicates thermoregulatory failure (though exertional heatstroke may still present with sweat)." },
+            { category: "Environmental", question: "Black widow spider venom is primarily:", options: ["Cytotoxic", "Neurotoxic", "Hemotoxic", "Non-toxic"], correctAnswer: "Neurotoxic", explanation: "It damages nerve tissues causing muscle spasms." },
+            { category: "Environmental", question: "Brown recluse spider venom is:", options: ["Cytotoxic", "Neurotoxic", "Hemotoxic", "Allergic"], correctAnswer: "Cytotoxic", explanation: "It causes local tissue necrosis (cell death)." },
+            { category: "Environmental", question: "Decompression sickness is commonly known as:", options: ["The bends", "Nitrogen narcosis", "Air embolism", "Barotrauma"], correctAnswer: "The bends", explanation: "Caused by nitrogen bubbles forming in tissues/blood." },
+            { category: "Environmental", question: "The diving reflex may cause:", options: ["Tachycardia", "Bradycardia", "Hypertension", "Hyperthermia"], correctAnswer: "Bradycardia", explanation: "Submersion in cold water slows the heart rate to preserve oxygen." },
+            { category: "Environmental", question: "HACE stands for:", options: ["High-Altitude Cerebral Edema", "High-Altitude Cardiac Event", "Heat-Associated Cramp Emergency", "Hypoxic Airway Constriction Event"], correctAnswer: "High-Altitude Cerebral Edema", explanation: "Swelling of the brain at high altitudes." },
+            { category: "Environmental", question: "Lyme disease is transmitted by:", options: ["Mosquitoes", "Fleas", "Ticks", "Spiders"], correctAnswer: "Ticks", explanation: "Specifically, the deer tick." },
+            
+            // Additional Random Questions to reach 100
+            { category: "Trauma Overview", question: "Newton's First Law states:", options: ["F=ma", "Objects in motion stay in motion", "Energy cannot be created", "Action equals reaction"], correctAnswer: "Objects in motion stay in motion", explanation: "Unless acted upon by an outside force." },
+            { category: "Bleeding", question: "Which blood component is responsible for clotting?", options: ["Red blood cells", "White blood cells", "Platelets", "Plasma"], correctAnswer: "Platelets", explanation: "Platelets initiate the clotting process." },
+            { category: "Soft-Tissue Injuries", question: "A burn encircling an arm or leg is dangerous because it can cause:", options: ["Compartment syndrome", "Infection", "Hypothermia", "Scarring"], correctAnswer: "Compartment syndrome", explanation: "The leathery skin acts like a tourniquet as tissues swell." },
+            { category: "Head and Spine", question: "The most prominent vertebra at the base of the neck is:", options: ["C1", "C2", "C7", "T1"], correctAnswer: "C7", explanation: "Often palpable at the base of the neck." },
+            { category: "Chest Injuries", question: "Subcutaneous emphysema feels like:", options: ["A soft sponge", "Crackling or rice krispies", "Hard bone", "Fluid"], correctAnswer: "Crackling or rice krispies", explanation: "Air trapped under the skin." },
+            { category: "Abdominal/GU", question: "The liver is located primarily in the:", options: ["RUQ", "LUQ", "RLQ", "LLQ"], correctAnswer: "RUQ", explanation: "Right Upper Quadrant." },
+            { category: "Orthopaedic", question: "Tendons connect:", options: ["Bone to Bone", "Muscle to Bone", "Muscle to Muscle", "Ligament to Bone"], correctAnswer: "Muscle to Bone", explanation: "Ligaments connect bone to bone." },
+            { category: "Environmental", question: "Passive rewarming involves:", options: ["Hot packs", "Warm IV fluids", "Blankets and warm environment", "Warm bath"], correctAnswer: "Blankets and warm environment", explanation: "Allowing the body to generate its own heat." },
+            { category: "Trauma Overview", question: "Which organ is most susceptible to blast overpressure?", options: ["Liver", "Ear (Tympanic Membrane)", "Heart", "Bone"], correctAnswer: "Ear (Tympanic Membrane)", explanation: "The eardrum ruptures at low pressures." },
+            { category: "Bleeding", question: "Shock is also known as:", options: ["Hypertension", "Hypoperfusion", "Hypoxia", "Hypercarbia"], correctAnswer: "Hypoperfusion", explanation: "Inadequate circulation of blood." },
+            { category: "Soft-Tissue Injuries", question: "A 'road rash' is an example of an:", options: ["Incision", "Avulsion", "Abrasion", "Puncture"], correctAnswer: "Abrasion", explanation: "Friction scrape of the epidermis." },
+            { category: "Head and Spine", question: "The foramen magnum is:", options: ["The jaw bone", "The opening at the base of the skull", "The cheek bone", "The eye socket"], correctAnswer: "The opening at the base of the skull", explanation: "Where the spinal cord exits." },
+            { category: "Chest Injuries", question: "The membrane lining the chest wall is the:", options: ["Visceral pleura", "Parietal pleura", "Peritoneum", "Pericardium"], correctAnswer: "Parietal pleura", explanation: "Visceral covers the lungs; Parietal covers the wall." },
+            { category: "Abdominal/GU", question: "The spleen is located in the:", options: ["RUQ", "LUQ", "RLQ", "LLQ"], correctAnswer: "LUQ", explanation: "Left Upper Quadrant." },
+            { category: "Orthopaedic", question: "The kneecap is called the:", options: ["Fibula", "Tibia", "Femur", "Patella"], correctAnswer: "Patella", explanation: "The bone anterior to the knee joint." },
+            { category: "Environmental", question: "Heat loss via wind is called:", options: ["Conduction", "Convection", "Radiation", "Evaporation"], correctAnswer: "Convection", explanation: "Heat transfer to moving air." },
+            { category: "Trauma Overview", question: "Ejection from a vehicle increases the chance of death by:", options: ["2 times", "5 times", "25 times", "100 times"], correctAnswer: "25 times", explanation: "Ejection is a significant mechanism of injury." },
+            { category: "Bleeding", question: "Capillary bleeding is characterized by:", options: ["Spurting", "Dark flow", "Slow oozing", "Clots"], correctAnswer: "Slow oozing", explanation: "Low pressure bleeding." },
+            { category: "Soft-Tissue Injuries", question: "The layer of skin below the epidermis is the:", options: ["Subcutaneous", "Fascia", "Dermis", "Muscle"], correctAnswer: "Dermis", explanation: "Contains nerves, glands, and vessels." },
+            { category: "Head and Spine", question: "How many cervical vertebrae are there?", options: ["5", "7", "12", "33"], correctAnswer: "7", explanation: "C1 through C7." },
+            { category: "Chest Injuries", question: "Jugular Vein Distention (JVD) is best assessed with the patient at a:", options: ["90 degree angle", "45 degree angle", "Supine position", "Prone position"], correctAnswer: "45 degree angle", explanation: "Allows visualization of venous pressure." },
+            { category: "Abdominal/GU", question: "The appendix is located in the:", options: ["RUQ", "LUQ", "RLQ", "LLQ"], correctAnswer: "RLQ", explanation: "Right Lower Quadrant." },
+            { category: "Orthopaedic", question: "The bone on the thumb side of the forearm is the:", options: ["Ulna", "Radius", "Humerus", "Carpal"], correctAnswer: "Radius", explanation: "Radius radiates to the thumb." },
+            { category: "Environmental", question: "Severe hypothermia is a core temp less than:", options: ["90°F", "86°F", "80°F", "70°F"], correctAnswer: "86°F", explanation: "Patient becomes lethargic, stops fighting cold." },
+            { category: "Trauma Overview", question: "The 'Golden Hour' refers to:", options: ["Time to get to scene", "Time from injury to definitive care", "Time for CPR", "Time for police to arrive"], correctAnswer: "Time from injury to definitive care", explanation: "Survival rates drop after 1 hour." },
+            { category: "Bleeding", question: "A tourniquet should be tightened until:", options: ["The patient screams", "Bleeding stops", "The limb turns blue", "2 minutes have passed"], correctAnswer: "Bleeding stops", explanation: "And distal pulse is absent." },
+            { category: "Soft-Tissue Injuries", question: "Never use what type of bandage to secure a dressing?", options: ["Elastic bandage", "Roller gauze", "Triangular bandage", "Tape"], correctAnswer: "Elastic bandage", explanation: "Can become a tourniquet if swelling occurs." },
+            { category: "Head and Spine", question: "A collection of blood within the skull is a:", options: ["Concussion", "Contusion", "Hematoma", "Laceration"], correctAnswer: "Hematoma", explanation: "Intracranial hematoma." }
+        ];
+        
+        // Add definitions as questions
+        const allVocabWords = Object.keys(vocabWords);
+        for (const [word, definition] of Object.entries(vocabWords)) {
+            // Add about 12 vocab questions to reach 100 total (current count is 88)
+             if(allQuestions.length >= 100) break;
+
+            const correctOption = definition;
+            let distractors = [];
+            while(distractors.length < 3) {
+                const randomWord = allVocabWords[Math.floor(Math.random() * allVocabWords.length)];
+                if (randomWord !== word && !distractors.includes(vocabWords[randomWord])) {
+                    distractors.push(vocabWords[randomWord]);
+                }
+            }
+            let options = [correctOption, ...distractors];
+            
+            allQuestions.push({
+                category: "Vital Vocabulary",
+                question: `What is the definition of "<strong>${word}</strong>"?`,
+                options: options,
+                correctAnswer: correctOption,
+                explanation: `<strong>${word}</strong>: ${definition}`
+            });
+        }
+
+        // --- DOM Elements ---
+        const categorySelect = document.getElementById('category-select');
+        const scrambleBtn = document.getElementById('scramble-btn');
+        const reviewStarredBtn = document.getElementById('review-starred-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionText = document.getElementById('question-text');
+        const starBtn = document.getElementById('star-btn');
+        const optionsList = document.getElementById('options-list');
+        const explanationDiv = document.getElementById('explanation');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const vocabModal = document.getElementById('vocab-modal');
+        const modalTerm = document.getElementById('modal-term');
+        const modalDefinition = document.getElementById('modal-definition');
+
+        // --- State Management ---
+        let currentQuizSet = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { questionIndex: 'selected answer' }
+        let correctCount = 0;
+        let starredQuestions = new Set(); 
+        let vocabRegex;
+
+        // --- Functions ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function buildVocabRegex() {
+            // Sort by length (longest first) to match "tension pneumothorax" before "pneumothorax"
+            const sortedWords = Object.keys(vocabWords).sort((a, b) => b.length - a.length);
+            const pattern = sortedWords.map(word => word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+            vocabRegex = new RegExp(`\\b(${pattern})\\b`, 'gi');
+        }
+        
+        function processTextForVocab(text) {
+            return text.replace(vocabRegex, (match) => {
+                const originalKey = Object.keys(vocabWords).find(key => key.toLowerCase() === match.toLowerCase());
+                if (originalKey) {
+                    const definition = vocabWords[originalKey].replace(/"/g, '&quot;');
+                    return `<span class="vocab-term" data-term="${originalKey}" data-definition="${definition}">${match}</span>`;
+                }
+                return match;
+            });
+        }
+
+        function populateCategories() {
+            const categories = [...new Set(allQuestions.map(q => q.category))];
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        function loadQuiz(mode) {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            correctCount = 0;
+            
+            if (mode === 'Starred') {
+                 if (starredQuestions.size === 0) {
+                    alert("You haven't starred any questions yet!");
+                    return;
+                }
+                currentQuizSet = [...starredQuestions];
+            } else {
+                const selectedCat = categorySelect.value;
+                if (selectedCat === 'All') {
+                    currentQuizSet = [...allQuestions];
+                } else {
+                    currentQuizSet = allQuestions.filter(q => q.category === selectedCat);
+                }
+                
+                // Always shuffle options within questions, but keep question order unless scrambled
+                currentQuizSet.forEach(q => {
+                    // We need to clone options to not mess up the master list order permanently if we want consistency later
+                    // But for this quiz app, shuffling options every load is good behavior.
+                     shuffleArray(q.options);
+                });
+            }
+            
+            displayQuestion(currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+            if (currentQuizSet.length === 0) return;
+
+            const question = currentQuizSet[index];
+            questionText.innerHTML = processTextForVocab(question.question);
+            optionsList.innerHTML = '';
+            
+            question.options.forEach(option => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                li.innerHTML = processTextForVocab(option); 
+                li.dataset.value = option;
+                
+                // Restore state if already answered
+                if (userAnswers[index]) {
+                    li.classList.add('answered');
+                    if (option === question.correctAnswer) {
+                        li.classList.add('correct');
+                    }
+                    if (option === userAnswers[index] && option !== question.correctAnswer) {
+                        li.classList.add('incorrect');
+                        li.classList.add('selected');
+                    }
+                } else {
+                    li.addEventListener('click', () => handleAnswerSelect(option, index));
+                }
+                
+                optionsList.appendChild(li);
+            });
+
+            // Show explanation if answered
+            if (userAnswers[index]) {
+                explanationDiv.style.display = 'block';
+                explanationDiv.innerHTML = `<strong>Explanation:</strong> ${processTextForVocab(question.explanation)}`;
+            } else {
+                explanationDiv.style.display = 'none';
+            }
+
+            updateUI(index);
+        }
+        
+        function handleAnswerSelect(selectedOption, index) {
+            if (userAnswers[index]) return; // Prevent changing answer
+            
+            userAnswers[index] = selectedOption;
+            const question = currentQuizSet[index];
+            
+            if (selectedOption === question.correctAnswer) {
+                correctCount++;
+            }
+            
+            // Refresh the view to show colors and explanation
+            displayQuestion(index);
+        }
+
+        function updateUI(index) {
+            // Progress
+            const total = currentQuizSet.length;
+            const percent = ((index + 1) / total) * 100;
+            progressBar.style.width = `${percent}%`;
+            questionCounter.textContent = `${index + 1} / ${total}`;
+            
+            // Score
+            const answeredCount = Object.keys(userAnswers).length;
+            const scorePercent = answeredCount === 0 ? 0 : Math.round((correctCount / answeredCount) * 100);
+            scoreDisplay.textContent = `Score: ${scorePercent}%`;
+
+            // Nav Buttons
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === total - 1;
+            
+            // Star Button
+            const currentQ = currentQuizSet[index];
+            if (starredQuestions.has(currentQ)) {
+                starBtn.classList.add('starred');
+                starBtn.textContent = '★';
+            } else {
+                starBtn.classList.remove('starred');
+                starBtn.textContent = '☆';
+            }
+        }
+        
+        function toggleStar() {
+            const currentQ = currentQuizSet[currentQuestionIndex];
+            if (starredQuestions.has(currentQ)) {
+                starredQuestions.delete(currentQ);
+            } else {
+                starredQuestions.add(currentQ);
+            }
+            updateUI(currentQuestionIndex);
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            buildVocabRegex();
+            populateCategories();
+            loadQuiz('All'); // Initial load
+        });
+
+        categorySelect.addEventListener('change', () => loadQuiz());
+        
+        scrambleBtn.addEventListener('click', () => {
+            shuffleArray(currentQuizSet);
+            // Reset progress but keep answers if mapped by ID? 
+            // For simple app, simple scramble resets current session state usually, 
+            // but to keep it user friendly let's reset index.
+            currentQuestionIndex = 0;
+            displayQuestion(0);
+        });
+
+        reviewStarredBtn.addEventListener('click', () => loadQuiz('Starred'));
+        
+        starBtn.addEventListener('click', toggleStar);
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuizSet.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        // Modal Logic
+        document.getElementById('quiz-area').addEventListener('click', function(event) {
+            // Traverse up in case they clicked bold tag inside span
+            let target = event.target;
+            if (target.classList.contains('vocab-term')) {
+                modalTerm.textContent = target.dataset.term;
+                modalDefinition.textContent = target.dataset.definition;
+                vocabModal.style.display = 'flex';
+            }
+        });
+
+        vocabModal.addEventListener('click', function(event) {
+            if (event.target === vocabModal) {
+                vocabModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
