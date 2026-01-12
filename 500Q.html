@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Quiz 500</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --error: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text);
+        }
+
+        .quiz-container {
+            background: var(--card);
+            width: 100%;
+            max-width: 650px;
+            padding: 2.5rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header Stats */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-light);
+            background: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .stats-box {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-item { display: flex; align-items: center; gap: 0.4rem; }
+        .stat-correct { color: var(--success); }
+        .stat-wrong { color: var(--error); }
+
+        h2 {
+            margin: 0 0 1.5rem 0;
+            font-size: 1.35rem;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        /* Options Grid */
+        .options-grid { display: grid; gap: 0.85rem; }
+
+        button.option {
+            width: 100%;
+            padding: 1.1rem;
+            text-align: left;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        button.option:hover:not(.disabled) {
+            border-color: var(--primary);
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        /* Feedback States */
+        button.option.correct {
+            border-color: var(--success);
+            background-color: #dcfce7;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        button.option.wrong {
+            border-color: var(--error);
+            background-color: #fee2e2;
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        button.option.disabled {
+            cursor: default;
+        }
+
+        /* Controls Footer */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr; /* Left, Center, Right */
+            gap: 1rem;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        button.nav-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        button.nav-btn:hover { opacity: 0.9; }
+        button.nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Scramble Button Specifics */
+        button.scramble-btn {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        button.scramble-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <span id="progress">Question 1/500</span>
+        <div class="stats-box">
+            <span class="stat-item stat-correct">✅ <span id="count-correct">0</span></span>
+            <span class="stat-item stat-wrong">❌ <span id="count-wrong">0</span></span>
+        </div>
+    </div>
+    
+    <h2 id="question-text">Loading...</h2>
+    
+    <div class="options-grid" id="options-container">
+        </div>
+
+    <div class="controls">
+        <button class="nav-btn" id="prev-btn" onclick="prevQuestion()">← Back</button>
+        
+        <button class="scramble-btn" onclick="scrambleQuiz()">🔀 Restart & Scramble</button>
+        
+        <div style="text-align: right;"> <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. PASTE YOUR DATA BELOW
+    // ==========================================
+    const quizData = [
+        
+        // --- START PASTING HERE ---
+        { question: "The centralized coordination of EMS resources so that both localities and victims trauma or medical emergencies have equal access to basic emergency care and transportation by certified personnel is a function of", options: ["Transportation", "Training", "Resource Management", "Regulation and policy"], correct: 2 },
+{ question: "All of the following are necessary components of an effective EMS system EXCEPT:", options: ["Medical Direction", "Public information & education", "Air transport", "Communications"], correct: 2 },
+{ question: "Which of the following is an essential component of an EMS system?", options: ["Medical direction", "Plan for all types of disasters", "Means of communication by cellular phone", "Tiered response"], correct: 0 },
+{ question: "Which label of training prepares the person who is often initially on the scene and whose emphasis is on activating the EMS system and providing immediate care for life-threatening injuries?", options: ["First-responder", "EMT-B", "EMT-I", "Physician’s assistant"], correct: 0 },
+{ question: "One of your roles as an EMT-B is to protect your patient’s rights. This is called being", options: ["Compassionate", "Moral", "Empathetic", "An Advocate"], correct: 3 },
+{ question: "Your first responsibility as an EMT-B is to", options: ["Open the patient’s airway", "Keep yourself safe", "Gain access to the patient", "Provide for the patient’s safety"], correct: 1 },
+{ question: "A system of internal and external audits and reviews to ensure that an EMS system the highest quality of prehospital care is called:", options: ["Quality improvement", "Call-sheet review", "Ongoing system redesign", "All of the above"], correct: 0 },
+{ question: "Methods to improve the quality of care in an EMS system include:", options: ["Swift discipline for mistakes made", "A regular continuing education program", "Reviews and audits by the public", "Limiting procedures authorized by standing orders"], correct: 1 },
+{ question: "The delegation of patient care to the EMT-B by the physician legally responsible for the EMS system is usually referred to as:", options: ["Implied consent", "Medical direction", "Medical guideline", "Quality improvement"], correct: 1 },
+{ question: "The professional attributes of an EMT-B should include:", options: ["The ability to perform technical rescues", "The ability to use manual defibrillators and administer IV fluids", "The ability to be confident and persuasive", "Hazardous materials technician’s training"], correct: 2 },
+{ question: "A communication system that gives the public access to police, fire, rescue, and ambulance services through a universal number is often called a(n):", options: ["9-1-1 system", "Priority dispatch system", "Emergency medical dispatch system", "Public information and education system"], correct: 0 },
+{ question: "Signs of “burnout” include", options: ["Ability to empathize with patients and families", "Loss of interest in work", "Making quick decisions", "Loss of any feelings of guilt"], correct: 1 },
+{ question: "Major sources of stress for the EMT-B include:", options: ["Boredom between calls", "Lack of concern about making serious errors", "Getting constant praise and recognition", "Dealing with minor injured patients"], correct: 0 },
+{ question: "The signs and symptoms of stress include all the following EXCEPT", options: ["Irritability with family, friends, and coworkers", "Increased interest in sexual activities", "Loss of appetite", "Inability to concentrate"], correct: 1 },
+{ question: "A reaction to death or dying where the patient asserts, “Not me!” is referred to as:", options: ["Anger", "Denial", "Bargaining", "depression"], correct: 1 },
+{ question: "A reaction to death or dying where the [patient] says, “Okay, I’m not afraid” is referred to as:", options: ["Bargaining", "Acceptance", "Depression", "denial"], correct: 1 },
+{ question: "A reaction to death or dying where the patient says, “okay, but I haven’t” is referred to as:", options: ["Bargaining", "Acceptance", "Depression", "denial"], correct: 2 },
+{ question: "An appropriate way to assist the family of a dying patient is to:", options: ["Tell them the patient will be fine", "Keep them away from the patient", "Do everything possible to maintain the patient’s dignity", "Instruct the family not to show emotions or to express themselves"], correct: 2 },
+{ question: "Scenario: Your partner has worked many shifts in a row and has recently handled a number of serious trauma calls. She has recently become irritable at home and work and complains of the inability to sleep and concentrate. She is probably suffering from:", options: ["Mononucleuosis", "Critical incident stress", "Hypertension syndrome", "All of the above"], correct: 1 },
+{ question: "All of the following are distinct phases of critical incident stress debriefing EXCEPT:", options: ["The introduction phase", "The feelings phase", "The teaching phase", "The documentation phase"], correct: 3 },
+{ question: "It is important that all participants in a CISD process understand that:", options: ["Everything said in the meeting is being recorded for future use", "Follow-up with team members may be necessary if issues have not been resolved", "Critical incident stress indicates some weakness in the EMT-B", "Rescuers’ family members are not allowed to participate in any debriefings"], correct: 1 },
+{ question: "A process where a team of trained peer counselors and mental health professionals meet with EMT-Bs who have been involved in a major incident called a/an:", options: ["Quality assurance review", "Quality circle", "CISD", "Ongoing assessment"], correct: 2 },
+{ question: "Organisms that cause diseases are called:", options: ["Pathogens", "Toxins", "Antigens", "antibodies"], correct: 0 },
+{ question: "The EMT-B should take all of the following steps for personal protection when caring for any patient EXCEPT:", options: ["Using non-disposable equipment and supplies whenever possible", "Washing a uniform soiled with body fluids in hot soapy water", "Gathering all soiled equipment and supplies and labeling them as infectious waste", "Documenting any contact you have had with body fluids"], correct: 0 },
+{ question: "As you work in rescue operations, you will need personal protective equipment that includes:", options: ["A grown", "A helmet", "Vinyl or latex gloves", "A heap respirator"], correct: 1 },
+{ question: "When caring for a patient with suspected tuberculosis, the EMT-B should:", options: ["Wear a surgical mask", "Wear a HEPA respirator", "Have the patient wear a surgical mask", "Wear a SCBA"], correct: 1 },
+{ question: "The single most important thing you can do to prevent the spread of infection is to:", options: ["Wear a surgical mask", "Wash your hands thoroughly", "Wear a HEPA respirator", "Wear eye protection"], correct: 1 },
+{ question: "Which of the following would provide the greatest personal safety for the EMT working at night or in bad weather?", options: ["White uniform shirt", "Reflective clothing", "Flares", "Emergency spotlights"], correct: 1 },
+{ question: "For your safety and that of your crew you should always:", options: ["Request police assistance on all calls", "Search each patient for weapons", "Evaluate all scenes for dangers before entering", "Ensure availability of ALS for all medical calls"], correct: 2 },
+{ question: "Expresses consent is:", options: ["Assumed to exist when the patient is unconscious", "Defined by local protocol for certain types of emergencies", "Assumed to exist when care is urgently needed", "Obtained from a conscious, competent, adult patient"], correct: 3 },
+{ question: "Stopping the treatment of a patient without assuring the continuation of treatment at the same level or higher is referred to as:", options: ["Negligence", "Assault", "Abandonment", "Breach of duty"], correct: 2 },
+{ question: "A series of laws, varying in each state, designed to provide limited legal protection for citizens and some health care personnel are called:", options: ["Liability statutes", "Good Samaritan laws", "Government immunities", "Negligence waivers"], correct: 1 },
+{ question: "A signed donor card gives legal approval for:", options: ["Resuscitation", "Blood transfusion", "Denial of life-support services", "Organ donation"], correct: 3 },
+{ question: "At a crime scene you should", options: ["Not disturb any item at the scene unless emergency care requires it", "Not enter or provide any care until police arrive", "Use the phone at the scene rather than your radio to contact police", "Protect the scene by closing all open doors&windows"], correct: 0 },
+{ question: "Commonly required reporting situations in many states include all the following EXCEPT:", options: ["Child and elderly abuse", "Spousal abuse", "Sexual assault", "Spider bites"], correct: 3 },
+{ question: "In hospitals, one standard comfort measure for patients is:", options: ["Intubation", "Extubation", "Defibrillation", "Oxygen adminstration"], correct: 3 },
+{ question: "The anatomical term meaning “toward the front” is", options: ["Anterior", "Posterior", "Superior", "Inferior"], correct: 0 },
+{ question: "Slicing through the imaginary body down the center, passing between the eyes and extending down past the umbilicus, creates a plane called the:", options: ["Midaxillary line", "Anterior axillary line", "Midline", "Midclavicular line"], correct: 2 },
+{ question: "Which of the following represents the correct sequence of passage of oxygen from room air to the lungs?", options: ["Nose, bronchi, larynx, trachea, pharynx", "Larynx, esophagus, trachea, bronchi, alveoli", "Mouth, pharynx, trachea, bronchi, alveoli", "Epiglottis, trachea, cricoid, bronchi, alveoli"], correct: 2 },
+{ question: "All of the following are true relative to the aorta EXCEPT that the aorta:", options: ["Is the major artery originating from the heart", "Divided at the level of the navel into the iliac arteries", "Supplies all other arteries with blood", "Is the only artery that carries deoxygenated blood"], correct: 3 },
+{ question: "The vessel that carries oxygen-poor blood to the right atrium is the:", options: ["posterior tibia", "Internal jugular", "Vena cava", "aorta"], correct: 2 },
+{ question: "The blood component that is essential for the formation of blood clots is called:", options: ["plasma", "Platelets", "White blood cells", "Red blood cells"], correct: 1 },
+{ question: "The musculoskeletal system:", options: ["gives the body shape", "Protects vital internal organs", "Provides for body movement", "All of the above"], correct: 3 },
+{ question: "A type of muscle tissue found in tube-like organs of the body is:", options: ["Voluntary", "Involuntary", "Cardiac", "skeletal"], correct: 1 },
+{ question: "Involuntary or smooth muscles are found in the:", options: ["arms and legs", "Blood vessels", "Forehead", "heart"], correct: 1 },
+{ question: "The upper jaw is also called the:", options: ["Mandible", "Zygomatic", "Maxilla", "mastoid"], correct: 2 },
+{ question: "The upper extremities include the:", options: ["olecranon and radius bones", "Humerus and calcaneous bones", "Phalanges and tibia", "All of the above"], correct: 0 },
+{ question: "All the following are types of muscle EXCEPT:", options: ["Voluntary", "Condyloid", "Involuntary", "cardiac"], correct: 1 },
+{ question: "The largest organ of the body is the:", options: ["Skin", "Liver", "Small intestine", "brain"], correct: 0 },
+{ question: "A normal respiratory rate for an adult at rest is:", options: ["Btw 6-8 per min", "btw 8-10 per min", "Btw 2-24 per min", "Btw 12-20 per min"], correct: 3 },
+{ question: "The term “cyanotic” is used to describe skin color that is:", options: ["Yellow", "Red", "Blue-gray", "pink"], correct: 2 },
+{ question: "Hot, dry, skin is often the result of:", options: ["Shock", "The body losing heat", "Fever", "anxiety"], correct: 2 },
+{ question: "Cool, clammy, or moist skin is usually a sign of:", options: ["Fever", "Heat exposure", "Fear", "shock"], correct: 3 },
+{ question: "TO evaluate the capillary refill in a pediatric patient, press on the child’s nail. The normal pink color to the nail bed should return in no more than:", options: ["1 second", "2 seconds", "3 seconds", "4 seconds"], correct: 1 },
+{ question: "Normally, pupils are midpoint in size. When you shine your penlight into a patient’s eye, the pupil will typically", options: ["Dilate", "Become larger", "Constrict", "Remain about the same size"], correct: 2 },
+{ question: "Light entering the pupil of the eye can cause it to change size. When the environment is dark, the pupil will:", options: ["Constrict to allow more light in", "Constrict to allow less light in", "Dilate to allow more light in", "Dilate to allow less light in"], correct: 2 },
+{ question: "Nonreactive pupils are pupils that:", options: ["Constrict in response to a bright light", "Do not constrict in response to a bright light", "Dilate in response to a bright light", "Do not dilate in response to a bright light"], correct: 1 },
+{ question: "When taking a blood pressure of a patient, the bladder in the cuff should be centered over the:", options: ["Radial artery", "Carotid artery", "Brachial artery", "Femoral artery"], correct: 2 },
+{ question: "In the blood pressure reading, 120 over 70, the 120 represents the:", options: ["Systolic pressure", "Resting pressure", "Diastolic pressure", "Pulse pressure"], correct: 0 },
+{ question: "When the lower left chamber of the heart is relaxed and filling, the pressure remaining in the arteries is called:", options: ["Regular blood pressure", "Diastolic blood pressure", "Systolic blood pressure", "Resting blood pressure"], correct: 1 },
+{ question: "Two kinds of information that you gather about your patient are signs and symptoms. Which of the following is not considered a sign?", options: ["Nausea", "Vomiting", "Pale skin", "abrasion"], correct: 0 },
+{ question: "The safest, most efficient methods of using the body to gain a mechanical advantage are:", options: ["Isometrics", "Body mechanics", "Kinetics", "traumatics"], correct: 1 },
+{ question: "When lifting a patient, you should assure your own safety by:", options: ["Always wearing a back brace", "Keeping the weight as far away from your body as possible", "Using your legs, not your back to lift", "Never lifting a patient over your own weight"], correct: 2 },
+{ question: "When placing all fingers and the palm in contact with the object being lifted, you are using a:", options: ["Power grip", "Power lift", "Lock grip", "All of the above"], correct: 0 },
+{ question: "When reaching over to perform a log roll:", options: ["keep your back flexed", "Lean from your waist", "Use your shoulder muscles to help with the roll", "All of the above"], correct: 2 },
+{ question: "When you must push an object:", options: ["Push from the area between the waist and shoulder", "Push from an overhead position", "Keep your elbows straight", "Push at a level below the waist"], correct: 0 },
+{ question: "Which of the following signs would indicate your patient has inadequate breathing?", options: ["Air moving out of the nose or mouth", "Equal expansion of both sides of the chest", "Nasal flaring", "All of the above"], correct: 2 },
+{ question: "When using the head-tilt chin-lift maneuver to open an unconscious patient’s airway, your hands should be placed :", options: ["On the forehead and under the neck", "On the nose, with the fingertips pinching it closed, and under the neck", "On the forehead and on the nose, with the fingertips pinching it closed", "On the forehead with the fingertips of the other hand under the jaw"], correct: 3 },
+{ question: "If your patient’s airway contains blood, vomitus, or secretions:", options: ["Use a suction unit to immediately clear the airway", "Your patient will still be able to breathe adequately", "Use artificial ventilations to clear the airway", "Perform a finger sweep to remove the blockage"], correct: 0 },
+{ question: "You should not suction a patient’s airway for longer than:", options: ["10 seconds", "5 seconds", "15 seconds", "12 seconds"], correct: 2 },
+{ question: "Adding oxygen and a reservoir to a bag-valve-mask system increase the oxygen delivered to the patient from 21% to nearly:", options: ["70 %", "90%", "80%", "100%"], correct: 3 },
+{ question: "The most reliable sign that your patient is being adequately ventilated by a bag-valve mask is:", options: ["The patient’s abdomen rises", "The patient’s chest rises", "The Patient’s pupils react", "The patient regains consciousness"], correct: 1 },
+{ question: "When administering mouth-to-stoma ventilations to a nonbreathing patient, the proper position of the head is in:", options: ["The same positon as when performing mouth-to-mouth using the head-tilt, chin-lift method", "A neutral position, as it is not necessary to position the airway", "The same position as when performing mouth-to-mouth using only the jaw thrust method", "The extended position, using the neck-lift method"], correct: 1 },
+{ question: "To select the proper size oropharyngeal airway, you should measure from the patient’s", options: ["Corner of the mouth to the tip of the earlobe", "Nose to the tip of the earlobe", "Corner of the mouth to the nose", "Nose to the tip of the chin"], correct: 0 },
+{ question: "The technique for inserting a nasopharyngeal airway includes:", options: ["lubricating the airway with a petroleum-based product", "Use of only rigid. Clear plastic airways", "Keeping your patient’s head in a neutral position", "Facing the bevel of the airway towards the septum"], correct: 3 },
+{ question: "A nonrebreather mask at the proper liter flow of oxygen can deliver a maximum of:", options: ["40-50% oxygen concentration", "60-70% oxygen concentration", "80-90% oxygen concentration", "20-30% oxygen concentration"], correct: 2 },
+{ question: "When should you assess the scene of an accident or injury?", options: ["Only at the beginning of the call", "At the beginning and throughout the entire call", "Only when needed", "After the patient has been treated for life threatening injuries"], correct: 1 },
+{ question: "Scene size-up and safety begin with the receipt of the call and dispatch information. Which of the following is true regarding information?", options: ["Dispatch information is almost always accurate regarding the nature of the problem", "The EMT-B can assume that appropriate emergency agencies such as police and fire have been dispatched", "Dispatchers usually do not have complete information to work with", "When dispatched to a medical call at a residence, the EMT-B can assume the scene is safe"], correct: 2 },
+{ question: "Scenario: You arrive at the scene of a bar fight. A 25-year old man has been stabbed and is bleeding severely. The assailant is still on the scene and is holding a knife. What should you do first?", options: ["Try to keep the assailant calm while you treat the patient", "Take the knife away from the assailant", "Retreat to a place of safety and call for help", "Stay where you are but tell the assailant to go away"], correct: 2 },
+{ question: "If A scene becomes hazardous after you have entered it, you should:", options: ["Attempt to handle the situation as best as you can", "Use your portable radio to call for assistance", "Remove yourself from the scene", "Call your partner to assist you in handling the scene"], correct: 2 },
+{ question: "When arriving at a potential crime scene, the EMT-B should:", options: ["Leave all the vehicle emergency lights and siren on until you reach the exact location of the call to announce your arrival", "Park directly in front of the address given so you can be easily seen", "Wait for law enforcement officers to arrive before entering the scene", "All of the above"], correct: 2 },
+{ question: "Significant external signs of vehicle impact after a motor vehicle crash which the EMT-B should look for an document include:", options: ["Deformity to the vehicle greater than 12 inches", "Displacement of the vehicle axle", "Deformity to either front or rear bumper", "All of the above"], correct: 1 },
+{ question: "All of the following are considered medical problems EXCEPT:", options: ["heart attack", "Chemical burn", "Heat stroke", "Drug overdose"], correct: 1 },
+{ question: "During your scene size-up of a multiple vehicle crash, it is important to determine the number of patients because:", options: ["if there are more patients than you and your crew can handle, you should call for additional EMS resources", "It is important to be accurate in your reports to the media", "You will need a run report for each patient", "If there are more than 2 patients, you must request additional resources"], correct: 0 },
+{ question: "One main purpose of the initial assessment is to identify:", options: ["Immediately treat life-threatening conditions", "Life-threatening conditions for treatment later", "All the injuries in an organized fashion", "Treat all the injuries found"], correct: 0 },
+{ question: "Which part of the initial assessment should be done first?", options: ["Form a general impression", "Opens the airway", "Assess breathing", "Assess mental status"], correct: 0 },
+{ question: "Scenario: You arrive at the scene of a fall. You find a 42-year old woman lying on the ground under a ladder. She says she only fell a couple of feet. She is complaining of pain in her ankle. Which of the following components of the initial assessment are you unable to determine from the information given?", options: ["General impression", "Airway", "Breathing", "Transport priority"], correct: 3 },
+{ question: "In an infant or young child, one way of gauging mental status is observing whether or not the child is:", options: ["Responding to strong smells", "Following movements with his eyes", "Capable of capillary refill", "All of the above"], correct: 3 },
+{ question: "When stabilizing the cervical spine of the seated trauma patient, the patient’s head should be held:", options: ["Slightly tilted forward", "Slightly titled back", "In a neutral in-line position", "In the position found"], correct: 2 },
+{ question: "Scenario: Your patient is a 32-year old female complaining of lower leg pain. She is alert and oriented and her respirations are 16. There are no obvious injuries you can see at first glance. What should you do next?", options: ["Request additional resources", "Start high concentration oxygen", "Assess her lower leg", "Continue the initial assessment"], correct: 3 },
+{ question: "An unresponsive adult patient who is breathing at a rate of 6 breaths per minute needs to be cared for by:", options: ["Positive pressure ventilation with a bag-valve mask", "Applying high concentration oxygen by a nonrebreather mask", "Applying supplemental oxygen by nasal cannula", "Monitoring respiration only"], correct: 0 },
+{ question: "Scenario: You are treating a 74-year old male patient who collapsed at home. He is unresponsive. His respirations are 6 per minute. What should you do first?", options: ["Start high concentration oxygen and assess his circulation", "Give him two breaths and assess his metal status", "Move him to the ambulance and start high concentration oxygen", "Provide ventilations with a bag valve mask and 100% oxygen"], correct: 3 },
+{ question: "Scenario: You arrive on the scene of a car accident. Your patient is a 27-year-old man who is complaining of chest pain. His pulse is 100 and his respirations are 30. He is answering all of your questions appropriately. Your next action should be to:", options: ["Start oxygen at 15lpm by nonrebreather mask", "Assess his blood pressure and circulation", "Perform a complete survey to find any other injuries", "Repeat a full set of vital signs and start low concentration oxygen"], correct: 0 },
+{ question: "The first step in the focused history and physical exam of a trauma patient is:", options: ["Conducting a head-to-toe", "Reassessing the mechanism of injury", "performing a detailed physical exam", "Conducting an ongoing assessment"], correct: 1 },
+{ question: "Scenario: You have provided spinal stabilization to a 66-year-old male patient who is unconscious following a vehicle roll-over. Your next step should be to:", options: ["Perform a SAMPLE history", "Take the patient’s blood pressure", "Consider requesting advanced life support", "Reassess the patient’s mental status"], correct: 2 },
+{ question: "During a rapid trauma assessment you should evaluate the patient’s head, neck, chest, abdomen, pelvis, extremities, and:", options: ["Heart rhythm", "Blood sugar level", "Posterior body", "All of the above"], correct: 2 },
+{ question: "You evaluate specific areas of the body during a rapid trauma assessment to identify:", options: ["The greatest life-threats to the patient", "All sites of bleeding", "All fracture sites", "Any threat that will require surgical interventions"], correct: 0 },
+{ question: "Scenario: You perform a rapid assessment on an unresponsive 10-year-old female trauma patient. When evaluating her chest, you should check for:", options: ["Firmness", "Distention", "Softness", "Bowel sounds"], correct: 0 },
+{ question: "Scenario: A 66-year-old female patient was in a vehicle roll-over. While evaluating her abdomen you check for all the following EXCEPT:", options: ["Firmness", "Distention", "Softness", "Bowel sounds"], correct: 3 },
+{ question: "While performing a rapid trauma assessment, you determine the patient has suffered a penetrating head wound and a cervical spine injury. You should:", options: ["treat the head wound and continue you rapid assessment", "Stop your exam and provide appropriate care for both injuries", "Manage the cervical spine injury and continue your rapid assessment", "Make a mental note of both injuries and continue the assessment"], correct: 1 },
+{ question: "Scenario: A 20-year-old female patient fell off a 3-foot-high step ladder. She complains of leg and hip pain. You should conduct a:", options: ["Rapid trauma assessment and transport immediately", "Rapid trauma assessment and ongoing assessment", "Focused physical exam and assessment of vital signs", "Detailed physical exam prior to transporting the patient"], correct: 2 },
+{ question: "Scenario: Your patient complains of chest pain. He has no known prior history of this sort of pain. Which of the following question should you ask?", options: ["Is your pain crushing or heavy", "Is your pain dull", "How would you describe the pain", "All of the above"], correct: 2 },
+{ question: "Scenario: A 62-year-old female patient complains of severe abdominal pain. While completing a SAMPLE history, she tells you she is not currently being treated by a physician for this problem and takes no medications. You should:", options: ["Transport patient to the hospital and provide your findings to the emergency department staff", "Re-assess the patient’s complaint, beginning with your initial assessment", "Palpate the abdomen to determine point tenderness and referred pain", "All of the above"], correct: 0 },
+{ question: "Scenario: Your patient is a 78-year-old male with a history of chest pain. You should find out which medications he takes during the", options: ["SAMPLE history", "OPQRST exam", "Ongoing assessment", "Initial assessment"], correct: 0 },
+{ question: "Scenario: A 23-year-old patient just had a seizure. Following the seizure, he is awake enough to tell you he is an epileptic. Why is this history important?", options: ["It provides you information to give to the hospital staff", "The history helps determine what interventions you make take", "The history helps determine the nature of the illness", "All of the above"], correct: 3 },
+{ question: "Scenario: Your 36-year-old male patient tells you he is a diabetic. What is the first step of your focused history and physical exam?", options: ["Conduct a rapid physical exam", "Obtain baseline vital signs", "Gather a SAMPLE history", "Conduct a focused physical exam"], correct: 2 },
+{ question: "Scenario: A 20 year old female patient is found unresponsive. The first step during your focused history and physical exam should be:", options: ["Obtain vital signs", "Conduct a rapid physical assessment", "Gather a SAMPLE history from the family", "Request ALS support"], correct: 1 },
+{ question: "Scenario: A 77 year old male patient is unresponsive but breathing. You should obtain pertinent patient information from:", options: ["Bystanders or family", "The family physician", "The responding advanced life support unit", "all of the above"], correct: 0 },
+{ question: "Scenario: A 10 year old medical patient is unresponsive. The first step in the focused history and physical exam should be:", options: ["A SAMPLE history from family members", "A rapid physical exam", "A history of childhood illnesses from family members", "Physical exam of the head and chest"], correct: 1 },
+{ question: "Scenario: You just completed a rapid physical exam on an unresponsive 65 year old female patient. Your next action should be to:", options: ["Take a history of the present illness", "gather a SAMPLE history", "Perform a focused physical exam", "Obtain baseline vital signs"], correct: 3 },
+{ question: "You perform a rapid physical exam of the unresponsive medical patient’s extremities. You should look for all of the following EXCEPT:", options: ["Sensation", "Pulse", "Medical identification devices", "Referred pain"], correct: 3 },
+{ question: "Scenario: A 25 year old female patient is unresponsive. During the rapid physical exam of her neck you should look for:", options: ["Jugular vein disclosure", "A medical identification device", "Paradoxical respirations", "Muscle spasms"], correct: 1 },
+{ question: "The purpose of the detailed physical exam is to:", options: ["Identify and care for non-life threatening injuries", "Determine the patient’s blood pressure and pulse", "Find life-threatening problems requiring intervention", "All of the above"], correct: 0 },
+{ question: "Scenario: A 40 year old male patient was struck in the face by a softball. During your detailed exam, you should assess for blood in his anterior:", options: ["Eyes", "Nose", "Mouth", "ears"], correct: 0 },
+{ question: "Scenario: A responsive 24 year old female patient tells you her horse kicked her. She complains of breathing difficulty. During your detailed exam, you should assess for paradoxical motion of her:", options: ["Eyes", "Chest", "Jugular veins", "abdomen"], correct: 1 },
+{ question: "Scenario: A 63 year old male patient complains of general weakness, nausea, and vomiting. The mechanism of injury is unknown. During the detailed exam, you inspect and palpate for firmness and distention of the patient’s:", options: ["Chest", "Abdomen", "Posterior", "pelvis"], correct: 1 },
+{ question: "When assessing the mouth of a responsive trauma patient, you should check for all of the following EXCEPT:", options: ["Lordosis", "Loose or broken teeth", "Tongue lacerations", "discoloration"], correct: 0 },
+{ question: "Scenario: You find a 16 year old football player who is unresponsive with a deformed right leg. During your initial assessment, you find broken teeth. You should:", options: ["Proceed with your exam and immobilize the deformed right leg", "Proceed with your exam to locate other life-threatening conditions", "Proceed to the management of the patient’s neck", "Stop your exam and remove broken teeth from the mouth"], correct: 3 },
+{ question: "Scenario: A 30 year old female patient fell off of her bicycle. She was not wearing a helmet. During your detailed exam you notice a bruise behind her left ear. This is most likely a sign of:", options: ["possible hearing loss", "A head injury", "A mandible injury", "A past injury to that area"], correct: 1 },
+{ question: "You should perform an ongoing assessment to determine if:", options: ["There are any changes in the patient’s condition", "You are going to transport", "You will leave the patient with family members", "You have completed all items on the patient care report"], correct: 0 },
+{ question: "Scenario: En route to the hospital you decide to begin the ongoing assessment of your 22 year old trauma patient. You should begin by:", options: ["Taking blood pressure", "Checking the placement of the nasal cannula", "Repeating the initial assessment", "Reassessing all immobilization devices"], correct: 2 },
+{ question: "Scenario: A 26 year old female patient is found responsive and alert at the scene of a car roll-over. She complains of upper abdominal pain. Following an appropriate patient assessment, you decide to transport. En route she becomes less responsive. Her breathing rate increases. As a part of your ongoing assessment you should immediately:", options: ["Repeat the focused history and physical exam", "Repeat the detailed physical exam", "Repeat the initial assessment", "Contact medical control"], correct: 2 },
+{ question: "You should reassess and record vital signs during your:", options: ["Ongoing assessment", "Scene survey", "Focused history and physical exam", "SAMPLE history"], correct: 0 },
+{ question: "Scenario: You arrive at the emergency department with your unresponsive trauma patient. The receiving nurse asks you for your assessment of trends in the patient’s condition. Why is this of values to the nurse?", options: ["To report the information in the hospital quality assurance report", "To tell if the patient’s condition has improved", "To determine if your SAMPLE was done properly", "To evaluate your knowledge of the assessment process"], correct: 1 },
+{ question: "Changes in the body systems of the elderly include:", options: ["Frequent hypotension", "Quicker healing to skin injuries", "Increased tendency for infection", "Increased effectiveness of coughing"], correct: 2 },
+{ question: "High-risk geriatric patients include those who:", options: ["Live with an elderly spuse", "Have been recently bereaved", "Appear in good health", "Live in long-term care faciclities"], correct: 1 },
+{ question: "A disease which affects the elderly commonly called “hardening of the arteries” is:", options: ["arteriosclerosis", "Cardiac hypertrophy", "Kyphosis", "Osteoporosis"], correct: 0 },
+{ question: "Changes in the integumentary system due to aging include:", options: ["More attachment tissue between the dermis and epidermis", "Increased production of replacement skin cells", "Less perspiration being produced", "A heightened sense of touch"], correct: 2 },
+{ question: "A “mini stroke” having a similar presentation to a CVA is called a:", options: ["TIA", "ICP", "CHF", "COPD"], correct: 0 },
+{ question: "Alzheimer’s disease is responsible for more than 10,000 deaths each year in the US. While the disease does not directly cause death, it can result in:", options: ["Sudden cardiac arrest", "Numerous infections", "CVA", "Hypoglycemia"], correct: 1 },
+{ question: "Scenario: You are treating an 82-year old female who is hard of hearing. She is having trouble understanding some of your questions. What should you do to get your information?", options: ["Try to find a neighbor to help you", "Speak clearly and slowly", "Yell loudly", "Stop asking questions"], correct: 1 },
+{ question: "Scenario: You are treating a 23 year old man who is deaf. You need to find out why he called for an ambulance. What is the best way to communicate with this man?", options: ["Speak very loudly just in case he can hear something", "Make sure the patient can see your mouth in case he can lip read", "Find someone else to ask questions so you don’t need to talk to him", "Call for an interpreter to meet you at the hospital"], correct: 1 },
+{ question: "Scenario: You are treating a 76 year old man who tells you his name is Joseph Wicker. In speaking to him, you should:", options: ["Use the name Joe to put him at ease", "Use his formal first name and call him joseph", "Use a term like “pal” to make him feel at ease", "Call him “mr.wicker” unless he tells you otherwise"], correct: 3 },
+{ question: "Scenario: You are treating a 23 year old woman who has a painful swollen deformity on her lower left leg. She is very nervous about what what you are going to do. She asks you fit he procedure will hurt. What should you tell her before you splint the leg?", options: ["Not to worry, everything will be fine", "Yes, it may hurt somewhat", "No, this shouldn’t hurt", "Yes, it might, but it’s no big deal"], correct: 1 },
+{ question: "You may receive an order from the on-line physician to help a patient with his/her medication. You should then:", options: ["Explain to the patient what you are going to do", "Repeat the order back to the physician word for word", "Repeat just the name of the medication to the physician", "Advise the physician that you understand and then give the medication"], correct: 1 },
+{ question: "The prehospital care report serves as:", options: ["Special record to document a personal injury", "Special document to report infectious disease", "Legal document", "All of the above"], correct: 2 },
+{ question: "The EMS unit number and call number are elements in which section of the PCR?", options: ["Administrative information", "Patient data", "Patient narrative", "Vital signs"], correct: 0 },
+{ question: "The prehospital care report typically contains which of the following sections?", options: ["A medical device section", "A legal section", "A patient narrative section", "A contagious disease section"], correct: 2 },
+{ question: "To aid in research across many states and regions, the US department of transportation has developed a minimum data set. Which of the following is one of the elements, in the minimum patient data set?", options: ["Billing information", "Insurance information", "Patient name", "Time of arrival of patient"], correct: 3 },
+{ question: "You just completed writing down the data and dispatch times of your call. This information is included in which section of your patient care report?", options: ["Narrative section", "Run data section", "Vital signs section", "None of the above"], correct: 2 },
+{ question: "You just finished the last of three prehospital care records. You include baseline vitals for each of the records in the:", options: ["Narrative section", "Run data section", "Vital signs section", "None of the above"], correct: 2 },
+{ question: "As you write your patient care report you remember that your medical patient told you, “I feel dizzy”. This information should be included in the:", options: ["Narrative section", "Run data section", "Patient data section", "None of the above"], correct: 0 },
+{ question: "Which of the following is considered subjective patient information?", options: ["“The patient has a swollen, deformed extremity”", "”the patient’s pulse is 110 beats per minute", "The patient’s blood pressure 110/80", "The patient appears to be in pain"], correct: 3 },
+{ question: "Steps to follow when your competent adult patient refuses treatment include:", options: ["Having law enforcment place the patient in custody", "Restraining the patient", "Discussing the possible consequences of the delaying or refusing treatment", "Telling the patient he/she will die if he does not go to the hospital"], correct: 2 },
+{ question: "Under which one of the following conditions would a full and detailed patient care report not be required?", options: ["A patient who refuses transportation but approves treatment", "A mass casualty incident", "An intoxicated patient without a chief complaint", "A patient call in which you administer oral glucose"], correct: 1 },
+{ question: "The three medications you will carry on the ambulance are:", options: ["Lidocaine, Narcan, and atropine", "Activated charcoal, oral glucose, and oxygen", "Valium, ibuprofen, and dextrose 50%", "Prescribed inhalers, nitroglycerine, and epinephrine"], correct: 1 },
+{ question: "Epinephrine in auto-injectors is a medication that is:", options: ["Administered sub-lingually", "Sprayed into a patient’s airway", "Given by mouth", "Administered intramuscularly"], correct: 3 },
+{ question: "Which of the following are generic medications that you may assist the patient in taking?", options: ["ibuprofen, propranolol, and phenytoin", "Isoetharine, nitroglycerine, and epinephrine", "Phenobarbital, acetaminophen, and procainamide", "Primidone, codeine, and digoxin"], correct: 1 },
+{ question: "Which one of the following is a generic name for a prescribed inhaler?", options: ["Albuterol", "Phenobarbital", "Propranolol", "Furosemide"], correct: 0 },
+{ question: "Oral glucose comes as what form of medication?", options: ["Fine powder", "Gel", "Sub-lingual spray", "Liquid"], correct: 1 },
+{ question: "Which medication is used to treat patients who are hypoxic?", options: ["Activated charcoal", "Nitroglycerine", "Oral glucose", "Oxygen"], correct: 3 },
+{ question: "The condition in which the cells in the body are not getting an adequate supply of oxygen is called:", options: ["Hypoxia", "Bronchospasm", "Tachypnea", "bradypnea"], correct: 0 },
+{ question: "Scenario: A 6 year old female patient is complaining of breathing difficulty. Which of the following signs or symptoms would assist you in verifying this complaint?", options: ["Respiratory rate 16 breaths per minute", "The chest moving inward, while the abdomen moves outward", "Bilateral chest expansion", "Pink mucous membrane"], correct: 1 },
+{ question: "Which one of the following signs is characteristic of adult respiratory distress?", options: ["Decreased pulse rate", "Respiratory rate of 12 breaths per minute", "Use of the accessory muscles", "Bilateral chest expansion"], correct: 2 },
+{ question: "When oxygenation of the body’s tissues is reduced, your patient’s skin may be:", options: ["red, hot, and dry to the touch", "Pale, cool,, and moist to the touch", "Normal, hot, and moist to the touch", "Normal, hot, and dry to the touch"], correct: 1 },
+{ question: "Scenario: A 40 year old male patient is unresponsive. You should look for which of the following signs of inadequate breathing?", options: ["Respiratory rate of 16 breaths per minute", "Snoring sounds", "Movement of diaphragm", "Bilateral chest expansion"], correct: 1 },
+{ question: "When infants or children experience breathing difficulties, their pulse may:", options: ["Decrease significantly, then return to normal", "Decrease early, then increase significantly", "Increase significantly, then return to normal", "Increase early, then decrease significantly"], correct: 3 },
+{ question: "Your initial management of a patient experiencing respiratory difficulty should be to:", options: ["Assist the patient in taking a prescribed inhaler", "Establish an open airway", "Begin CPR", "Transport the patient"], correct: 1 },
+{ question: "OPQRST are letter used to help you remember which questions to ask patients during your assessment. What does the “p” stand for?", options: ["Proximity", "Pulse", "Provocation", "pain"], correct: 2 },
+{ question: "During what phase of patient assessment do you use the mnemonic “OPQRST”?", options: ["Focused history and physical exam", "Initial assessment", "Detailed physical exam", "Scene size-up"], correct: 0 },
+{ question: "Scenario: You find a 73 year old male patient lying in bed. He complains of breathing trouble. You should immediately:", options: ["Assist the patient in taking his prescribed inhaler", "Assess the airway", "Take his blood pressure", "Take his pulse"], correct: 1 },
+{ question: "Scenario: A 50 year old female patient has chronic bronchitis. The initial assessment finds her breathing rate is 6 times per minute and her skin is cool and clammy to the touch. Your next action should be to:", options: ["Administer oxygen by nasal cannula at 15lpm", "Assist respiration with positive pressure ventilations and supplemental oxygen", "Administer oxygen by nonrebreather mask at 15 lpm", "Place the patient in sitting position, and reassess breathing"], correct: 1 },
+{ question: "Scenario: A 63 year old patient is breathing at a rate of 28 per minute. His breaths are very shallow. You would manage this patient by:", options: ["Seeing if the patient wiil tolerate a nasal cannula", "Providing positive pressure ventilation", "Seeing if the patient will tolerate a nonrebreather mask", "Using a bvm without supplemental oxygen"], correct: 1 },
+{ question: "Scenario: Your adult patient is breathing at 38 breaths per minute. The breathing is irregular. Your next action should be to:", options: ["Provide oxygen by nasal cannula", "Use a bvm with supplemental oxygen", "Provide oxygen by nonrebreather mask", "Have the patient breathe into a paper bag"], correct: 1 },
+{ question: "Scenario: Upon reassessment of your patient with breathing difficulty, you observe shallow, rapid breathing, and your patient appears very tired. Your patient is on high-glow oxygen by nonrebreather mask. Your next action should be to:", options: ["Discontinue the oxygen therapy and contact medical direction", "Change from the nonrebreather mask to a nasal cannula and contact medical direction", "Decrease the oxygen flow rate to 8 liters per minute and contact medical direction", "Begin positive pressure ventilations with supplemental oxygen and contact medical direction"], correct: 3 },
+{ question: "Scenario: You are providing positive pressure ventilation to an unresponsive 60 year old female. The patient’s pulse continues to increase with no change in her mental status. This may indicate:", options: ["Normal response before the pulse begins to decrease", "An increase in patient oxygen levels", "Inadequate positive pressure ventilation", "None of the above"], correct: 2 },
+{ question: "When using a nonrebreather mask you should administer oxygen at:", options: ["10 liters per minute", "3 liters per minute", "6 liters per minute", "15 liters per minute"], correct: 3 },
+{ question: "Which of the following is a generic name for a prescribed inhaler?", options: ["Severity", "Provocation", "Quality", "onset"], correct: 2 },
+{ question: "Which of the following is a generic name for a prescribed inhaler?", options: ["procainamide", "Furosemide", "Albuterol", "tolbutamide"], correct: 2 },
+{ question: "Which of the following is an early sign of inadequate breathing in children?", options: ["Blue-gray skin", "Barrel chest", "Nasal flaring", "tremors"], correct: 2 },
+{ question: "Management for a child experiencing an upper airway obstruction due to blood and teeth includes:", options: ["Suctioning", "Refraining from placing anything in the mouth", "Applying a nonrebreather mask, then suctioning", "Artificial ventilation, then suctioning"], correct: 0 },
+{ question: "A slow pulse in an infant or small child experiencing breathing difficulty is:", options: ["A serious and abnormal sign", "A good sign", "Normal and usually brief", "Also seen in adults"], correct: 0 },
+{ question: "The pulmonary valve prevents blood from returning to the:", options: ["Right atrium", "Right ventricle", "Left ventricle", "Left atrium"], correct: 1 },
+{ question: "Whenever you are managing a patient with chest pain, you should:", options: ["Attach electrode pads to the patient", "Treat the situation as a cardiac emergency", "Analyze the patient’s heart rhythm", "Give the patient nitroglycerin"], correct: 1 },
+{ question: "Scenario: Your chest pain patient is breathing adequately. She is conscious and alert. You should next:", options: ["Administer 6 liters of oxygen through a nasal canula", "Administer 15 liters of oxygen through a nonrebreather mask", "Use the bvm without supplemental oxygen", "Use the bvm with a low concentration oxygen"], correct: 1 },
+{ question: "Your role as an EMT-B in the emergency cardiac care system includes all of the following EXCEPT:", options: ["Monitoring the patient’s heart rhythm with the automated external defibrillator", "Use of a flow-restricted oxygen powered ventilations", "Use of the bvm with oxygen", "Use of the automated external defibrillator"], correct: 0 },
+{ question: "The best way to determine the position of the comfort for the patient experiencing cardiac compromise is to ask the patient to:", options: ["Lie down", "Tell you which position feels most comfortable", "Sit up", "Lie on his side"], correct: 1 },
+{ question: "Scenario: Your patient complains of chest pain. He has a weak, thready pulse rate of 140 per minute. His respirations are 6 per minute. You should immediately:", options: ["Administer oxygen via nasal cannula", "Administer oxygen via nonrebreather mask", "Provide positive pressure ventilations with supplemental oxygen", "Give nitroglycerin"], correct: 2 },
+{ question: "Before administering a second dose of nitroglycerin to a patient you must:", options: ["Perform CPR or 1 minute", "Request authorization from medical direction", "Provide supplemental oxygen via nasal cannula", "Check the patients pupuis for excess dilation"], correct: 1 },
+{ question: "All of the following are appropriate indications for helping the patient with chest pain take nitroglycerin EXCEPT:", options: ["The patient complains of chest pain", "The patient has a history of cardiac problems", "The patient has nitroglycerin with him", "The patient’s systolic blood pressure is less than 100"], correct: 3 },
+{ question: "Of the following, which is a contraindiction for the use of nitroglycerin?", options: ["the patient has a history of cardiac problems", "The patient complains of chest pain", "The patient has a head injury", "The patient’s systolic pressure is greater than 100"], correct: 2 },
+{ question: "Which of the following cardiac arrest patients should you defibrillate?", options: ["A 12 year old who weighs less than 90 lbs", "A 14 year old who weighs 110 lbs", "A 12 year old trauma patient who weighs 120 lbs", "An infant experiencing sudden death syndrome"], correct: 1 },
+{ question: "With which of the following cardiac arrest patients would you use an AED?", options: ["An 80 year old, 88 lbs female", "A 6 year old, 58 lbs drowning victim", "A 11 year old 92 lbs traumatic shock patient", "A 1 year old SIDS patient"], correct: 0 },
+{ question: "Whenever you are managing patient with chest pain, you should:", options: ["Attach the electrode pads to the patient", "Be prepared for cardiac arrest", "Analyze the patients heart rhythm", "Give nitroglycerine"], correct: 1 },
+{ question: "Which of the following statements is correct concerning fully automated defibrillators?", options: ["They do not advise the EMT-B to take any action", "They advise the EMT-B to press a button to deliver shocks", "They are sometimes called shock advisory defibrillators", "All of the above"], correct: 0 },
+{ question: "When using an automated external defibrillator, you should defibrillate:", options: ["After analysis of rhythm and shock is indicated", "After hooking up oxygen", "After on-line approval from medical direction", "After hooking up oxygen and obtaining on-line medical approval"], correct: 0 },
+{ question: "Which of the following is a reason for assuring that a patient is pulseless and apneic when using the automated external defibrillator?", options: ["Because some patients with ventricular fibrillation have pulses", "Because some patients with ventricular fibrillations are conscious and alert", "Because some ventricular tachycardia patients are responsive", "Because some patients with systole have pulses"], correct: 2 },
+{ question: "Improper delivery of shocks as a result of mechanical error is usually causes by:", options: ["Radio transmissions", "Engine rhythms", "Poorly maintained or poorly changed batteries", "Spontaneous patient movement"], correct: 2 },
+{ question: "Performing CPR while the automated external defibrillator is analyzing the patients’ rhythm:", options: ["Is acceptable with today’s modern defibrillators", "Is indicated to maintain cardiac compressions", "Is indicated to maintain artificial ventilations", "Can cause the AED to misinterpret a rhythm"], correct: 3 },
+{ question: "What should you do for the cardiac arrest patient found in the rain?", options: ["Perform one rapid defibrillation, then move patient inside", "Defibrillate three times, then move patient inside", "Move patient inside away from the rain and dry the patient’s chest before defibrillation", "Perform one rapid defibrillation, then start CPR if the patient remains..."], correct: 2 },
+{ question: "Which of the following is the most effective in restoring a patient’s pulse?", options: ["Oxygen", "Chest compressions", "Artificial ventilation", "defibrillation"], correct: 3 },
+{ question: "Which of the following is an advantage of automated defibrillation?", options: ["the speed of the procedure", "No need for initial assessment", "No need to confirm cardiac arrest", "No training required"], correct: 0 },
+{ question: "AEDs provide safer, more effective delivery of defibrillation shocks when:", options: ["Using adhesive external pads", "Using paddles held against the chest", "Requiring the EMT-B to press a button to deliver a defibrillation shock", "Automatically delivering a defibrillation shock"], correct: 0 },
+{ question: "The automated external defibrillator should give a “No Shock” message for all of the following conditions EXCEPT:", options: ["The patient’s rhythm is asystole", "The patient rhythm is PEA", "The heart’s electrical activity has returned", "The patient’s rhythm is ventricular fibrillation"], correct: 3 },
+{ question: "What does a “set of stacked” shocks mean?", options: ["Six shocks have been delivered with no pause for a pulse check", "One shock, CPR then three more shocks are delivered", "Three shocks have been delivered with no pause for a pulse check", "Three shocks have been delivered with pulse checks after each shock"], correct: 2 },
+{ question: "Scenario: You have administered six shocks to your cardiac arrest patient. She remains pulseless and is not breathing. You should next:", options: ["Reanalyze the rhythm and deliver six more shocks", "Resume CPR and contact medical direction for guidance", "Deliver two shocks", "Provide no further treatment until an ALS unit arrives"], correct: 1 },
+{ question: "Scenario: You are dispatched to a house where you find a 79 year old female in cardiac arrest. You are alone with no one else who can do CPR. After your initial assessment you should give two ventilations then:", options: ["Analyze the rhythm, and deliver a shock if indicated", "Begin chest compressions for one minute", "Analyze the rhythm, then begin chest compressions", "Call medical control, and begin chest compressions"], correct: 0 },
+{ question: "Scenario: A 58 year old male cardiac arrest patient’s pulse returns after you deliver a set of three stacked shocks. His breathing is adequate. You should now:", options: ["detach the defibrillator from the patient", "Administer 15 lpm of oxygen by nonrebreather mask", "Cancel ALS backup", "Disconutie all treatment of the patient"], correct: 1 },
+{ question: "One of the most common problem with automated external defibrillator is:", options: ["Battery failure", "Arcing", "Misinterpretation of shockable rhythms", "Accidental shocks to the EMT-B"], correct: 0 },
+{ question: "The American heart association:", options: ["Licenses and approves automated external defibrillators", "Provides licensure to EMS personnel for the use of the automated external defibrillator", "Publishes guidelines on the use of the automated external defibrillator", "All of the above"], correct: 2 },
+{ question: "The first button (#1) the EMT-B presses on the AED after positioning the device next to a cardiac arrest patient:", options: ["Delivers the first shock", "Begins the AED analysis", "Turns on the power to the AED", "Begins printing a paper ECG printout"], correct: 2 },
+{ question: "Hypoglycemia is a term for a diabetic condition which means:", options: ["Low blood sugar", "High blood insulin level", "High blood sugar", "Low blood insulin level"], correct: 0 },
+{ question: "Which one of the following is a sign or symptom associated with a diabetic emergency?", options: ["Energetic appearance", "Alert and oriented", "Intoxicated appearance", "Bright red skin"], correct: 2 },
+{ question: "All of the following are indications for giving oral glucose EXCEPT:", options: ["The patient is alert and oriented", "The patient is unresponsive", "The patient’s mental status is altered due to diabetes", "The patient has a history of diabetes controlled by medication"], correct: 1 },
+{ question: "Altered mental status is typically caused by all of the following EXCEPT:", options: ["Decreased oxygen levels", "Low blood sugar", "Infection", "Chest pain"], correct: 3 },
+{ question: "A diabetic with high blood sugar levels needs which of the following to correct the condition?", options: ["Orinase", "Diabinese", "Insulin", "Insta-glucose"], correct: 2 },
+{ question: "Scenario: Your diabetic patient became unresponsive after you administered oral glucose. You should next:", options: ["Give a second dose of oral glucose", "Use tongue depressor to inspect the airway", "Ensure an open airway", "Use a tongue depressor as a bite-block in case of seizures"], correct: 2 },
+{ question: "Scenario: Your diabetic patient is unresponsive. Treatment may include all of the following EXCEPT:", options: ["positioning patient on his side", "Giving oral glucose", "Preparing to perform CPR", "Preparing for artificial ventilation"], correct: 1 },
+{ question: "Scenario: Your patient is unresponsive. A medical identification bracelet tells you that she is a diabetic. What should you do first?", options: ["Administer oral glucose", "Contact medical control", "Establish and maintain an open airway", "Check for a pulse"], correct: 2 },
+{ question: "Which one of the following is a possible side effect of oral glucose?", options: ["Hypotension", "Decreased blood sugar levels", "Aspiration in patients without a gag reflex", "Decreased breathing rate"], correct: 2 },
+{ question: "Scenario: You have given your diabetic emergency patient one dose of oral glucose. She does not respond appropriately. Your next action should be to:", options: ["Administer a second dose of glucose, then consult medical direction", "Manage the airway and consult medical direction", "Administer the patient’s insulin and oral glucose", "Transport since no other field treatment is necessary"], correct: 1 },
+{ question: "Oral glucose is given to the diabetic patient because it helps get", options: ["Sugar into the bloodstream and to the brain", "Insulin into the pancreas", "Excess sugar out of the body", "Excess sugar out of the pancreas and into the blood"], correct: 0 },
+{ question: "Your patient has an altered mental status accompanied by loss motor function. A frequent cause of this condition is:", options: ["Heart attack", "Shock", "Stroke", "asthma"], correct: 2 },
+{ question: "When a patient loses some or all of the ability to speak, feel sensations, and move, he is experiencing:", options: ["A neurological deficit", "A seizure", "Traumatic asphyxia", "A hypertensive crisis"], correct: 0 },
+{ question: "To care for a patient with nontraumatic brain injury who is breathing inadequately, you should consider all of the following EXCEPT:", options: ["Positive pressure ventilation", "Oxygen administration", "CPR", "Insertion of an oropharyngeal or nasopharyngeal airway"], correct: 2 },
+{ question: "TO assess your patient for any weakness or paralysis to the extremities:", options: ["Have the patient stand walk", "Have the patient grasp and squeeze your fingers", "Check the patient’s pupils for equality", "Check capillary refill in the fingernail beds"], correct: 1 },
+{ question: "Signs and symptoms of a nontraumatic brain injury may be similar to those of:", options: ["A heart attack", "Asthma", "Hypoglycemia", "Shock"], correct: 2 },
+{ question: "Emergency medical care of an unresponsive patient with nontraumatic brain injury includes placing the patient:", options: ["supine, with legs elevated", "Supine, with head elevated", "In a left lateral recumbent position", "prone"], correct: 2 },
+{ question: "During emergency care for the patient with altered mental status, it is important for you to remember that:", options: ["Since extremities may be paralyzed, there is no need to protect them", "Even if the patient cannot respond, he may understand what you say", "Your patient will always be able to protect his own airway", "Transportation to a hospital is rarely needed"], correct: 1 },
+{ question: "Brief intermittent stroke episode are known as:", options: ["CVAs", "TIAs", "CHFs", "MIs"], correct: 1 },
+{ question: "Most commonly, the signs and symptoms of TIAs:", options: ["Last for 5 to 10 minutes", "Last for several hours", "Last up to 7 days", "Rarely disappear"], correct: 0 },
+{ question: "The most common type of seizure is:", options: ["The grand mal seizure", "Syncope", "Status epilepticus", "The postictal seizure"], correct: 0 },
+{ question: "Of the following, which is a common cause of seizure?", options: ["Epilepsy", "Head injuries", "High fever", "All of the above"], correct: 3 },
+{ question: "Scenario: You arrive on the scene where a patient is experiencing seizure activity. A bystander has placed a spoon in the patient’s mouth. You should:", options: ["Restrain the patient’s movement", "Gently hold the spoon in place", "Remove the spoon", "Hold the spoon in place and grab the patient’s tongue"], correct: 2 },
+{ question: "Assessment of the seizure patient includes:", options: ["Determining the type of seizure", "Determining the cause of the seizures", "Managing any life-threatening conditions", "determining the seizure stage"], correct: 2 },
+{ question: "The postictal patient typically presents with:", options: ["Extreme muscle rigidity", "Airway problems", "An open airway", "An alert and oriented appearance"], correct: 2 },
+{ question: "Which of the following patients is considered to be a dire medical emergency?", options: ["The aura patient", "The postictal patient", "The syncopal patient", "The status epilepticus patient"], correct: 3 },
+{ question: "All of the following are stages of the grand mal seizure EXCEPT the:", options: ["Syncopal stage", "Aura", "Clonic phase", "Postical state"], correct: 0 },
+{ question: "Status epilepticus is defined as a seizure which lasts longer than:", options: ["3 minutes", "5 minutes", "10 minutes", "15 minutes"], correct: 2 },
+{ question: "A bite stick is sometimes appropriate for the care of the seizing patient because it?", options: ["Prevents the patient from swallowing his tongue", "Is a good airway device", "May prevent the patient from biting his tongue", "Is useful for removing secretions"], correct: 2 },
+{ question: "A convulsion is characterized as:", options: ["A visual disturbance", "Contracted and tense muscles", "Muscle spasms that alternate with relaxation", "A period of confusion, fatigue, and headache"], correct: 2 },
+{ question: "Which sign and symptom immediately follows the aura stage of a grand mal seizure?", options: ["Loss of responsiveness", "An odd or unpleasant sensation", "30 seconds to 5 minutes of convulsions", "5 minutes to several hours of deep sleep"], correct: 0 },
+{ question: "Scenario: Your patient has had continuous seizures for 10 minutes. Care and management of this patient includes:", options: ["Using the head-tilt, chin-lift maneuver", "Administering glucose", "Administering oxygen via nasal cannula", "Moving the patient into a prone positon"], correct: 0 },
+{ question: "Syncope almost always occurs:", options: ["After eating", "When standing from a sitting position", "After sleeping", "After a clonic seizure"], correct: 1 },
+{ question: "Which of the following is a sign or symptom of syncope?", options: ["the patient remembers feeling faint", "The patient’s skin is warm and dry", "The patient remains unconscious after becoming supine", "The patient convulses"], correct: 0 },
+{ question: "Your syncope patient Is complaining of mild chest pain. You should immediately:", options: ["Administer oxygen by nasal cannula", "Transport", "Give nitroglycerin", "Provide oxygen at 15 lpm via nonrebreather mask"], correct: 3 },
+{ question: "Which of the following might a patient suffering from an allergic reaction say?", options: ["“My heart is beating too slow”", "”My chest feels tight”", "”My skin feels cool”", "“My muscles ache”"], correct: 1 },
+{ question: "Epinephrine mimics the responses of the sympathetic nervous system by doing all of the following EXCEPT:", options: ["Improving blood pressure", "Relaxing smooth muscle in the lungs", "Reversing swelling and hives", "Slowing the heart rate"], correct: 3 },
+{ question: "If your patient experiencing an allergic reaction develops inadequate respirations, you may need to use a bag-valve mask. If the device has a pop-off valve, you may need to:", options: ["Use a pocket mask instead of the BVM", "Deactivate the pop-of valve", "Continue using the BVM as is", "Wait to give ventilations until ALS personnel arrive"], correct: 1 },
+{ question: "Scenario: Your patient is experiencing shortness of breath and wheezing after eating dinner at an Asian restaurant. His respiratory rate is 32 and shallow, and he is becoming cyanotic. Your next step is to:", options: ["Provide ventilations with a BVM device", "Apply high-flow oxygen with a nonrebreather mask", "Immediately administer epinephrine", "Contact medical direction"], correct: 0 },
+{ question: "What treatment should you provide during the initial assessment of the patient experiencing an allergic reaction?", options: ["Blood pressure assessment", "Airway management", "Initiating body substance isolation", "Obtaining SAMPLE history"], correct: 1 },
+{ question: "Scenario: Your patient is experiencing an allergic reaction to a wasp sting. Your patient is breathing adequately. What is your next step?", options: ["Provide oxygen at 15 lpm through a nonrebreather mask", "Take the patient’s blood pressure", "Contact medical direction", "Apply high concentration oxygen through a nasal cannula"], correct: 0 },
+{ question: "Scenario: A 23 year old female patient has a history of allergies to bee stings. She is complaining of breathing difficulty after being stung by a wasp. She has a prescribed epinephrine auto-injector. Your next action should be to:", options: ["Adminster oxygen and transport", "Identify the insect that [stung] her", "Administer oxygen and assist the patient with auto-injector", "Perform ongoing assessment and administer oxygen"], correct: 2 },
+{ question: "What should you do for the patient with an allergic reaction who has never had a prescribed epinephrine auto-injector?", options: ["Recommend the patient take an oral antihistamine", "Administer oxygen and transport immediately", "Administer the epinephrine given to you by a relative with the same condition", "Administer oxygen and identify the allergen"], correct: 1 },
+{ question: "Scenario: Your patient is suffering from an allergic reaction to the shrimp he has eaten. Earlier he was breathing adequately, now he is not. What do you suspect?", options: ["The patient’s airway is at risk", "The patient is experiencing an emotional reaction", "The patient has low blood sugar", "The patient is about to have a seizure"], correct: 0 },
+{ question: "In an allergic reaction, exposure to an allergen will cause blood vessels to:", options: ["Constrict", "Spasm", "Close completely", "Dilate rapidly"], correct: 3 },
+{ question: "Epinephrine when administered as a medication dilates the bronchioles. What does this do for the patient suffering an allergic reaction?", options: ["Drys out mucous-clogged airways and improves breathing", "Helps open the airway and improve breathing", "Helps dilate the blood vessels and decrease the blood pressure", "All of the above"], correct: 1 },
+{ question: "What is the dosage of epinephrine for an infant or child suffering from an allergic reaction?", options: ["1mg", "0.3 mg", "0.15mg", "5mg"], correct: 2 },
+{ question: "When administering epinephrine to an infant or child, you should place the tip of the auto-injector against the:", options: ["Lateral portion of the patient’s thigh", "Medial portion of the patient’s thigh", "Medial portion of the patient’s arm", "Patient’s buttocks"], correct: 0 },
+{ question: "When administering epinephrine by auto-injector you should:", options: ["Hold the injector in place for 30 seconds", "Immediately inject and release", "Hold injector in place at least 10 seconds", "Light apply injector for 5 seconds"], correct: 2 },
+{ question: "Which of the following indicated a need for medical direction in the care of the patient with an allergic reaction?", options: ["The patient has come in contact with a substance that caused an allergic reaction in the past", "The patient complains of respiratory distress", "The patient has a prescribed epinephrine auto-injector", "All of the above"], correct: 3 },
+{ question: "Scenario: Your patient was stung by a bee. He complains of itchy palms, but denies any breathing difficulty. At this time, he is probably suffering:", options: ["A severe allergic reaction", "A mild allergic reaction", "An anaphylactic reaction", "Acute dermatitis"], correct: 1 },
+{ question: "An anaphylactic reaction may present with:", options: ["Severe breathing difficulty and no hives", "Normal breathing hives", "Hypertension and a complaint of itchy, watery eyes", "A normal blood pressure and a complaint of itchy, watery eyes"], correct: 0 },
+{ question: "Scenario: Your patient is experiencing an allergic reaction reaction after a bee sting. She denies breathing difficulty. Vital signs are normal. You should:", options: ["Continue your focused assessment", "Assist the patient with her epinephrine auto-injector", "Give oxygen by nasal cannula", "All of the above"], correct: 0 },
+{ question: "Scenario: You have administered one dose of epinephrine by auto-injector. Your patient’s blood pressure is 90/50, pulse is 144, and respirations are 40. What should you do next?", options: ["Wait for epinephrine to take effect", "Contact patient’s personal physician", "Administer high concentration oxygen through a nasal cannula", "Obtain medical direction for an additional dose of epinephrine"], correct: 3 },
+{ question: "Carbon monoxide is a poison which may enter the body by:", options: ["Inhalation", "Ingestion", "Absorption", "All of the above"], correct: 0 },
+{ question: "Absorbed poisons are those that are:", options: ["Swallowed", "Inhaled", "Taken into the body through unbroken skin", "All of the above"], correct: 2 },
+{ question: "Scenario: Your patient is a conscious 2 year old male. He ahs ingested a small quantity of bleach. You may see which of the following signs?", options: ["Dilated pupils", "Hot, dry skin", "Bright red skin on child’s extremities", "Chemical burns around the mouth"], correct: 3 },
+{ question: "A common symptom of poison ingestion is:", options: ["Nausea", "Chest pain", "Muscle pain", "Difficulty in breathing"], correct: 0 },
+{ question: "Scenario: Your 2 year old male patient has ingested an unknown quantity of aspirin. He is conscious and alert. You will most likely be told by medical direction to:", options: ["Administer milk", "Administer activated charcoal", "Induce vomiting", "Administer oral glucose"], correct: 1 },
+{ question: "Scenario: Your 70 year old female patient has ingested an unknown quantity of Tylenol with codeine tablets. She is conscious and alert. You have managed her airway. Your next action should be to:", options: ["Call medical direction", "Administer syrup of ipecas", "Administer activated charcoal", "Administer mineral oil"], correct: 0 },
+{ question: "Scenario: You find an 18 year old unconscious male patient who is lying beside several empty beer bottles. You take body substance isolation precautions and immediately:", options: ["Administer syrup of ipecac", "Manage the airway", "Call medical direction", "Administer activated charcoal"], correct: 1 },
+{ question: "Scenario: A 7 year old female patient has ingested drain cleaner. She has burns about her mouth. Her breathing is adequate. Treatment may include all of the following EXCEPT:", options: ["Irrigate with clean water", "Transport", "Dilute with vinegar and water", "Irrigate with a weak acid solution"], correct: 3 },
+{ question: "Scenario: A 7 year old female patient has ingested drain cleaner. She has burns about her mouth. Her breathing is adequate. Treatment may include all of the following EXCEPT:", options: ["Rising the patient’s mouth and lips", "Maintaining the airway", "Calling medical direction", "Administering activated charcoal"], correct: 3 },
+{ question: "Scenario: You arrive and find a 17 year old male patient standing near his car. He is spitting and coughing after swallowing gasoline. You should practice body substance isolation, manage the airway, and:", options: ["Suction", "Administer activated charcoal", "Call medial direction", "Administer syrup of ipecac"], correct: 2 },
+{ question: "Scenario: A car’s battery exploded in your patient’s eyes. He denies any breathing difficulty. What treatment should you provide next:", options: ["Irrigate eyes with a dilution of vinegar and water", "Irrigate eyes with clean water for at least 20 mins", "Cover both eyes with moist sterile dressings", "Cover both eyes with dry sterile dressings"], correct: 1 },
+{ question: "Scenario: You suspect that your nearly unconscious male patient has ingested sleeping pills and alcohol. He is breathing inadequately. You should be prepared to immediately:", options: ["GIVE OXYGEN BY NASAL CANULA", "ADMINISTER ACTIVATED CHARCOAL", "ADMINISTER SYRUP OF IPECAC", "MANAGE THE AIRWAY"], correct: 3 },
+{ question: "One way to administer activate charcoal is to:", options: ["Cover the container and have the patient sip the medication through a straw", "Have the patient sip the medication very slowly with coffee or tea", "Have the patient drink a little rest, rest, and then drink the remainder", "mix the charcoal with extra water and add a fruit flavoring"], correct: 0 },
+{ question: "Which of the following is a trade name for activated charcoal?", options: ["Diabinese", "Lasix", "Inderol", "actidose"], correct: 3 },
+{ question: "All of the following are contraindications for the use of activated charcoal?", options: ["Aspirin overdose", "Altered mental status", "Ingestion of acids or alkalis", "Patient’s inability to swallow"], correct: 0 },
+{ question: "Scenario: Your patient has ingested a poisonous wild mushroom. After you administer activated charcoal, he vomits. What should you do next?", options: ["Administer milk", "Give artificial ventilation", "Repeat the dose", "Increase oxygen administration"], correct: 2 },
+{ question: "Which of the following is an action of activated charcoal?", options: ["Causes the patient to vomit the poison", "Acts as an antidote during a poisonous ingestion", "Dilutes poisons", "Prevents certain poisons from being absorbed"], correct: 3 },
+{ question: "Life threatening drug or alcohol emergencies are characterized by all of the following EXCEPT:", options: ["Irregular pulse", "Altered mental status", "Seizures", "Intense sweating"], correct: 3 },
+{ question: "Signs and symptoms associated with drug overdose or abuse may be confused with which of the following medical problems?", options: ["Heart attack", "Diabetic emergency", "Asthma", "shock"], correct: 1 },
+{ question: "TO reduce the patient’s anxiety, panic, and confusion you may use:", options: ["Restraints", "The talk-down technique", "Critical incident stress debriefing", "Lights and siren during transport to the hospital"], correct: 1 },
+{ question: "Pain in the mid-back associated with an acute abdomen usually originated in the:", options: ["Peritoneum", "Spleen", "Kidneys", "Large intestine"], correct: 2 },
+{ question: "Which one of the following organs is found in more than one quadrant?", options: ["Gallbladder", "Spleen", "Kidneys", "Large intestine"], correct: 3 },
+{ question: "The function of the liver is to:", options: ["Filter dead red blood cells", "Act as a reservoir for urine", "Regulate carbohydrate metabolism", "Regular water retention"], correct: 0 },
+{ question: "Which one of the following organs aids in the production of red blood cells?", options: ["Kidneys", "Spleen", "Liver", "pancreas"], correct: 1 },
+{ question: "The causes of most cases of acute abdomen pain are:", options: ["Drugs", "Food poisoning", "Not obvious", "Immediately apparent"], correct: 2 },
+{ question: "All patients with abdominal pain should be:", options: ["referred to their personal physician", "Advised to take an over-the-counter medical to relieve discomfort", "Assumed to have a life-threatening condition until proven otherwise", "None of the above"], correct: 2 },
+{ question: "Which of the following is a typical sign of acute abdominal pain?", options: ["A sot abdomen", "A blood pressure of 128/80", "Warm, dry skin", "A distended abdomen"], correct: 3 },
+{ question: "Your patient complains of vomiting “coffee-grounds”. You suspect:", options: ["Possible poisoning", "Possible internal bleeding", "The patient is not telling the truth", "The patient has probably eaten too much choclate cake"], correct: 1 },
+{ question: "Involuntary guarding refers to:", options: ["Right flank pain", "Left flank pain", "A muscle contraction the patient cannot stop", "The patient raising his arms before his head"], correct: 2 },
+{ question: "Most radiant heat loss occurs from:", options: ["A person’s head", "Perspiration", "Exhalation", "A person’s legs"], correct: 0 },
+{ question: "Cooling which affects the entire body is called:", options: ["Hyperthermia", "Frostnip", "Hypothermia", "frostbite"], correct: 2 },
+{ question: "Scenario: A 12 year old patient is suffering from a deep local cold injury to her hands. You should expect to see all of the following signs or symptoms EXCEPT:", options: ["white, waxy skin", "Loss of feeling and sensation in the injured area", "Softness of the skin and the tissue just beneath it", "blisters"], correct: 2 },
+{ question: "Which of the following patients would you be most concerned about during a hypothermic emergency?", options: ["A 30 year old", "A 77 year old", "A 15 year old", "A 44 year old"], correct: 1 },
+{ question: "The severity of hypothermia can be determine by nothing the patient’s decreasing motor function and?", options: ["Skin temperature", "Degree of chest pain", "Level of nausea", "Decreasing mental status"], correct: 3 },
+{ question: "All of the following are typical signs or symptoms of hypothermia EXCEPT:", options: ["slowly responding pupils", "Stiff or rigid posture", "Anxiety and a sense of doom", "Red skin in the early stages"], correct: 2 },
+{ question: "Which of the following signs or symptoms might you expect to see in a patient suffering from hypothermia?", options: ["Incoherence", "Excessive mucous production", "Blood-tinged sputum", "Burning or itching in the underarms"], correct: 0 },
+{ question: "You should suspect severe hypothermia when the patient:", options: ["Complains of chest pain", "Shivers intensely", "Is no longer shivering", "Complains of numbness and tingling"], correct: 2 },
+{ question: "Rough handling of the patient suffering from severe hypothermia may cause:", options: ["Ventricular fibrillation", "Nausea and vomiting", "Increased shivering", "Decreased shivering"], correct: 0 },
+{ question: "Emergency care for the early local cold injury includes:", options: ["Gently massaging affected area", "Warming the affected area", "Covering the affected area with warm moist dressings", "All of the above"], correct: 1 },
+{ question: "If you cannot detect a pulse or respiration in your unresponsive hypothermic patient but do note some movement, you should:", options: ["Raise the feet higher than the head", "Begin CPR immediately", "Begin the defibrillation procedure", "Contact medical control"], correct: 3 },
+{ question: "To assess the skin temperature of the patient suffering from hypothermia, place your hand:", options: ["on the patient’s forehead", "On the back of the patient’s neck", "Between the clothing and the patient’s abdomen", "On the patient’s cheek"], correct: 2 },
+{ question: "Passive rewarming of the hypothermic patient involves:", options: ["Applying external heat sources", "Allowing the body to rewarm itself", "Giving the patient warm liquids", "All of the above"], correct: 1 },
+{ question: "Scenario: Your hypothermic patient is alert and responding appropriate. All of the following are acceptable emergency care steps EXCEPT:", options: ["Removing the patient’s wet clothing", "Transporting the patient to the hospital", "Covering the patient with warm blankets", "Rewarming the patient’s limbs"], correct: 3 },
+{ question: "During core rewarming of the hypothermic patient you apply heat to all the following areas EXCEPT:", options: ["Head", "Soles of the feet", "Armpits", "Lower back"], correct: 1 },
+{ question: "You suspect a heat-related emergency if the patient:", options: ["Is wheezing", "Complains of leg cramps after running 3 miles", "Has breath which smells like nail polish remover", "Complains of “itchy” skin on a warm summer day"], correct: 1 },
+{ question: "During your care of the heat emergency patient with hot, dry, skin, you apply packs to the neck, armpits, and:", options: ["Groin", "Feet", "Lower back", "abdomen"], correct: 0 },
+{ question: "Management for your patient who was stung by a bee includes:", options: ["placing the affected site above the level of the patient’s heart", "Pulling the stinger out with tweezers", "Applying a hot pack to the affected sit", "Removing jewelry from any affected limb"], correct: 3 },
+{ question: "Water-related accidents typically involve all of the following EXCEPT:", options: ["Substance abuse", "Heat-related emergencies", "Generalized cooling", "Cardiac arrest"], correct: 1 },
+{ question: "Scenario: While attempting to ventilate a near-drowning patient, you meet resistance in the airway. You should apply firm pressure to the:", options: ["Epigastric area", "Cricoid ring", "Upper back", "Upper chest"], correct: 0 },
+{ question: "A near-drowning patient is successfully resuscitated. He does not want to be transported. You should:", options: ["Tell the patient is contact his personal physician", "Tell the patient to drive to the nearest facility", "Attempt to convince the patient to be transported", "Give the patient instructions to call 9-1-1 if any breathing difficulties occur"], correct: 2 },
+{ question: "Signs and symptoms that a patient is experiencing a behavioral change due to a physical problem include:", options: ["Visual hallucinations", "The patient’s memory remaining intact", "Orientation to person, place, and time", "Symptoms that have developed over several days"], correct: 0 },
+{ question: "All of the following conditions are common causes of behavioral emergencies EXCEPT:", options: ["Low blood sugar", "Lack of oxygen", "Head trauma", "Allergic reaction"], correct: 3 },
+{ question: "Of the following, the most common method of suicide is:", options: ["Wrist slashing", "Drug ingestion", "Carbon monoxide inhalation", "Self-inflicted gunshot wounds"], correct: 3 },
+{ question: "Scenario: A 14 year old male patient has a self-inflicted bullet wound to his abdomen. He is conscious and alert but refuses emergency care. You believe he has a life-threatening emergency. You should:", options: ["Provide care since it is better to err on the side of treatment than to abandon the patient", "Have the patient sign a refusal of treatment form, then return to your station", "Wait for the patient to become unconscious. Then provide emergency care", "Contact dispatch and request law enforcement to restrain the [patient] since a..."], correct: 0 },
+{ question: "Scenario: A 16 year old female patient has ingested an unknown quantity of sleeping pills. She is conscious, but refuses emergency care. Her mother is present. You should:", options: ["Seek permission for treatment from the mother", "Have the mother witness the refusal of treatment form and report your action to the dispatcher", "Contact law enforcement and have the patient arrested", "Have the girl sign a refusal of care form since she is an [emancipated minor]"], correct: 0 },
+{ question: "Scenario: A 16 year old minor patient has ingested hallucinogenic mushrooms. He is vomiting excessively. He agrees to treatment, but does not want to be transported. Your next action should be to:", options: ["Contact medical direction", "Leave after advising the family physician of the situation", "Request that the patient sign a release form and return to your station", "Stay with the patient until he has recovered"], correct: 0 },
+{ question: "As an EMT-B you may legally transport an adult patient without his consent if:", options: ["the patient threatens to harm himself or others", "The patient’s family requests transport", "The patient’s physician requests transport", "Your paramedic supervisor orders you to"], correct: 0 },
+{ question: "A 16 year old patient may be considered an adult in many states if:", options: ["She has a valid driver’s license", "She is pregnant", "Her parents cannot be contacted", "She has suffered an injury that requires treatment"], correct: 1 },
+{ question: "When managing a behavioral emergency patient who refuses care you should know:", options: ["Your state laws and local protocol", "The national guidelines", "The national protocols", "The exact cause of the emergency"], correct: 0 },
+{ question: "When interviewing a patient who is experiencing a behavioral emergency:", options: ["Ask questions that can be answered simply “yes” or “no”", "Do not repeat or rephrase what the patient says", "Acknowledge the patient’s feelings", "All of the above"], correct: 2 },
+{ question: "If there is a need to restrain your patient, you should:", options: ["Plan your activities before you attempt to restrain", "Attempt to restrain the patient by yourself first, as too many people frighten him or her", "Use pain to make the patient submit to your control", "Approach and restrain the patient in a slow, deliberate manner"], correct: 0 },
+{ question: "Your first concern when you are called to care for a patient who has attempted suicide should be:", options: ["preserving any evidence at the scene", "Your own safety", "Treating life-threatening conditions", "The patient’s safety"], correct: 1 },
+{ question: "After ensuring the safety of the scene at a behavioral emergency, you should:", options: ["Treat life-threatening problems", "Begin restraint procedures", "Call medical direction", "Call law enforcement"], correct: 0 },
+{ question: "You should manage the restrained patient who is spitting by:", options: ["Placing a surgical mask on the patient", "Turning the patient face down on a stretcher", "Covering patient’s face with a. towel", "Covering patient’s face with an emesis basin"], correct: 0 },
+{ question: "The tape or sterilized cord contained in the obstetric kit are used to:", options: ["Tie the umbilical cord", "Secure the blanket around the baby", "Secure the oxygen mask on the baby’s face", "Tie a delivery tag to the baby’s wrist for identification"], correct: 0 },
+{ question: "Which of the following is a common sign or symptom of a predelivery emergency?", options: ["mother’s skin is red and dry", "Profuse vaginal bleeding", "Blood shiw", "Itchy skin"], correct: 1 },
+{ question: "Management of the patient who has suffering a miscarriage may include:", options: ["Placement of a sanitary napkin in the vagina", "Transport in a sitting position", "Treatment for shock", "Removal of any tissues from the vagina"], correct: 2 },
+{ question: "Scenario: Your patient is a 23 year old experiencing labor pains. You need to decide if you should transport or prepare for the baby’s delivery. Which of the following should you ask the woman?", options: ["How long have you had labor pains?", "Has your bag of water broken", "How often are the contractions occurring", "All of the above"], correct: 3 },
+{ question: "Crowning occurs when the:", options: ["Placenta separates from the uterine wall", "Umbilical cord presents at the vaginal opening", "Baby’s head is visible at the vaginal opening", "Placenta is formed in an abnormal location"], correct: 2 },
+{ question: "When delivering a baby you should perform all of the following EXCEPT:", options: ["Pulling on the baby’s head to assit delivery of the shoulders", "Positioning your gloved hands at the vaginal opening", "Spreading your fingers around the baby’s head", "Assuring that your partner is present during the delivery"], correct: 0 },
+{ question: "When the baby’s head is delivered, you see the umbilical cord is wrapped around the baby’s neck. You should immediately:", options: ["transport, since no basic life-support care can be provided", "Gently attempt to remove the cord from around the baby’s neck", "Delay delivery by gently pushing on the baby’s head", "Quickly deliver the baby and transport immediately"], correct: 1 },
+{ question: "Which of the following is correct way to use the rubber bulb syringe when managing the newborn’s airway?", options: ["Compress the syringe after placing it in baby’s mouth and nose", "Compress the syringe before placing it in baby’s mouth and nose", "Compress the syringe and suction only the nose", "Compress the syringe and suction only the mouth"], correct: 1 },
+{ question: "In order to assist in controlling the airway, once the baby has been delivered you should:", options: ["Keep baby above the level of the mother’s vagina", "Keep the infant level with the mother’s vagina", "Keep baby below the level of the mother’s vagina", "Lay the baby on its back with the head higher than the body"], correct: 1 },
+{ question: "You are unable to loosen or slip the umbilical cord from around the baby’s neck. Your next action should be to:", options: ["Delay delivery by gently pushing on the baby’s head", "Clamp the cord in two places and transport", "Clamp the cord in two places and cut the cord between the clamps", "Cut the cord and then apply direct pressure to the ends of the cord"], correct: 2 },
+{ question: "When trying or clamping the umbilical, you should apply the clamp:", options: ["Quickly to cu the cord", "4 finger widths from the infant", "When the cord is still pulsating", "After the placenta has been delivered"], correct: 1 },
+{ question: "How should you assist in a placental delivery?", options: ["Pull gently on the cord", "Ask mother to keep her legs together", "Grasp the placenta gently, rotate it, and guide it", "Push on the placenta"], correct: 2 },
+{ question: "All of the following are appropriate methods for controlling post-delivery bleeding EXCEPT:", options: ["Massaging the uterus", "Placing a sanitary napkin over the vaginal opening", "Elevating the mother’s feet", "Placing a sanitary napkin into the vagina"], correct: 3 },
+{ question: "A sign of a depressed newborn is a respiratory rate of:", options: ["30 or greater", "40 or greater", "50 or greater", "60 or greater"], correct: 3 },
+{ question: "If your newborn patient does not breath within the appropriate period of time, you should gently but vigorously:", options: ["Flick the palms of its hands", "Rub the baby’s chest", "Slap its bottoms", "Rub the baby’s back in a circular motion using three fingers"], correct: 3 },
+{ question: "While assessing a mother in labor you see both of the newborn’s legs are protruding from the vaginal opening. You should immediately:", options: ["Initiate rapid transport", "Attempt to deliver baby by gently pulling on one leg", "Attempt to deliver baby by gently pulling on both legs", "Ask mother to hold her legs together while you prepare for delivery"], correct: 0 },
+{ question: "All of the following are true regarding multiple births EXCEPT:", options: ["The second baby may be born either before or after the placenta is delivered", "The babies are typically smaller than a single birth", "You should be prepared for multiple resuscitation", "A multiple birth is considered a complication"], correct: 0 },
+{ question: "One of the most important steps you can take in caring for the premature baby is to:", options: ["Give the baby high-concentration oxygen by nonrebreather mask", "Keep the baby warm", "Suction fluids from only the nose", "Give the baby to family members to establish a bond"], correct: 1 },
+{ question: "A patient who has fallen ________, with a feet-first landing, will probably have a spinal injury.", options: ["twice his height", "5 feet", "Three times his height", "8 feet"], correct: 2 },
+{ question: "During a motor vehicle collision, the stage in which the patient comes to a quick stop on some part or parts of the inside of the vehicle is known as the:", options: ["Organ collision", "Body collision", "Secondary collision", "Physologic collison"], correct: 1 },
+{ question: "A common injury received in a rear-end motor vehicle collisions results in the anterior ligaments of the neck being stretched or torn and is called:", options: ["Whiplash", "Paper bag syndrome", "Spider web injury", "Dissipation injury"], correct: 0 },
+{ question: "During a frontal impact collision, the driver will:", options: ["Continue to accelerate", "Continue to move forward, but more slowly than the vehicle was traveling", "Continue moving forward at the same speed the vehicle was traveling", "Stop moving forward at the same time the vehicle stops"], correct: 2 },
+{ question: "Cavitation greatly extends the tissue damage caused by a bullet because:", options: ["The hole in the tissues is larger than the diameter of the bullet", "The bullet tumbles after it enters the body", "The bullet explodes into many fragments", "The bullet causes an exit wound"], correct: 0 },
+{ question: "The “golden hour” is a standard parameter for emergency care. The severely injured patient has the best chance for survival if:", options: ["The patient arrives at the emergency department withing one hour of the injury", "Surgical intervention takes place within one hour of the injury", "Surgical intervention takes place within one hour after the patient’s arrival at the hospital", "The ambulance arrives at the scene within one hour of the injury"], correct: 1 },
+{ question: "The circulatory system is responsible for:", options: ["Taking in oxygen and getting rid of wastes", "Electrolyte balance", "Distribution of blood to the body", "Breaking down foods into usable energy"], correct: 2 },
+{ question: "A blood vessel with thick, muscular walls that carries blood away from the heart is a(n):", options: ["Artery", "Capillary", "Vein", "venule"], correct: 0 },
+{ question: "External bleeding that is a steady flow of dark red blood is from a(n):", options: ["Artery", "Vein", "Capillary", "All of the above"], correct: 1 },
+{ question: "You should use the pressure point at the brachial artery to control bleeding from the:", options: ["Upper extremity", "Lower extremity", "Face", "foot"], correct: 0 },
+{ question: "Of the following, your first step in the care of a trauma patient is:", options: ["Control of external hemorrhage", "Opening and maintaining the airway", "Assessment of the carotid pulse", "Assessment of respirations"], correct: 1 },
+{ question: "Your care for the patient with internal bleeding should include all of the following EXCEPT:", options: ["maintaining ABCs", "Fluids by mouth", "Control of any external bleeding", "Immediate transport to the appropriate facility"], correct: 1 },
+{ question: "Of the following, which is a neurological sign or symptom associate with hypoperfusion?", options: ["Nausea and vomiting", "Increased pulse", "Decreased blood pressure", "Altered mental status"], correct: 3 },
+{ question: "Your first priority when dealing with a patient in shock should be:", options: ["Maintaing an open airway", "Controlling external hemorrhage", "Assessing the carotid pulse", "Administering high concentration oxygen"], correct: 0 },
+{ question: "An injury in which the epidermis remains intact, but cells and blood vessels in the dermis may be damaged is called a(n):", options: ["Avulsion", "Concussion", "Contusion", "evisceration"], correct: 2 },
+{ question: "When force is transmitted to the body’s internal structure causing internal organs to rupture or bleed internally, the injury is called a(n):", options: ["Crush injury", "Concussion", "Contusion", "avulsion"], correct: 0 },
+{ question: "A hematoma may be an indication of internal injuries and internal bleeding. It is important for you to monitor for any signs and symptoms of:", options: ["Low blood sugar", "Shock", "Infection", "Hypothermia"], correct: 1 },
+{ question: "An injury in which flaps of skin and tissues are torn loose or pulled off completely is called a(n):", options: ["Laceration", "Abrasion", "Avulsion", "puncture"], correct: 2 },
+{ question: "Scenario: A 32 year old female patient has amputated her index finer in a table-saw accident. You have bandaged her hand. The best way to transport the amputated finger is:", options: ["By placing the finger directly in ice", "By wrapping the figner wel in an occlusive dressing", "By placing the finger directly in sterile saline", "By wrapping the finger in gausze, placing it in a plastic bag and keeping it as cool as possible"], correct: 3 },
+{ question: "Scenario: A 23 year old male patient has been involved in a motor vehicle crash and has an open abdominal injury with a protruding bowel. Your treatment of the injury should include:", options: ["Replacing the exposed bowel", "Keeping the patient’s legs straight", "Covering the exposed bowel with a sterile dressing moistened with saline", "Covering the bowel with dry sterile gauze prior to transport"], correct: 0 },
+{ question: "As an EMT-B you should be familiar with the various types of dressings and bandages. As a rule, dressings should:", options: ["Be sterile", "Provide an air-tight seal", "Be placed over all bandages", "All of the above"], correct: 0 },
+{ question: "All of the following are true regarding bandages EXCEPT:", options: ["Bandages should always be sterile", "A bandage is sued to secure a dressing in place", "Adhesive tape may be used to secure bandages", "If a bandage becomes blood-soaked, do not remove it"], correct: 0 },
+{ question: "An important point to remember when bandaging an open wound:", options: ["Cover fingers or toes when bandaging hands and feet", "Proceed from distal to proximal when applying the bandage", "Leave jewelry in place on injured extremities", "Leave the edges of the dressing visible around the bandage"], correct: 1 },
+{ question: "To properly apply a pressure dressing and bandage to an open wound, it is important that you:", options: ["Apply a tourniquet to control bleeding", "Replace any dressings that become blood-soaked", "Apply an antiseptic solution to the wound", "Check distal pulses to be sure the bandage is not too tight"], correct: 3 },
+{ question: "Scenario: You respond to a farm accident in which an 18 year old man has had his right leg amputated below the knee. After your patient has been appropriately managed, the amputated legs should be:", options: ["Transported wrapped in a sterile dressing, and kept as cool as possible", "Transported wrapped in a sterile dressing, and immersed in cold water", "Left at the scene for the medical examiner", "Transported packed directly in ice"], correct: 0 },
+{ question: "A full thickness burn that involves more than 10 percent of the body surface is classified as a:", options: ["Minor burn", "Moderate burn", "Critical burn", "Circumferential burn"], correct: 2 },
+{ question: "Scenario: Your 42 year old male patient was involved in a house fire. His lower legs have been burned. They are charred black, but your patient states he has little pain. This burn would be classified as:", options: ["Partial thickness", "Full thickness", "Superficial", "minor"], correct: 1 },
+{ question: "Scenario: You respond to a burn patient at a house fire. Upon your arrival, one of the firefighters assists a 34 year old male patient to your ambulance. The patient is conscious and alert. He has full thickness burns to both hands and forearms. He also has partial thickness burns to his chest. Your treatment should include:", options: ["Soaking the burned area in saline and wrapping with sterile dressing", "Carefully wrapping the burned areas with a dry sterile dressing", "Applying an antiseptic ointment to the burns prevent infection", "Applying ice to the burned areas to cool them"], correct: 1 },
+{ question: "An important reason to splint a closed painful, swollen, deformed injury is to [prevent]:", options: ["Shock", "Hypothermia", "Cardiac arrest", "Brain damage"], correct: 2 },
+{ question: "An important reason to splint a closed painful, swollen, deformed injury is to:", options: ["Cover any external injuries", "Prevent it form becoming an open injury", "Allow the patient to move the injured extremity without pain", "Restrict blood flow to reduce swelling"], correct: 1 },
+{ question: "If your patient with an extremity injury also has a life-threatening condition that requires immediate transport, the fastest way of splinting would be to secure:", options: ["The injured limb to the torso", "The injured limb to an uninjured limb", "The entire body to a spine board", "Each injury individually to a rigid splint"], correct: 2 },
+{ question: "Scenario: Your 34 year old male patient has sustained a painful, deformed shoulder, inured while playing baseball. The patient has good pulse, motor function, and sensation in the distal extremity. Before you attempt to move him, you should:", options: ["Attempt to realign the shoulder", "Splint the shoulder as you find it", "Let the patient attempt to realign the shoulder himself", "Transport the patient as is, since you cannot splint a shoulder injury"], correct: 1 },
+{ question: "If you apply a splint improperly, the complications may include all of the following EXCEPT:", options: ["Further soft tissue injury", "Development of an open fracture", "Compression of injured nerves and blood vessels", "Excessive distal circulation"], correct: 3 },
+{ question: "Scenario: Your 35 year old male patient has fallen while rock climbing. During your assessment you find deformed right lower leg. The distal extremity is pulseless and the skin is cool and cyanotic. Your emergency treatment for this injury should include:", options: ["Splinting the extremity as it is", "Attempting to realign the injured extremity", "Applying a traction splint", "Moving the patient to your ambulance before splinting"], correct: 1 },
+{ question: "Traction splints are specifically designed to splint injuries to the:", options: ["Upper arm", "Lower arm", "Upper leg", "Cervical spine"], correct: 2 },
+{ question: "Use of a traction splint is contraindicated if your patient:", options: ["Has a knee injury", "Has a back injury", "Has a femur injury", "Has no distal pulse in the injured extremity"], correct: 0 },
+{ question: "The component of the central nervous system that decides how to respond to changing conditions inside and outside the body is the:", options: ["Spinal cord", "Peripheral nerves", "Sensory nerves", "brain"], correct: 3 },
+{ question: "Scenario: You are caring for a 36 year old, conscious, male patient. He was the driver of an automobile struck on the driver’s side by another automobile at approximately 45 mph. He has an open soft tissue injury to the left side of his face. You should assume from this injury that the patient also has a:", options: ["Low back injury", "Cervical spine injury", "Pelvic injury", "Abdominal injury"], correct: 1 },
+{ question: "Which of the following is an indication of an open skull injury?", options: ["Pooling of blood within the brain", "Pooling of blood within the skull", "Pieces of bone protruding through the scalp", "Tearing of the brain tissue"], correct: 2 },
+{ question: "An oriented patient should be aware of the time, his name, and:", options: ["Who the president of the United states is", "Where he is", "What temperature is", "What happened"], correct: 1 },
+{ question: "After you have determine the patient’s degree of alertness, you should next determine:", options: ["Response to verbal stimulus", "Response to painful stimulus", "Orientation", "Unresponsiveness"], correct: 0 },
+{ question: "Of the following, a sign of a deep state of unresponsiveness is when the patient:", options: ["Cries out in pain", "Mumbles incoherently", "Extends both arms and legs and arch his back", "Closes his eyes tightly, and refuses to open them"], correct: 2 },
+{ question: "Raccoon sign is an indication of:", options: ["Unconsciousness", "Intracranial bleeding", "A brain stem injury", "A cervical spine injury"], correct: 1 },
+{ question: "Battle’s sign is recognized as:", options: ["Bleeding from the nose", "Clear fluid from the nose and ears", "Purplish discoloration around the mastoid", "Purplish discoloration around the eyes"], correct: 2 },
+{ question: "When treating a head-inured patient, you should first:", options: ["Take body substance isolation precautions", "Manage the airway", "Provide oxygen", "Determine the level of consciousness"], correct: 0 },
+{ question: "Scenario: You suspect your head-injured patient has suffered a neck injury. To manage the airway you should perform:", options: ["A head-tilt-maneuver", "A modified chin-lift-maneuver", "A modified jaw-thrust technique", "A tongue-jaw-lift technique"], correct: 2 },
+{ question: "The most frequent cause of death in the head injured patient is:", options: ["Lack of blood pressure", "Lack of oxygen", "Lack of blood", "Lack of glucose"], correct: 1 },
+{ question: "Scenario: A head-injured patient’s respirations are 6 per minute. To treat this patient, you should:", options: ["Administer low concentration oxygen via a nonrebreather mask", "Hyperventilate the patient at 24 to 30 breaths per minute", "Hyperventilate the patient at 20 breaths per minute", "Ventilate the patient at 12 to 20 breaths per minute"], correct: 1 },
+{ question: "All of the following are signs or symptoms of head injury EXCEPT:", options: ["Unequal pupils", "Irregular breathing", "Hypotension", "Nausea or vomiting"], correct: 2 },
+{ question: "Most messages sent from the brain to other parts of the body must first travel along the:", options: ["Spinal cord", "Peripheral nerves", "Sensory nerves", "Autonomic nerves"], correct: 0 },
+{ question: "The system that provides support and protection to the body is the:", options: ["Integumentary system", "Skeletal system", "Endocrine system", "Circulatory system"], correct: 1 },
+{ question: "Scenario: Your patient was the driver of a vehicle struck on the driver’s side by another automobile travelling at a speed of about 45 mph. This mechanism of injury suggest possible cervical spine injury due to:", options: ["Extension", "Distraction", "Flexion", "Lateral bending"], correct: 3 },
+{ question: "One sign of spine injury is priapism, which is:", options: ["Lack of sensation to the distal extremities", "Persistent erection of the penis", "Cramping of the fingers and toes", "Loss of bladder control"], correct: 1 },
+{ question: "One of the most reliable signs of spinal injury in a conscious patient is:", options: ["Pain with movement", "Pain without movement", "Paralysis of the extremities", "Unequal pupils"], correct: 2 },
+{ question: "You should open the airway of a trauma patient by using the:", options: ["head-tilt, chin-lift maneuver", "Head-tilt, neck-lift maneuver", "Jaw thrust, head-tilt maneuver", "Jaw thrust maneuver"], correct: 3 },
+{ question: "A short spine board is appropriate to use in immobilizing a patient who is:", options: ["Standing", "Lying on a hard suface", "Lying on a soft surface", "Seated in a vehicle"], correct: 3 },
+{ question: "When using a short spine to immobilize a patient involved in a motor vehicle crash, the patient’s head should be secured:", options: ["Last", "First", "After the patient is removed from the vehicle", "As soon as the patient is placed on a long spine board"], correct: 0 },
+{ question: "Scenario: You are caring for a 52 year old unconscious male patient who was the passenger in a vehicle struck by a semi-truck. He has an open head wound and bruising to the chest and abdomen. His respirations are 28 per minute and his pulse is 140 per minute. His skin is very cool and clammy. Your choice for extricating this patient is:", options: ["full immobilization with a short spine board", "Full immobilization with a KED", "Rapid extrication", "Using only the chest straps on the short spine board"], correct: 2 },
+{ question: "When using a rapid extrication procedure for a high priority patient:", options: ["A long spine board is slid between the patient and the vehicle seat", "A cervical collar is not used", "The patient is secured to a short spine board prior to extrication from the vehicle", "The roof of the vehicle must be removed"], correct: 0 },
+{ question: "All of the following are steps in performing a rapid extrication EXCEPT:", options: ["The patient is brough into alignment with manual stabilization", "A long spine board is positioned next to the patient", "A short spinal immobilization device Is placed behind the patient", "A cervical collar is applied"], correct: 2 },
+{ question: "In caring for a patient involved in a motorcycle crash you decide to remove the patient’s helmet. To do so, one EMT-B should be at the top of the patient’s head holding the helmet while another EMT-B places his hands:", options: ["On the patient’s mandible and forehead", "On the patient’s mandible and at the back of the head", "Under the patient’s neck and on the forehead", "Under the patient’s neck and on the clavicle"], correct: 1 },
+{ question: "The clear, portion of the eye which covers the pupil is called the:", options: ["sclera", "Cornea", "Iris", "Conjuctiva"], correct: 1 },
+{ question: "Which of the following is the actual number of facial bones?", options: ["2 bones", "6 bones", "13 bones", "14 bones"], correct: 3 },
+{ question: "The only moveable facial bone is the:", options: ["Zygomatic", "Maxillae", "Mandible", "nasal"], correct: 2 },
+{ question: "Any injury to the neck should lead you to suspect:", options: ["An air emobolism", "An irregular pulse", "A spinal cord injury", "A loss of consciousness"], correct: 2 },
+{ question: "To open the airway of a patient who has suffered a facial injury you should perform:", options: ["A head-tilt maneuver", "A modified chin-lift maneuver", "The jaw-thrust maneuver", "The tongue-jaw-lift maneuver"], correct: 2 },
+{ question: "After taking body substance isolation precautions, your next step when treating the eye, face, or neck injury patient should be to:", options: ["Manually stabilize the head and neck", "Perform a modified chin-lift", "Perform a jaw-thrust maneuver", "Begin ventilations"], correct: 0 },
+{ question: "You should consider requesting ALS backup for the eye, face, or neck injury patient during the:", options: ["Scene size up", "Initial assessment", "Focused history and physical exam", "Detailed physical exam"], correct: 1 },
+{ question: "TO treat an eye injury due to a chemical burn you should:", options: ["Irrigate eyes with water or saline", "Apply salve", "Irrigate the eyes with diluted alcohol", "Neutralize the chemical with vinegar"], correct: 0 },
+{ question: "Which of the following are signs or symptoms of a suspected orbital fracture?", options: ["Loss of sensation over the eyebrow", "Clear fluid from the ears", "Paralysis of the patient’s downward gaze", "Increased sensation of the upper lip"], correct: 0 },
+{ question: "All of the following are common signs or symptoms of injuries to the globe EXCEPT:", options: ["Bruising", "Laceration", "A pear-shaped eyeball", "Blood in the posterior chamber"], correct: 3 },
+{ question: "Injuries to the globe should be treated by applying:", options: ["A pressure dressing only", "A pressure dressing soaked in saline", "A patch to the injured eye only", "A patch to both eyes"], correct: 3 },
+{ question: "To treat an impaled object in the eye you should:", options: ["Apply a pressure dressing", "Apply a dry sterile dressing", "Encircle the eye with gauze dressing", "Use a Styrofoam cup"], correct: 2 },
+{ question: "When assessing injuries to the face, mouth, or jaw it is most important to determine:", options: ["Where the fractures are", "Whether or not a fracture is present", "Whether the patient has any DCAP_BTLS signs or symptoms", "Who caused the injuries"], correct: 2 },
+{ question: "TO manage the airway of a facial injury patient you should:", options: ["Use an orophyarngeal airway", "Insert a bite stick", "Suction any blood or debris", "None of the above"], correct: 2 },
+{ question: "Appropriate airway management of the facial injury patient may include:", options: ["Grasping the tongue and pulling it forward", "Inserting an oropharyngeal airway", "A head-tilt, chin-lift maneuver", "Inserting a nasopharyngeal airway"], correct: 0 },
+{ question: "Scenario: Your patient has a knitting needle in his cheek. It is all the way through and loose. You should:", options: ["Stabilize it with bulky dressings", "Have the patient remove it", "Push the needle out of the cheek", "Attempt to cut it off"], correct: 2 },
+{ question: "Scenario: Your patient has severed his ear. To care for the ear you should place it in:", options: ["Saline soaked gauze", "Water soaked gauze", "Dry sterile dressing", "ice"], correct: 0 },
+{ question: "Scenario: You notice bleeding from the patient’s ear. To stop the bleeding you should:", options: ["Pack the ear with sterile dressing", "Apply pressure dressing", "Apply ice pack", "Place a loose dressing across the opening of the ear"], correct: 3 },
+{ question: "Scenario: Your patient has a severed carotid artery. To treat the patient you should:", options: ["Wrap a pressure dressing around the wound", "Use a circumferential bandage", "Probe the wound and attempt to pinch the artery closed", "Apply an occlusive dressing"], correct: 3 },
+{ question: "The mediastinum is a hollow area that contains a number of major body structures, including the:", options: ["Stomach", "Lungs", "Aorta", "spleen"], correct: 2 },
+{ question: "A sucking chest wound should be treated quickly, because it may progress to the life-threatening condition called a:", options: ["Flail segment", "Hemothroax", "Pericardial tamponade", "Tension pneumothroax"], correct: 3 },
+{ question: "Scenario: A 19 year old male has been stabbed in the chest with a knife, which is still protruding from the wound. Your treatment should include:", options: ["Removing the knife and sealing the wound with an occlusive dressing", "Removing the knife and packing bulky dressing in the wound", "Taping the knife to the chest to stabilize it", "Cutting the top of the kife off for easier transport"], correct: 2 },
+{ question: "Scenario: Your patient has an open chest wound received when he was stabbed with a screwdriver. You have placed an occlusive dressing over the wound to completely seal it. Several minutes later, your patient becomes short of breath, his respiratory rate increases, and breath sounds on the injured side disappear. Your first action should be to:", options: ["Lift a corner of the occlusive dressing to allow air to escape", "Begin positive pressure ventilations", "Increase the liter flow of oxygen", "Remove the occlusive dressing and leave it off during transport"], correct: 0 },
+{ question: "An example of a vascular structure found in the abdominal cavity is the:", options: ["Aorta", "Urinary bladder", "Liver", "kidney"], correct: 0 },
+{ question: "Solid organs found in the abdominal cavity include the:", options: ["Vena cava", "Stomach", "Gallbladder", "pancreas"], correct: 3 },
+{ question: "Your treatment for a patient with an abdominal evisceration should include all of the following EXCEPT:", options: ["Exposing the wound", "Positioning the patient on his back with legs flexed", "Applying sterile dressing soaked in saline or sterile water", "Replacing the protruding organs"], correct: 3 },
+{ question: "Care for an open chest wound and an abdominal evisceration are similar in that:", options: ["Moist dressings are placed on both wounds", "If the wounds are sealed, air must be periodically released", "Occlusive dressings are used on both wounds", "Both types of wounds can cause jugular vein distention"], correct: 2 },
+{ question: "Before the patient can be extricated from a tractor, the machine needs to be shut down and:", options: ["The diesel fuel emptied from the fuel tank", "The battery removed from the tractor", "Stabilized", "Moved onto flat ground"], correct: 2 },
+{ question: "Scenario: During a tractor rollover, the tires have pinned your patient to the ground. To extricate the patient you should:", options: ["Attempt removal of the dirt below the tractor", "Deflate the tires", "Use a come along to pull the tractor", "All of the above"], correct: 0 },
+{ question: "A common source of injury from an agricultural combine is the:", options: ["Safety lock", "Auger", "Hydrauilic wedge", "Oscillating baler"], correct: 1 },
+{ question: "To remove a patient trapped in a hay baler, you should:", options: ["Use an oxyacetylene torch", "Reverse the direction of rotation", "Disassemble the lines", "Tighten the drive belts"], correct: 2 },
+{ question: "Silo gas smells like:", options: ["Manure", "Household bleach", "Roten eggs", "acetone"], correct: 1 },
+{ question: "Silo gas is produced by:", options: ["Liquid manure", "Fermenting crops", "Meat processing", "Sugar beet processing"], correct: 1 },
+{ question: "Hydrogen sulfide comes from:", options: ["Grain tanks", "Liquid manure", "Tractor exhaust", "silos"], correct: 1 },
+{ question: "When caring for a toddler, it is important to remember that a toddler:", options: ["Does not mind being separated from his caregiver", "Has little fear of anything", "May apologize for being hurt", "Does not mind being touched"], correct: 2 },
+{ question: "Scenario: You are caring for a 16 year old male who was the driver of a car involved in a collision. While assessing your patient, remember that adolescents:", options: ["Are very cautious and rarely take risk", "Are not overly concerned with modesty or about their appearance", "May be reluctant ot disclose information about their personal habits", "Usually do not want their peers around when they are hurt"], correct: 2 },
+{ question: "Because an infant has a smaller circulating blood volume than an adult:", options: ["A comparatively small blood loss in an infant would constitute a major hemorrhage for an adult", "External bleeding must be stopped as quickly as possible", "The respiratory rate is slower than an adult’s", "The heart rate is slower than an adults"], correct: 1 },
+{ question: "Scenario: Your responsive 4 year old male patient has swallowed a marble that is causing a complete airway obstruction. Your immediate care should include:", options: ["CPR", "Oxygen by pediatric nonrebreather", "Backblows and chest thrusts", "Abdominal thrusts"], correct: 3 },
+{ question: "Scenario: You are caring for a 10 month old female patient. She has swallowed a piece of a hot dog that is causing an airway obstruction. Your treatment should include:", options: ["Backblows and chest thrusts", "Blind finger sweep to attempt removal of the object", "High-concentration oxygen by blow by or nonrebreather", "Ventilations by bvm and oxygen"], correct: 0 },
+{ question: "When caring for a pediatric patient in respiratory failure, general guidelines include:", options: ["Performing blind finger sweeps to relieve airway obstructions", "Suctioning the airway for 20 to 30 seconds", "Using a 750 ml BVM for infants", "Padding beneath the shoulder blades to maintain an open airway"], correct: 3 },
+{ question: "One of the most reliable signs of early hypoperfusion in a 2 year old is:", options: ["A decreased blood pressure", "Strong peripheral pulses", "Delayed capillary refill", "Excessive tear production"], correct: 2 },
+{ question: "In infants and children, the primary cause of cardiac arrest is:", options: ["Shock", "Respiratory failure", "Hypothermia", "seizures"], correct: 1 },
+{ question: "The number-one killer of American children from ages 1 to 14 is:", options: ["Motor vehicle crashes", "Firearms", "Airway obstruction", "Burns"], correct: 0 },
+{ question: "Scenario: You arrive at the scene of a bicycle crash involving a car. Your 10 year old male patient was riding the bike. He is unconscious and has a great deal of bleeding from an open leg wound. Your first action should be:", options: ["Controlling bleeding from the leg wound to prevent shock", "Assuring an open airway and cervical spine stabilization", "Applying a pediatric PASG", "Administering high concentration oxygen"], correct: 1 },
+{ question: "If you suspect your pediatric patient has been physically abused you should:", options: ["Transport the child and report your suspicions to the emergency department staff", "Have local law enforcement respond to the scene to question the parents", "Ask the child if he has been abused", "Make your suspicions known to both the parents and the child at the scene"], correct: 0 },
+{ question: "When positioning a patient who has chest pain or discomfort with signs of hypertension, you should:", options: ["Lay him flat on his stomach", "Lay him flat on his back", "Place him in a position of comfort", "Lay him flat on his back with his legs elevated"], correct: 2 },
+{ question: "The method for transferring a bed-level patient to a wheeled ambulance stretcher is the:", options: ["Extremity transfer", "Side carry method", "Draw sheet method", "Log roll technique"], correct: 2 },
+{ question: "When a patient who has no suspected spine injury needs to be lifted from the ground to the stretcher, the EMT-B often uses the:", options: ["Extremity lift", "Direct ground lift", "Direct carry", "Straddle-slide method"], correct: 1 },
+{ question: "Examples of situations for an emergency move include:", options: ["Fire or danger of fire", "Explosives or other hazardous chemicals", "Inability to protect the patient from other hazards at the scene", "All of the above"], correct: 3 },
+{ question: "If the patient is on the ground and you have decided that an emergency move is appropriate, he can be moved by:", options: ["Using one rescuer on each extremity", "Using a spine board and strapping him down", "Pulling on his clothing in the neck and shoulder area", "All of the above"], correct: 2 },
+{ question: "AN urgent move for the patient found in the sitting position in an automobile is called:", options: ["Rapid takedown", "Rapid extrication", "Short board application", "Blanket roll technique"], correct: 1 },
+{ question: "All of the following are examples of a patient lifting device except the:", options: ["Stair chair", "Scoop stretcher", "KED", "Portable stretcher"], correct: 2 },
+{ question: "Which is best suited for moving responsive medical patients through a narrow hallway?", options: ["Wheeled ambulance stretcher", "Portable ambulance stretcher", "Stokes basket", "Long spine board"], correct: 1 },
+{ question: "The device called a cot is also referred to as a(n):", options: ["Guerney", "Stokes basket", "Reeves stretcher", "All of the above"], correct: 0 },
+{ question: "The federal agency that develops specifications for ambulance vehicles designs is the:", options: ["USDA", "FDA", "DOT", "FCC"], correct: 2 },
+{ question: "The phases of an ambulance call include all of the following EXCEPT:", options: ["Daily pre-run vehicle and equipment inspection", "Billing and collections", "En route to the receiving facility", "En route to the scene"], correct: 1 },
+{ question: "The condition of a patient is normally reported to the receiving hospital in all of the following ways EXCEPT:", options: ["By telephone upon returning to base", "As an oral report upon arrival at the hospital", "In a written report on the PCR", "By radio en route to the hospital"], correct: 0 },
+{ question: "When using the siren the EMT-B should:", options: ["Use it until reaching the receiving facility", "Never assume that all motorists will hear it", "Turn off other warning devices", "All of the above"], correct: 1 },
+{ question: "Use of escort vehicles during an emergency response is often a:", options: ["Very quick way to respond", "More dangerous means of response", "Means of decreasing the chance of collision", "Way to make the ambulance driver’s job easier"], correct: 1 },
+{ question: "Operators of emergency vehicles must drive with the safety of others in mind. This concept is known as driving:", options: ["Within the law", "With due regard", "In the emergency mode", "Within intent"], correct: 1 },
+{ question: "Studies indicate that fewer than one-half of all ambulance calls are requested as emergencies. Only half of those are true emergencies, with ______ being life-threatening.", options: ["Less than 20%", "Less than 10%", "Less than 5%", "Less than 2%"], correct: 2 },
+{ question: "Full immobilization of a trauma patient should take place:", options: ["Prior to moving the patient to the ambulance", "En route to the hospital in the ambulance", "Just prior to arrival at the hospital", "Before your initial assessment"], correct: 0 },
+{ question: "When delivering the patient to the hospital, you should never:", options: ["Write the prehospital care report in the emergency department", "Just move a patient onto the hospital stretcher and leave", "Transfer the patient’s personal effects", "Offer assistance to hospital personnel"], correct: 1 },
+{ question: "Intermediate-level disinfection for stethoscope:", options: ["Soap and hot water", "A 1:100 solution of bleach and water", "A 1:10 solution of bleach and water", "A hot water soak for 5 minutes"], correct: 2 },
+{ question: "When cleaning up visible spills of blood, vomitus, or other bodily fluid, you should always:", options: ["Use an EPA-registered chemical sterilant", "Wear protective gloves", "Have the patient compartments professionally sterilized", "Empty all supply compartments and clean them as well"], correct: 1 },
+{ question: "The basic role of the EMT-B during extrication is that of:", options: ["Vehicle stabilizer", "Patient care provider", "Emergency management director", "None of the above"], correct: 1 },
+{ question: "Scenario: AN automobile has collided with a tanker carrying highly flammable material. An unconscious patient is found sitting in the front passenger seat of the car with his legs pinned by the vehicles dash. Once he has been freed, the removal method to use is:", options: ["The rapid takedown technique", "A kendrich extrication device", "The rapid extrication technique", "Full immobilization to a long board"], correct: 2 },
+{ question: "Scenario: Your patient is entrapped following a motor vehicle crash. You have completed a scene size-up. You should next:", options: ["Begin extrication", "Begin your initial assessment", "Break the window furthest from the patient", "Conduct a rapid assessment"], correct: 1 },
+{ question: "When power is restored to a downed wire, there may be a phenomenon known as:", options: ["Arcing", "Ground gradient", "Lightning", "Flash point"], correct: 0 },
+{ question: "When an automobile strikes an underground power source, you should:", options: ["Ignore it, since a below-ground source poses no hazard", "Tell the patient to stay in the vehicle till the power company arrives", "Go over and shut off the ignition switch of the automobile right away", "Contact the power compn"], correct: 1 },
+{ question: "Appropriate eye protection worn by the EMT should be:", options: ["Safety goggles or safety glasses", "The hinged plastic shield on your helmet", "Your own eyeglasses", "Your own suglasses"], correct: 0 },
+{ question: "Good body protection for a rescue operation is provided by wearing all of the following EXCEPT:", options: ["A short to mid-length OSHA approved turnout coat", "A standard-issue uniform", "Steel-toe high top work shoes", "Fire-resistant trousers or turnout pants"], correct: 1 },
+{ question: "To help minimize hazards to the patient at a motor vehicle collision, the EMT-V should consider using:", options: ["Blankets", "A short spine board", "A tarp", "All of the above"], correct: 3 },
+{ question: "Which would not be considered a complex access at a motor vehicle collision?", options: ["Prying the door with a. hurst tool", "An occupant unlocking the door", "Breaking the rear window with a punch", "Using an air chisel"], correct: 1 },
+{ question: "The level of training for those who are likely to witness or discover a hazardous substance release is:", options: ["First responder awareness", "First responder operations", "Hazardous materials technician", "Hazardous materials specialist"], correct: 1 },
+{ question: "The level of training for those who initially respond to releases of hazardous materials in order to protect people, property, and the environment is:", options: ["First responder awareness", "First responder operations", "Hazardous materials technician", "Hazardous materials specialist"], correct: 0 },
+{ question: "How many hours of training are required for the hazardous materials technician course?", options: ["8", "16", "24", "40"], correct: 2 },
+{ question: "The national hazmat standard written specifically for EMS responders to a hazmat incident is:", options: ["OSHA 1910-1030", "NFPA Standard 473", "EPA 472", "OSHA 1910-1200"], correct: 1 },
+{ question: "At a hazmat incident, all victims are considered contaminated who exit the:", options: ["Cold zone", "Warm zone", "Hot zone", "Cool zone"], correct: 2 },
+{ question: "Work done in the hot zone of a hazardous materials incident includes all of the following EXCEPT:", options: ["Actual rescue", "Initial decontamination", "Triage of patients", "Treatment of life-threatening conditions"], correct: 2 },
+{ question: "The federal agencies that have developed regulations to deal with the increasing frequency of hazmat emergencies are OSHA and:", options: ["The FDA", "The HEW", "The public health service", "The EPA"], correct: 3 },
+{ question: "Any incident that places a great demand on EMS Resources in a community is called a(n):", options: ["Class I disaster", "Reportable event", "Multiple-casualty incident", "Extraordinary response situation"], correct: 2 },
+{ question: "EMT-Bs who become emotionally incapacitated at the scene of an emergency should:", options: ["Be treated as patient", "Be removed from the scene by the police", "Receive an immediate CISD", "Be treated ahead of all patients"], correct: 0 },
+{ question: "The officer at a multiple-casualty incident responsible for the sorting and prioritizing of patients is the:", options: ["Triage officer", "Treatment officer", "Transportation officer", "Staging officer"], correct: 0 },
+{ question: "The officer at a multiple-casualty incident who is responsible for logging patient destinations and communicating with the area hospitals is the:", options: ["Triage officer", "Treatment officer", "Transportation officer", "Staging officer"], correct: 2 },
+{ question: "The officer at a multiple-casualty incident who is responsible for coordinating additional units at a distant location to the scene is the:", options: ["Extrication officer", "Transportation officer", "Staging officer", "Triage officer"], correct: 2 },
+{ question: "The first role of the EMT-B responding to a disaster scene is:", options: ["Treating and transporting the injured", "Calling for additional help", "Planning how to respond", "Advising the press on what has happened"], correct: 1 },
+{ question: "At the MCI the medical commander may find it necessary to establish a:", options: ["Triage sector", "Treatment sector", "Transportation sector", "All of the above"], correct: 3 },
+{ question: "Which of the following is a key component of local multiple-casualty incident plan?", options: ["Determining how to extricate patients", "Determining how an incident occurred", "Determining who is in chare", "All of the above"], correct: 2 },
+{ question: "For an EMT-B providing care, one of the most effective ways to get help in a mulitple-casualty incident is to:", options: ["Contact dispatch directly", "coordinate any requests with the sector officer", "Contact law enforcement", "Contact fire chief"], correct: 1 },
+{ question: "The respiratory anatomy and physiology of infants and children differ from those of adults in that:", options: ["Children use their diaphragm very little for breathing", "The neck of an infant or child must be extended father back to open the airway", "The tongue of a child is proportionately larger than an adults", "The trachea of a child is more rigid than an adults"], correct: 2 },
+{ question: "When a child is placed in the supine position because the occiput is larger than in adult, the head tilts forward:", options: ["Opening the childs airway", "Causing the tongue to fall back", "Constricting the airway", "Stimulating the gag reflex"], correct: 2 },
+{ question: "In most situations, if the basic steps of airway management and ventilation are omitted and advanced airway procedures are performed immediately [the patient]:", options: ["Will suffer no major consequences", "May recover sooner due to increased oxygentation", "Can become hypoxic and suffer irreversible consequences", "Is more likely to vomit"], correct: 2 },
+{ question: "Sellicks maneuver is performed by:", options: ["Lifting up on the back of the patients neck", "Lifting the patients mandible", "Exerting direct pressure on the patients cricoid cartilage", "Exerting direct pressure on the patient’s sternum"], correct: 2 },
+{ question: "The straight laryngoscope blade used during orotracheal intubation:", options: ["Fits into the vallecula", "Is placed past the larynx", "Directly lifts the epiglottis", "Rests on the teeth"], correct: 2 },
+{ question: "When performing orotracheal intubation on an adult male, you should use a:", options: ["8.0 to 8.5 mm tube", "7.0 to 7.5 mm tube", "6.0 to 6.5 mm tube", "9.0 to 10 mm tube"], correct: 0 },
+{ question: "When performing orotracheal intubation it is essential to visualize the:", options: ["Right mainstem bronchus", "Epiglottis", "Vallecula", "Vocal cords"], correct: 3 },
+{ question: "When performing orotracheal intubation on an infant, the patient’s head and neck should be::", options: ["Hyperextended to properly visualize the vocal cords", "Flexed downward with the chin near the chest", "Positioned the same as when intubating an adult", "Placed in the sniffing position"], correct: 3 },
+{ question: "IF you hear no sounds over an intubated patient’s epigastrium, his chest rises and falls with each ventilation, and breath sounds are equal bilaterally, your next step should be to:", options: ["Attempt reintubation", "Ventilate", "Secure the tube in place", "None of the above"], correct: 2 },
+
+
+    ]; 
+
+    // ==========================================
+    // 2. QUIZ ENGINE (DO NOT TOUCH)
+    // ==========================================
+    
+    let currentQuestionIndex = 0;
+    let shuffledQuestions = [];
+    let userState = {}; // Tracks answers
+
+    window.onload = function() {
+        if (!quizData || quizData.length === 0) {
+            document.getElementById('question-text').innerText = "Error: No questions found in code!";
+            return;
+        }
+        initQuiz();
+    };
+
+    function initQuiz() {
+        // Fisher-Yates Shuffle
+        shuffledQuestions = [...quizData].sort(() => Math.random() - 0.5);
+        currentQuestionIndex = 0;
+        userState = {};
+        loadQuestion();
+    }
+
+    function scrambleQuiz() {
+        if(confirm("This will reset your score and re-shuffle all questions. Continue?")) {
+            initQuiz();
+        }
+    }
+
+    function loadQuestion() {
+        const q = shuffledQuestions[currentQuestionIndex];
+        const state = userState[currentQuestionIndex];
+        
+        // 1. Update Text
+        document.getElementById('question-text').innerText = q.question;
+        document.getElementById('progress').innerText = `Question ${currentQuestionIndex + 1} of ${shuffledQuestions.length}`;
+        updateStats();
+
+        // 2. Build Options
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option';
+            btn.innerText = opt;
+            
+            // Click Handler
+            btn.onclick = () => handleAnswer(index, q.correct, btn);
+            
+            // 3. Restore State (if user comes back to this question)
+            if (state) {
+                // Disable all buttons since question is done
+                btn.classList.add('disabled'); 
+                btn.onclick = null;
+
+                // Color logic
+                if (index === q.correct) btn.classList.add('correct');
+                if (index === state.selectedOption && !state.isCorrect) btn.classList.add('wrong');
+            }
+            
+            container.appendChild(btn);
+        });
+
+        // 4. Update Nav Buttons
+        document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+        document.getElementById('next-btn').innerText = currentQuestionIndex === shuffledQuestions.length - 1 ? 'Finish' : 'Next →';
+    }
+
+    function handleAnswer(selectedIndex, correctIndex, btnElement) {
+        const isCorrect = selectedIndex === correctIndex;
+        const allBtns = document.querySelectorAll('.option');
+        
+        // 1. Lock buttons instantly (Stop cheating/spamming)
+        allBtns.forEach(btn => {
+            btn.classList.add('disabled');
+            btn.onclick = null;
+        });
+
+        // 2. Show Visual Feedback
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+        } else {
+            btnElement.classList.add('wrong');
+            // Show the correct answer if they got it wrong
+            allBtns[correctIndex].classList.add('correct');
+        }
+
+        // 3. Save Score (Only first attempt counts)
+        if (!userState[currentQuestionIndex]) {
+            userState[currentQuestionIndex] = {
+                selectedOption: selectedIndex,
+                isCorrect: isCorrect
+            };
+            updateStats();
+        }
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < shuffledQuestions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion();
+        }
+    }
+
+    function updateStats() {
+        const stats = Object.values(userState);
+        const correct = stats.filter(s => s.isCorrect).length;
+        const wrong = stats.filter(s => !s.isCorrect).length;
+        
+        document.getElementById('count-correct').innerText = correct;
+        document.getElementById('count-wrong').innerText = wrong;
+    }
+</script>
+
+</body>
+</html>
